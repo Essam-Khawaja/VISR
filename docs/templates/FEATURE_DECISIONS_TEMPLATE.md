@@ -2,7 +2,7 @@
 
 ## Decision Log
 
-### YYYY-MM-DD — [Decision Title]
+### YYYY-MM-DD - [Decision Title]
 
 **Decision:**  
 What did we decide?

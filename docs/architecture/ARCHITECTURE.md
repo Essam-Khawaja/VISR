@@ -1,25 +1,36 @@
 # Architecture
 
 ## Overview
-Describe the high-level architecture here.
+StraighterNoodles is a Next.js App Router application with API routes backed by Supabase PostgreSQL. The frontend renders a vertical timeline dashboard with weather integration and a "Before You Leave" checklist.
 
 ## Main App Flow
-1. User enters the app
-2. User performs the main action
-3. App processes the request
-4. App displays the result
+1. User opens the app and sees a greeting + weather summary
+2. "Before You Leave" checklist shows all items needed for today
+3. Vertical timeline displays today's events in chronological order
+4. User can create/edit events, attach items, and find free time slots
 
 ## Frontend Architecture
-Describe pages, components, and client-side state.
+- **Dashboard (/)**: Main page with Header, WeatherBanner, BeforeYouLeave checklist, Timeline, and FreeTimeFinder
+- **Settings (/settings)**: User preferences form (city, timezone, category default items)
+- Components are organized by feature: timeline/, checklist/, weather/, events/, free-time/, layout/, settings/
 
 ## Backend Architecture
-Describe API routes, server actions, database logic, and external services.
+- **API Routes**: Next.js route handlers under src/app/api/
+- **Database**: Supabase PostgreSQL with tables for events, items, event_items, category_default_items, user_settings
+- **Weather**: Proxy route to OpenWeather API, returns normalized WeatherData
+- **Free Time**: Computes gaps between events for a given day
 
 ## Data Flow
-Describe how data moves through the app.
+1. Dashboard page fetches today's events, items, weather, and settings on mount
+2. Events are sorted chronologically and rendered as timeline cards
+3. Checklist aggregates items from category defaults, event-specific items, and weather advice
+4. Event creation/editing triggers API calls that persist to Supabase
 
 ## Error Handling
-Describe how the app handles loading, empty, and error states.
+- API routes return appropriate HTTP status codes
+- UI shows loading skeletons during data fetch
+- Empty states shown when no events exist for today
+- Weather failures gracefully degrade (no weather shown, no crash)
 
 ## Deployment
-Describe where and how the app is deployed.
+- Vercel deployment with environment variables for Supabase and OpenWeather
