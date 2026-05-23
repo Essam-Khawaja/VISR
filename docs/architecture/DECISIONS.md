@@ -93,3 +93,13 @@ Key architectural and design decisions made before the hackathon build. These sh
 **Reason:** Mixing Framer Motion with Three.js canvas re-renders causes performance issues. Three.js runs its own requestAnimationFrame loop and should not be controlled by React's render cycle.
 
 **Implementation:** The GoalTree component is wrapped in a regular div that Framer Motion can animate (fade in, scale up on mount). Inside the canvas, everything is pure Three.js.
+
+---
+
+## D9: Next.js app colocated at repo root
+
+**Decision:** Ship the MVP Next.js layout (`/app`, `/components`, `/lib`) from the repository root next to `/docs`.
+
+**Reason:** Matches `ARCHITECTURE.md` directory conventions and avoids an extra nesting layer for a hackathon timeline.
+
+**Tradeoff:** Spec docs and runnable code live in one tree — keep docs authoritative and route generated output to `.gitignore`-safe folders only.
