@@ -4,9 +4,9 @@
 Complete
 
 ## Summary
-Pathwise’s entire user-facing surface—landing, onboarding, strategy dashboard shell, supporting cards, opportunity check, loading states, and shared design system. This feature makes the product feel **premium, opinionated, and strategy-first**: the Goal Tree owns ~60% of the dashboard; everything else supports it in restrained dark UI. Visual quality is a demo requirement, not polish.
+Pathwise’s entire user-facing surface—landing, onboarding, strategy dashboard shell, opportunity check, loading states, shared design system, and the **custom Three.js Goal Tree**. This feature makes the product feel **premium, opinionated, and strategy-first**: the dashboard is a left nav rail plus a **full-viewport** 3D graph; supporting card components remain in the repo for opportunity/onboarding but are not shown on the dashboard route.
 
-**Out of this feature’s implementation scope:** Three.js Goal Tree logic (owned by `feat/graph`). This feature provides the layout slot, props contract, loading placeholder, and integration boundary for `GoalTree`.
+**Dashboard (current):** `DashboardSidebar` + `GoalTree` (dynamic import, `ssr: false`). Hover nodes for recommendation detail via `NodePopover`.
 
 ## User Problem
 Students need to trust Pathwise in seconds. Generic dashboards and chatbot UIs feel like “another productivity app.” They need a interface that:
@@ -33,9 +33,9 @@ Students need to trust Pathwise in seconds. Generic dashboards and chatbot UIs f
 ### Flow A — Demo (judging)
 1. User opens landing → clicks **View demo strategy**
 2. Navigates to `/dashboard/[DEMO_PLAN_ID]` (pre-cached plan, no live AI)
-3. Dashboard loads: header metrics visible immediately; Goal Tree animates in; cards stagger in
-4. User scrolls or scans cards (bottleneck, cut list, next 7 days)
-5. User opens **Check an opportunity** → enters text → sees fit gauge + recommendation
+3. Dashboard loads: sidebar + full-viewport Goal Tree (camera drift, node spawn)
+4. User hovers pillars/actions for recommendations; bottleneck node pulses
+5. User opens **Opportunity** from sidebar → enters text → sees fit gauge + recommendation
 
 ### Flow B — Full path
 1. Landing → **Get my strategy**
@@ -84,19 +84,24 @@ Students need to trust Pathwise in seconds. Generic dashboards and chatbot UIs f
 - [ ] On success: redirect to dashboard; on error: recoverable message + retry
 
 ### Must Have — Dashboard layout (`/dashboard/[planId]`)
-- [ ] **60% width** (or equivalent visual dominance) for Goal Tree region; cards in sidebar/below on smaller widths
-- [ ] Header row: **Destination**, **Current stage**, **Main bottleneck** (truncated with expand/tooltip if long), **Route status** badge, **Alignment score**
-- [ ] Alignment score: **~120px** display number, counts up 0→score over **1200ms** on first paint
-- [ ] Route status badge: **11px uppercase**, letter-spacing wide
-- [ ] Supporting cards (all from `StrategyPlan`):
-  - Bottleneck detail (emphasized copy, danger accent)
-  - Semester priorities
-  - Cut list (Cut / Defer / Keep / Double down with reasons)
-  - Next 7 days (3–7 items, priority visible)
-  - Risk warnings
-- [ ] Nav/link to opportunity check for this `planId`
-- [ ] Dashboard understandable in **10 seconds** (hierarchy: bottleneck + score + graph)
-- [ ] Does **not** feel like a generic admin template or chat UI
+- [x] **Full viewport** Goal Tree (remaining width after sidebar); `h-screen` shell, no card grid
+- [x] **DashboardSidebar**: Home, Strategy (active), Opportunity — navigation only (72px icon rail mobile, ~220px labeled desktop)
+- [x] **Three.js Goal Tree** with Obsidian-style glow orbs (solid core + additive halo sprite) and curved edges
+- [x] **Progressive disclosure**: default view shows goal + pillars only; click a pillar to reveal its actions, dim others, and zoom the camera toward it; click goal / empty / `Esc` to reset
+- [x] **Navigation**: drag empty space to pan, scroll wheel to zoom (clamped); per-node idle bob
+- [x] Raycast hover: scale **1.35×**, cursor pointer, `NodePopover` (suppressed when a sticky selection is active)
+- [x] Bottleneck node: pulsing glow opacity
+- [x] **Strategy HUD overlays** layered on canvas:
+  - Top-left: route status pill + current stage
+  - Top-right: bottleneck callout (`CornerBrackets`) with `FOCUS THE GRAPH` button
+  - Bottom-left: alignment score inside `Reticle` with count-up `NumberDial`
+  - Bottom-right: link to `/opportunity/[planId]`
+- [x] **SelectionCard** (bottom-center): pillar/action detail with reason or recommendation; pillar selection shows actions list with drill-in; action selection shows breadcrumb back to its pillar; close button + `Esc`
+- [x] `prefers-reduced-motion`: lerps snap, count-up renders final value, no bob
+- [x] Dashboard understandable in **10 seconds** (route status + alignment + bottleneck + visible pillars)
+- [x] Does **not** feel like a generic admin template or chat UI
+
+**Deferred on dashboard route (components kept):** bento cards (cut list, next 7 days, risks, semester priorities) — accessible via plan data and future detail surfaces.
 
 ### Must Have — Dashboard data & states
 - [ ] Initial load: skeleton placeholders on cards; graph area shows branded loading state until `GoalTree` mounts

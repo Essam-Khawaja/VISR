@@ -172,3 +172,99 @@ Per-component guards can miss CSS-only animations (badge dot breathing, scan-mas
 
 **Consequence:**  
 Any new CSS animation (`@keyframes ...`) is automatically opted out under reduced motion. Per-component Framer guards still required for `initial` states that would otherwise pop.
+
+---
+
+### 2026-05-23 — Dashboard shell: sidebar + full-viewport graph only
+
+**Decision:**  
+`DashboardLayout` is `flex h-screen`: `DashboardSidebar` (nav only) + `GoalTreeSlot` filling remaining width. Dashboard cards (`AlignmentScore`, `BottleneckCard`, etc.) are **not** rendered on the dashboard route; component files remain for opportunity/onboarding reuse.
+
+**Reason:**  
+Demo focus: the Goal Tree is the product surface. Cards competed with the graph and read as a generic admin template.
+
+**Alternatives Considered:**  
+- 60/40 bento with cards — rejected for this pass per product direction.
+- Delete card components — rejected; still used on opportunity and for post-hackathon restore.
+
+**Consequence:**  
+Judges land on `/dashboard/[planId]` and see navigation + 3D graph only. Opportunity and home remain linked from the sidebar.
+
+---
+
+### 2026-05-23 — Custom Three.js graph (reject `react-force-graph-3d`)
+
+**Decision:**  
+Implement radial Goal Tree in `components/graph/` with raw Three.js (`useGraphScene`, `graphLayout`, `graphNodes`, `graphEdges`, `graphAnimations`). Do **not** use force-directed graph packages.
+
+**Reason:**  
+Pathwise needs a **fixed** layout: goal at center, pillars on a ring, actions clustered per pillar. Force simulations fight locked positions and look like generic network graphs.
+
+**Alternatives Considered:**  
+- `react-force-graph-3d` / `r3f-forcegraph` — rejected for primary layout.
+- `@react-three/fiber` + drei — deferred; smaller surface area with a single hook for hackathon.
+
+**Consequence:**  
+`GoalTreeSlot` dynamic-imports `GoalTree` with `ssr: false`. Hover, bottleneck pulse, and camera drift are implemented in-repo. Dependency: `three` + `@types/three`.
+
+---
+
+### 2026-05-23 — Graph hover via raycaster + HTML `NodePopover`
+
+**Decision:**  
+Pointer raycasting on the WebGL canvas: hovered mesh scales to **1.35×**, cursor becomes pointer. `NodePopover` is a fixed-position HTML overlay (Framer enter/exit) following cursor with offset—not drawn in Three.js. Hover popover is hidden whenever a sticky selection is active to avoid double-detail.
+
+**Reason:**  
+Readable recommendation copy and a11y-friendly tooltips; matches global intent to keep Framer outside the canvas.
+
+**Consequence:**  
+`lib/cssColor.ts` resolves CSS token vars for Three.js materials at runtime in the browser.
+
+---
+
+### 2026-05-23 — Graph navigation feels like Obsidian (drag-pan, wheel-zoom, glow orbs)
+
+**Decision:**  
+Replace auto-rotation with Obsidian-style navigation. The whole graph lives inside a `THREE.Group` `root`; dragging on empty space translates `root.position` (world units per pixel via FOV math). Wheel adjusts `camera.position.z` (clamped 4–22). Auto-rotation is removed. Each node renders as a solid core sphere plus an additive glow sprite (canvas radial gradient), giving an Obsidian-style halo. Each node has an independent x/y bob (sin/cos with random phase) for life.
+
+**Reason:**  
+A force-directed knowledge-graph aesthetic and feel reads as the strategic map of the student's life, not a 3D demo. Drag/zoom matches the mental model judges expect.
+
+**Consequence:**  
+`useGraphScene` owns pointer capture and event delegation. Body cursor cycles `grab` → `grabbing` → `pointer`. HTML labels for goal + pillars project node world positions onto screen pixels each frame.
+
+---
+
+### 2026-05-23 — Click-to-expand selection model (dim others, reveal actions, zoom camera)
+
+**Decision:**  
+Default view shows only goal + pillars and the goal→pillar edges. Clicking a pillar selects it: other pillars dim to ~0.22 opacity, that pillar grows to 1.15×, its actions and pillar→action edges fade in, and the camera tweens toward `(pillar.xy * 0.55, z=6.2)` while looking at the same lean point. Clicking the goal or empty space clears selection and returns the camera to `(0,0,9.5)` looking at the origin. Clicking an action selects only that action; sibling actions soften to 0.45 opacity. `Esc` closes selection.
+
+**Reason:**  
+Showing every action node by default reads as "random network." Progressive disclosure makes the graph a strategic interface: you choose which pillar to focus and the rest of the strategy quiets down around it.
+
+**Alternatives Considered:**  
+- Show all actions always with no expansion — rejected; visually noisy, the strategy doesn't read.
+- Hide other pillars entirely on selection — rejected; loses the sense of the wider strategy.
+
+**Consequence:**  
+Selection state lives in `useGraphScene`; the hook exposes `select`, `clearSelection`, and `selectBottleneck`. Pickable meshes are recomputed per pointer event filtered by `currentOpacity > 0.18` so hidden actions are not clickable. All visibility changes are lerps (`LERP_FACTOR = 0.12`) for snappy but smooth transitions, snapped under `prefers-reduced-motion`.
+
+---
+
+### 2026-05-23 — Strategy HUD layered over the graph (minimum scope)
+
+**Decision:**  
+Four small fixed overlays sit on top of the canvas, none competing with the graph for space:
+- Top-left: route status pill (`plan.routeStatus`) with status-colored dot + current stage label.
+- Top-right: bottleneck callout in `CornerBrackets` with a `FOCUS THE GRAPH` button that calls `selectBottleneck()` (selects the pillar whose status is `Weak`/`Missing` or matches `mainBottleneck` text).
+- Bottom-left: alignment readout inside a `Reticle`, with `NumberDial` counting up to `plan.alignmentScore`.
+- Bottom-right: link to `/opportunity/[planId]`.
+
+A `SelectionCard` slides in bottom-center on selection: kind label + status pill, name in display font, reason/recommendation paragraph, drill-down action list when a pillar is selected, breadcrumb to parent pillar when an action is selected, close button.
+
+**Reason:**  
+The graph alone could feel decorative; the HUD ensures the dashboard reads as a strategy app in the first 5 seconds: route status, alignment number, the bottleneck callout, and an explicit jump to the opportunity flow.
+
+**Consequence:**  
+`GoalTree` now takes the full `StrategyPlan` plus `planId`. `GoalTreeSlot` and `DashboardLayout` forward both. Cut list / risks / next-7-days remain off the dashboard route for now; they live behind the opportunity tool and (future) detail surfaces.
