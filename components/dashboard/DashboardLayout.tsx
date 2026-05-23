@@ -6,6 +6,7 @@ import { LinkButton } from "@/components/ui/Button";
 import { AlignmentScore } from "./AlignmentScore";
 import { BottleneckCard } from "./BottleneckCard";
 import { CutList } from "./CutList";
+import { GoalTreeSlot } from "./GoalTreeSlot";
 import { NextSevenDays } from "./NextSevenDays";
 import { RiskCards } from "./RiskCards";
 import { SemesterPriorities } from "./SemesterPriorities";
@@ -28,11 +29,12 @@ export function DashboardLayout({ plan, planId }: Props) {
       <StrategyHeader plan={plan} />
 
       <section className="grid grid-cols-1 gap-4 lg:grid-cols-[1.5fr_1fr] lg:gap-6">
-        <Card index={2} className="min-h-[420px] lg:min-h-[560px]">
-          <div className="flex h-full min-h-[380px] items-center justify-center text-secondary">
-            <span className="text-[11px] uppercase tracking-widest">
-              Goal Tree slot — wired in Phase 5
-            </span>
+        <Card
+          index={2}
+          className="relative min-h-[420px] overflow-hidden lg:min-h-[560px]"
+        >
+          <div className="absolute inset-0">
+            <GoalTreeSlot plan={plan} />
           </div>
         </Card>
 
