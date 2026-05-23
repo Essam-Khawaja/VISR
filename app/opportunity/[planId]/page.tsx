@@ -1,13 +1,9 @@
-import { notFound } from "next/navigation";
-import { OpportunityClient } from "@/components/opportunity/OpportunityClient";
-import { fetchStrategyPlan } from "@/lib/fetchPlan";
-
-type Params = { params: { planId: string } };
+import { OpportunityShell } from "@/components/opportunity/OpportunityShell";
 
 export const dynamic = "force-dynamic";
 
-export default async function OpportunityPage({ params }: Params) {
-  const plan = await fetchStrategyPlan(params.planId);
-  if (!plan) notFound();
-  return <OpportunityClient planId={params.planId} />;
+type Params = { params: { planId: string } };
+
+export default function OpportunityPage({ params }: Params) {
+  return <OpportunityShell planId={params.planId} />;
 }

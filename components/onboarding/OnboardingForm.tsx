@@ -18,6 +18,8 @@ import {
 } from "./onboardingTypes";
 import { demoPlanId } from "@/lib/env";
 import { ease } from "@/lib/motion";
+import { savePlan } from "@/lib/planStore";
+import type { StrategyPlan } from "@/lib/types";
 
 const STEPS = [
   { id: "destination", label: "Destination" },
@@ -114,9 +116,14 @@ export function OnboardingForm() {
         const body = (await res.json().catch(() => ({}))) as { error?: string };
         throw new Error(body.error || `Request failed: ${res.status}`);
       }
-      const { planId } = (await res.json()) as { planId: string };
+      const data = (await res.json()) as {
+        ok?: boolean;
+        planId: string;
+        plan: StrategyPlan;
+      };
+      if (data.plan) savePlan(data.planId, data.plan);
       window.sessionStorage.removeItem(DRAFT_KEY);
-      router.push(`/dashboard/${planId}`);
+      router.push(`/dashboard/${data.planId}`);
     } catch (e) {
       setSubmitError(
         e instanceof Error ? e.message : "Something went wrong. Try again.",

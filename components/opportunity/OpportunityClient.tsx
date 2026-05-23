@@ -2,11 +2,12 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { Card } from "@/components/ui/Card";
+import { Button } from "@/components/ui/Button";
+import { usePlan } from "@/components/dashboard/PlanProvider";
+import { FitScoreGauge } from "./FitScoreGauge";
 import { OpportunityInput } from "./OpportunityInput";
 import { OpportunityResult } from "./OpportunityResult";
-import { FitScoreGauge } from "./FitScoreGauge";
-import { Card } from "@/components/ui/Card";
-import { fixtureOpportunity } from "@/lib/fixture";
 import type { OpportunityCheck } from "@/lib/types";
 
 type Props = {
@@ -16,10 +17,11 @@ type Props = {
 type State =
   | { kind: "idle" }
   | { kind: "loading" }
-  | { kind: "result"; check: OpportunityCheck }
+  | { kind: "result"; check: OpportunityCheck; applied: boolean }
   | { kind: "error"; message: string };
 
 export function OpportunityClient({ planId }: Props) {
+  const { plan, applyOpportunityResult, isDemo } = usePlan();
   const [state, setState] = useState<State>({ kind: "idle" });
 
   const evaluate = async (text: string) => {
@@ -28,23 +30,14 @@ export function OpportunityClient({ planId }: Props) {
       const res = await fetch("/api/opportunity", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ planId, opportunityText: text }),
+        body: JSON.stringify({ planId, plan, opportunityText: text }),
       });
       if (!res.ok) {
-        if (res.status === 404) {
-          // API not deployed yet — show the fixture result so the UX still demos.
-          await new Promise((r) => setTimeout(r, 900));
-          setState({
-            kind: "result",
-            check: { ...fixtureOpportunity, opportunityText: text, planId },
-          });
-          return;
-        }
         const body = (await res.json().catch(() => ({}))) as { error?: string };
         throw new Error(body.error || `Request failed: ${res.status}`);
       }
       const data = (await res.json()) as { check: OpportunityCheck };
-      setState({ kind: "result", check: data.check });
+      setState({ kind: "result", check: data.check, applied: false });
     } catch (e) {
       setState({
         kind: "error",
@@ -53,19 +46,26 @@ export function OpportunityClient({ planId }: Props) {
     }
   };
 
+  const applyToPlan = () => {
+    if (state.kind !== "result") return;
+    applyOpportunityResult(state.check);
+    setState({ ...state, applied: true });
+  };
+
   return (
-    <main id="main" className="relative min-h-screen px-5 py-6 sm:px-8 sm:py-8">
+    <main
+      id="main"
+      className="relative min-h-screen bg-base px-5 py-6 sm:px-8 sm:py-8"
+    >
       <header className="mx-auto flex w-full max-w-[760px] items-center justify-between">
         <Link
           href={`/dashboard/${planId}`}
-          className="inline-flex items-center gap-2 text-[10px] uppercase tracking-widest text-secondary transition-colors hover:text-primary"
+          className="inline-flex items-center gap-2 rounded-full border border-border bg-surface px-3 py-1.5 text-[12px] text-secondary shadow-soft transition-colors hover:border-border-strong hover:text-primary"
         >
-          <span aria-hidden>&larr;</span>
+          <span aria-hidden>←</span>
           Back to dashboard
         </Link>
-        <span className="text-[10px] uppercase tracking-widest text-secondary">
-          Opportunity Check
-        </span>
+        <span className="text-[12px] text-tertiary">Opportunity check</span>
       </header>
 
       <div className="mx-auto mt-8 flex w-full max-w-[760px] flex-col gap-6">
@@ -76,24 +76,30 @@ export function OpportunityClient({ planId }: Props) {
 
         {state.kind === "loading" ? (
           <Card noHover>
-            <div className="flex flex-col items-center gap-4 py-6 sm:flex-row sm:items-start sm:gap-8">
+            <div className="flex flex-col items-center gap-4 py-4 sm:flex-row sm:items-start sm:gap-8">
               <FitScoreGauge score={0} pending />
               <div className="flex-1 text-[14px] leading-relaxed text-secondary">
-                Scoring against your current route, naming the tradeoffs, and
-                finding what to cut. Usually under two seconds.
+                Scoring against your current route. Naming the tradeoffs.
+                Finding what to cut. Usually under two seconds.
               </div>
             </div>
           </Card>
         ) : null}
 
         {state.kind === "error" ? (
-          <Card noHover bracketColor="var(--danger)">
+          <Card noHover className="border-danger/30 bg-danger-soft/40">
             <p className="text-[14px] text-danger">{state.message}</p>
           </Card>
         ) : null}
 
         {state.kind === "result" ? (
-          <OpportunityResult check={state.check} />
+          <OpportunityResult
+            check={state.check}
+            applied={state.applied}
+            onApply={applyToPlan}
+            planId={planId}
+            isDemo={isDemo}
+          />
         ) : null}
       </div>
     </main>
