@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Card } from "@/components/ui/Card";
 import { LinkButton } from "@/components/ui/Button";
 import { AlignmentScore } from "./AlignmentScore";
+import { BottleneckCard } from "./BottleneckCard";
 import { StrategyHeader } from "./StrategyHeader";
 import type { StrategyPlan } from "@/lib/types";
 
@@ -35,13 +36,15 @@ export function DashboardLayout({ plan, planId }: Props) {
           <Card index={3} className="min-h-[220px]">
             <AlignmentScore score={plan.alignmentScore} />
           </Card>
-          <Card index={4} className="min-h-[200px]">
-            <div className="text-[10px] uppercase tracking-widest text-secondary">
-              Main Bottleneck
-            </div>
-            <p className="mt-3 text-[15px] leading-relaxed text-primary">
-              {plan.mainBottleneck}
-            </p>
+          <Card
+            index={4}
+            className="min-h-[220px] overflow-hidden"
+            bracketColor="var(--danger)"
+          >
+            <BottleneckCard
+              bottleneck={plan.mainBottleneck}
+              stage={plan.currentStage}
+            />
           </Card>
         </div>
       </section>
