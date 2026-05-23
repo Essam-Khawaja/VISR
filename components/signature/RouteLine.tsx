@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import { Fragment } from "react";
 import { cn } from "@/lib/cn";
 import { dur, ease } from "@/lib/motion";
@@ -26,6 +26,7 @@ const toneColor: Record<NonNullable<RouteLineWaypoint["tone"]>, string> = {
 };
 
 export function RouteLine({ waypoints, className, delay = 0 }: Props) {
+  const reduce = useReducedMotion();
   return (
     <div
       className={cn(
@@ -41,7 +42,7 @@ export function RouteLine({ waypoints, className, delay = 0 }: Props) {
             <div className="flex min-w-0 flex-col gap-1">
               <div className="flex items-center gap-2">
                 <motion.span
-                  initial={{ scale: 0, opacity: 0 }}
+                  initial={reduce ? false : { scale: 0, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
                   transition={{
                     duration: 0.25,
@@ -78,7 +79,7 @@ export function RouteLine({ waypoints, className, delay = 0 }: Props) {
             {!isLast ? (
               <motion.span
                 aria-hidden
-                initial={{ scaleX: 0, opacity: 0 }}
+                initial={reduce ? false : { scaleX: 0, opacity: 0 }}
                 animate={{ scaleX: 1, opacity: 1 }}
                 transition={{
                   duration: dur.route,

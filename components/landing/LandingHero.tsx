@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import { LinkButton } from "@/components/ui/Button";
 import { RouteLine } from "@/components/signature/RouteLine";
 import { ease, letterReveal } from "@/lib/motion";
@@ -10,6 +10,7 @@ const tagline = "You say the what. We tell you the how.";
 const words = tagline.split(" ");
 
 export function LandingHero() {
+  const reduce = useReducedMotion();
   return (
     <main className="relative isolate flex min-h-screen flex-col overflow-hidden">
       <BackgroundField />
@@ -51,7 +52,7 @@ export function LandingHero() {
               <span key={`${word}-${i}`} className="inline-block">
                 <motion.span
                   variants={letterReveal}
-                  initial="hidden"
+                  initial={reduce ? false : "hidden"}
                   animate="show"
                   custom={i}
                   className="inline-block"
