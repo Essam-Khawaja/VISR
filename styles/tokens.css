@@ -1,0 +1,30 @@
+:root {
+  /* Color (canonical, mirrors docs/architecture/PRD.md §6) */
+  --bg-base: #080c14;
+  --bg-surface: #0d1424;
+  --bg-elevated: #111827;
+  --border: #1a2640;
+  --accent: #4facfe;
+  --accent-glow: #4facfe33;
+  --danger: #ff4d6d;
+  --danger-glow: #ff4d6d33;
+  --success: #00f5a0;
+  --warning: #ffb547;
+  --muted: #3d4f6b;
+  --text-primary: #f0f4ff;
+  --text-secondary: #6b7fa3;
+
+  /* Structural */
+  --bracket-len: 14px;
+  --bracket-w: 1.5px;
+  --route-dot: 6px;
+  --scan-opacity: 0.06;
+  --grain-opacity: 0.025;
+
+  /* Motion */
+  --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --dur-card: 300ms;
+  --dur-score: 1200ms;
+  --dur-gauge: 800ms;
+  --dur-route: 400ms;
+}

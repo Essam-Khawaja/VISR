@@ -1,9 +1,94 @@
+@import "./tokens.css";
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-html,
-body {
-  background-color: #080c14;
-  color: #f0f4ff;
+@layer base {
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
+  html,
+  body {
+    background-color: var(--bg-base);
+    color: var(--text-primary);
+    font-family: var(--font-inter), system-ui, -apple-system, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    font-feature-settings: "ss01", "cv11";
+  }
+
+  body {
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Tabular figures everywhere a number lives. */
+  .tabular,
+  [data-tabular] {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum";
+  }
+
+  ::selection {
+    background-color: var(--accent-glow);
+    color: var(--text-primary);
+  }
+
+  :focus-visible {
+    outline: 1px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  button,
+  input,
+  textarea {
+    font: inherit;
+    color: inherit;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .glow-accent {
+    box-shadow: 0 0 0 1px var(--accent), 0 0 24px -4px var(--accent-glow);
+  }
+
+  .glow-danger {
+    box-shadow: 0 0 0 1px var(--danger), 0 0 28px -6px var(--danger-glow);
+  }
+
+  /* Vertical scan line used inside skeletons + loading panels. */
+  .scan-mask {
+    position: relative;
+    overflow: hidden;
+  }
+  .scan-mask::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      to bottom,
+      transparent 0%,
+      var(--accent-glow) 50%,
+      transparent 100%
+    );
+    height: 40%;
+    animation: scan-card 2.2s linear infinite;
+    pointer-events: none;
+    opacity: 0.7;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .scan-mask::after {
+      animation: none;
+      opacity: 0;
+    }
+  }
 }

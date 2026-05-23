@@ -1,9 +1,25 @@
 import type { Metadata } from "next";
+import { Inter, Space_Grotesk } from "next/font/google";
 import "@/styles/globals.css";
 
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-inter",
+  display: "swap",
+});
+
+const display = Space_Grotesk({
+  subsets: ["latin"],
+  variable: "--font-display",
+  display: "swap",
+  weight: ["500", "600", "700"],
+});
+
 export const metadata: Metadata = {
-  title: "Pathwise",
-  description: "You say the what. We tell you the how.",
+  title: "Pathwise — You say the what. We tell you the how.",
+  description:
+    "A strategic planning dashboard for ambitious university students. Pathwise tells you what's actually worth executing on.",
+  themeColor: "#080c14",
 };
 
 export default function RootLayout({
@@ -12,8 +28,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
-      <body>{children}</body>
+    <html lang="en" className={`${inter.variable} ${display.variable}`}>
+      <body className="bg-base text-primary antialiased">{children}</body>
     </html>
   );
 }
