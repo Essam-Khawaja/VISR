@@ -1,100 +1,68 @@
 "use client";
 
+import { useCallback, useState } from "react";
 import Link from "next/link";
-import { Card } from "@/components/ui/Card";
-import { LinkButton } from "@/components/ui/Button";
-import { AlignmentScore } from "./AlignmentScore";
-import { BottleneckCard } from "./BottleneckCard";
-import { CutList } from "./CutList";
+import { DashboardSidebar } from "@/components/layout/DashboardSidebar";
+import { Button } from "@/components/ui/Button";
+import { PlanProvider, usePlanOptional } from "./PlanProvider";
 import { GoalTreeSlot } from "./GoalTreeSlot";
-import { NextSevenDays } from "./NextSevenDays";
-import { RiskCards } from "./RiskCards";
-import { SemesterPriorities } from "./SemesterPriorities";
-import { StrategyHeader } from "./StrategyHeader";
-import type { StrategyPlan } from "@/lib/types";
+import { TodayOverlay } from "./TodayOverlay";
 
 type Props = {
-  plan: StrategyPlan;
   planId: string;
 };
 
-/**
- * Bento layout shell. Card content is filled in by Phase 5 commits.
- */
-export function DashboardLayout({ plan, planId }: Props) {
+export function DashboardLayout({ planId }: Props) {
+  return (
+    <PlanProvider planId={planId}>
+      <DashboardShell planId={planId} />
+    </PlanProvider>
+  );
+}
+
+function DashboardShell({ planId }: { planId: string }) {
+  const ctx = usePlanOptional();
+  const [todayOpen, setTodayOpen] = useState(false);
+  const toggleToday = useCallback(() => setTodayOpen((v) => !v), []);
+
+  if (!ctx) {
+    return <DashboardEmpty />;
+  }
+
   return (
     <main
       id="main"
-      className="relative flex min-h-screen flex-col gap-8 px-5 py-6 sm:px-8 sm:py-8 lg:gap-10 lg:px-12 lg:py-10"
+      className="flex h-screen overflow-hidden bg-base"
     >
-      <TopBar planId={planId} />
-
-      <StrategyHeader plan={plan} />
-
-      <section className="grid grid-cols-1 gap-4 lg:grid-cols-[1.5fr_1fr] lg:gap-6">
-        <Card
-          index={2}
-          className="relative min-h-[420px] overflow-hidden lg:min-h-[560px]"
-        >
-          <div className="absolute inset-0">
-            <GoalTreeSlot plan={plan} />
-          </div>
-        </Card>
-
-        <div className="flex flex-col gap-4 lg:gap-6">
-          <Card index={3} className="min-h-[220px]">
-            <AlignmentScore score={plan.alignmentScore} />
-          </Card>
-          <Card
-            index={4}
-            className="min-h-[220px] overflow-hidden"
-            bracketColor="var(--danger)"
-          >
-            <BottleneckCard
-              bottleneck={plan.mainBottleneck}
-              stage={plan.currentStage}
-            />
-          </Card>
-        </div>
-      </section>
-
-      <section className="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:gap-6">
-        <Card index={5}>
-          <SemesterPriorities priorities={plan.semesterPriorities} />
-        </Card>
-        <Card index={6}>
-          <RiskCards risks={plan.risks} />
-        </Card>
-      </section>
-
-      <Card index={7}>
-        <CutList items={plan.cutList} />
-      </Card>
-
-      <Card index={8}>
-        <NextSevenDays actions={plan.nextSevenDays} />
-      </Card>
+      <DashboardSidebar planId={planId} onTodayClick={toggleToday} />
+      <div className="relative min-h-0 flex-1">
+        <GoalTreeSlot onToggleToday={toggleToday} />
+      </div>
+      <TodayOverlay open={todayOpen} onClose={() => setTodayOpen(false)} />
     </main>
   );
 }
 
-function TopBar({ planId }: { planId: string }) {
+function DashboardEmpty() {
   return (
-    <header className="flex items-center justify-between">
-      <Link
-        href="/"
-        className="inline-flex items-center gap-2 text-[10px] uppercase tracking-widest text-secondary transition-colors hover:text-primary"
-      >
-        <span aria-hidden>&larr;</span>
-        Pathwise
-      </Link>
-      <LinkButton
-        href={`/opportunity/${planId}`}
-        variant="secondary"
-        size="md"
-      >
-        Check an opportunity
-      </LinkButton>
-    </header>
+    <main className="flex min-h-screen items-center justify-center bg-base px-6">
+      <div className="w-full max-w-md rounded-3xl border border-border bg-surface p-8 text-center shadow-card">
+        <h1 className="font-display text-2xl font-semibold text-primary">
+          No plan on this device yet
+        </h1>
+        <p className="mt-3 text-[14px] leading-relaxed text-secondary">
+          Strategy plans live in your browser. Start onboarding to make one of
+          your own, or open the demo plan to see what Pathwise feels like.
+        </p>
+        <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-center">
+          <Link href="/onboarding">
+            <Button>Start onboarding</Button>
+          </Link>
+          <Link href="/">
+            <Button variant="secondary">Back to home</Button>
+          </Link>
+        </div>
+      </div>
+    </main>
   );
 }

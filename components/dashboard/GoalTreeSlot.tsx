@@ -1,28 +1,28 @@
 "use client";
 
-import { GoalTreePlaceholder } from "./GoalTreePlaceholder";
-import type { StrategyPlan } from "@/lib/types";
+import dynamic from "next/dynamic";
+import { GoalTreeLoading } from "@/components/graph/GoalTreeLoading";
+import { usePlan } from "./PlanProvider";
+
+const GoalTree = dynamic(() => import("@/components/graph/GoalTree"), {
+  ssr: false,
+  loading: () => <GoalTreeLoading />,
+});
 
 type Props = {
-  plan: StrategyPlan;
+  onToggleToday: () => void;
 };
 
-/**
- * Boundary for the Three.js Goal Tree owned by feat/graph. Until that
- * branch is merged, this renders the radial constellation placeholder.
- *
- * Once feat/graph ships:
- *   const GoalTree = dynamic(() => import("@/components/graph/GoalTree"), {
- *     ssr: false,
- *     loading: () => <GoalTreePlaceholder ... variant="loading" />,
- *   });
- */
-export function GoalTreeSlot({ plan }: Props) {
+export function GoalTreeSlot({ onToggleToday }: Props) {
+  const { plan, planId, stored, markAction, isDemo } = usePlan();
   return (
-    <GoalTreePlaceholder
-      pillars={plan.strategicPillars}
-      destination={plan.destination}
-      mainBottleneck={plan.mainBottleneck}
+    <GoalTree
+      plan={plan}
+      planId={planId}
+      actionStates={stored.actionStates}
+      markAction={markAction}
+      isDemo={isDemo}
+      onToggleToday={onToggleToday}
     />
   );
 }
