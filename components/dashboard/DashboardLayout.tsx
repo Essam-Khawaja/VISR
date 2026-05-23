@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { Card } from "@/components/ui/Card";
 import { LinkButton } from "@/components/ui/Button";
+import { AlignmentScore } from "./AlignmentScore";
 import { StrategyHeader } from "./StrategyHeader";
 import type { StrategyPlan } from "@/lib/types";
 
@@ -31,14 +32,8 @@ export function DashboardLayout({ plan, planId }: Props) {
         </Card>
 
         <div className="flex flex-col gap-4 lg:gap-6">
-          <Card index={3} className="min-h-[180px]">
-            <div className="text-[10px] uppercase tracking-widest text-secondary">
-              Alignment Score
-            </div>
-            <div className="mt-3 font-display text-[80px] leading-none text-primary tabular">
-              {plan.alignmentScore}
-              <span className="text-secondary">%</span>
-            </div>
+          <Card index={3} className="min-h-[220px]">
+            <AlignmentScore score={plan.alignmentScore} />
           </Card>
           <Card index={4} className="min-h-[200px]">
             <div className="text-[10px] uppercase tracking-widest text-secondary">
