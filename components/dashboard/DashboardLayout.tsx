@@ -23,7 +23,10 @@ type Props = {
  */
 export function DashboardLayout({ plan, planId }: Props) {
   return (
-    <div className="relative flex min-h-screen flex-col gap-8 px-5 py-6 sm:px-8 sm:py-8 lg:gap-10 lg:px-12 lg:py-10">
+    <main
+      id="main"
+      className="relative flex min-h-screen flex-col gap-8 px-5 py-6 sm:px-8 sm:py-8 lg:gap-10 lg:px-12 lg:py-10"
+    >
       <TopBar planId={planId} />
 
       <StrategyHeader plan={plan} />
@@ -71,7 +74,7 @@ export function DashboardLayout({ plan, planId }: Props) {
       <Card index={8}>
         <NextSevenDays actions={plan.nextSevenDays} />
       </Card>
-    </div>
+    </main>
   );
 }
 

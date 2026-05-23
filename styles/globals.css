@@ -91,6 +91,24 @@
       opacity: 0;
     }
   }
+
+  .skip-link {
+    position: absolute;
+    left: -9999px;
+    top: 0;
+    z-index: 100;
+    padding: 0.5rem 0.875rem;
+    background-color: var(--bg-elevated);
+    color: var(--accent);
+    border: 1px solid var(--accent);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+  }
+  .skip-link:focus-visible {
+    left: 1rem;
+    top: 1rem;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

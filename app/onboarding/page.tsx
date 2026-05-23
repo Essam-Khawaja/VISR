@@ -3,7 +3,7 @@ import { OnboardingForm } from "@/components/onboarding/OnboardingForm";
 
 export default function OnboardingPage() {
   return (
-    <main className="relative min-h-screen px-6 py-10 sm:px-10">
+    <main id="main" className="relative min-h-screen px-6 py-10 sm:px-10">
       <div className="mx-auto flex w-full max-w-[640px] items-center justify-between">
         <Link
           href="/"

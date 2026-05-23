@@ -32,6 +32,9 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${inter.variable} ${display.variable}`}>
       <body className="bg-base text-primary antialiased">
+        <a href="#main" className="skip-link">
+          Skip to content
+        </a>
         <GlowFollow />
         <Grain />
         <div className="relative z-[2]">{children}</div>

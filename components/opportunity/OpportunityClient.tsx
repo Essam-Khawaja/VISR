@@ -54,7 +54,7 @@ export function OpportunityClient({ planId }: Props) {
   };
 
   return (
-    <main className="relative min-h-screen px-5 py-6 sm:px-8 sm:py-8">
+    <main id="main" className="relative min-h-screen px-5 py-6 sm:px-8 sm:py-8">
       <header className="mx-auto flex w-full max-w-[760px] items-center justify-between">
         <Link
           href={`/dashboard/${planId}`}

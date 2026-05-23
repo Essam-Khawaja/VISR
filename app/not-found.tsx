@@ -4,7 +4,10 @@ import { demoPlanId } from "@/lib/env";
 
 export default function NotFound() {
   return (
-    <main className="relative flex min-h-screen items-center justify-center px-6">
+    <main
+      id="main"
+      className="relative flex min-h-screen items-center justify-center px-6"
+    >
       <div className="relative flex w-full max-w-[520px] flex-col items-start gap-6">
         <Reticle
           className="left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 opacity-30"

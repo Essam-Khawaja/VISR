@@ -12,10 +12,16 @@ const words = tagline.split(" ");
 export function LandingHero() {
   const reduce = useReducedMotion();
   return (
-    <main className="relative isolate flex min-h-screen flex-col overflow-hidden">
+    <main
+      id="main"
+      className="relative isolate flex min-h-screen flex-col overflow-hidden"
+    >
       <BackgroundField />
 
-      <header className="relative z-[2] flex items-center justify-between px-6 pt-6 sm:px-10">
+      <header
+        aria-label="Pathwise"
+        className="relative z-[2] flex items-center justify-between px-6 pt-6 sm:px-10"
+      >
         <div className="flex items-center gap-3">
           <Logo />
         </div>
@@ -105,7 +111,11 @@ export function LandingHero() {
 
 function Logo() {
   return (
-    <div className="flex items-center gap-2.5">
+    <div
+      role="img"
+      aria-label="Pathwise"
+      className="flex items-center gap-2.5"
+    >
       <svg width="22" height="22" viewBox="0 0 22 22" aria-hidden>
         <circle
           cx="11"
