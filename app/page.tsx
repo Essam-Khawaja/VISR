@@ -1,3 +1,5 @@
-export default function Page() {
-  return <main />;
+import { LandingHero } from "@/components/landing/LandingHero";
+
+export default function LandingPage() {
+  return <LandingHero />;
 }
