@@ -5,6 +5,7 @@ import { Card } from "@/components/ui/Card";
 import { LinkButton } from "@/components/ui/Button";
 import { AlignmentScore } from "./AlignmentScore";
 import { BottleneckCard } from "./BottleneckCard";
+import { CutList } from "./CutList";
 import { RiskCards } from "./RiskCards";
 import { SemesterPriorities } from "./SemesterPriorities";
 import { StrategyHeader } from "./StrategyHeader";
@@ -60,24 +61,18 @@ export function DashboardLayout({ plan, planId }: Props) {
         </Card>
       </section>
 
-      <section className="grid grid-cols-1 gap-4 lg:gap-6">
-        <Card index={7} className="min-h-[200px]">
-          <div className="text-[10px] uppercase tracking-widest text-secondary">
-            Decision Manifest
-          </div>
-          <p className="mt-3 text-[13px] text-secondary">
-            CutList component lands in the next commit.
-          </p>
-        </Card>
-        <Card index={8} className="min-h-[200px]">
-          <div className="text-[10px] uppercase tracking-widest text-secondary">
-            Mission Brief — Next 7 Days
-          </div>
-          <p className="mt-3 text-[13px] text-secondary">
-            NextSevenDays component lands in the next commit.
-          </p>
-        </Card>
-      </section>
+      <Card index={7}>
+        <CutList items={plan.cutList} />
+      </Card>
+
+      <Card index={8} className="min-h-[200px]">
+        <div className="text-[10px] uppercase tracking-widest text-secondary">
+          Mission Brief — Next 7 Days
+        </div>
+        <p className="mt-3 text-[13px] text-secondary">
+          NextSevenDays component lands in the next commit.
+        </p>
+      </Card>
     </div>
   );
 }
