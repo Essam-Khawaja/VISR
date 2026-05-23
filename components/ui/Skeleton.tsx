@@ -11,7 +11,7 @@ export function Skeleton({ className, height, width }: Props) {
     <div
       aria-hidden
       className={cn(
-        "scan-mask relative overflow-hidden bg-surface",
+        "animate-shimmer rounded-xl bg-elevated bg-gradient-to-r from-elevated via-muted-soft to-elevated bg-[length:200%_100%]",
         className,
       )}
       style={{

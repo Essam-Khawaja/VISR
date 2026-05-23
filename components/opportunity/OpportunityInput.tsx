@@ -10,8 +10,14 @@ type Props = {
   busy?: boolean;
 };
 
+const SUGGESTIONS = [
+  "Should I join the robotics club?",
+  "I got offered a part-time job at 12 hrs/week.",
+  "Should I take an extra elective this semester?",
+];
+
 export function OpportunityInput({ onEvaluate, busy }: Props) {
-  const [text, setText] = useState("Should I join the robotics club?");
+  const [text, setText] = useState(SUGGESTIONS[0]);
   const [error, setError] = useState<string | undefined>();
 
   const onSubmit = (e: React.FormEvent) => {
@@ -34,15 +40,15 @@ export function OpportunityInput({ onEvaluate, busy }: Props) {
         className="flex flex-col gap-4"
       >
         <div>
-          <span className="text-[10px] uppercase tracking-widest text-secondary">
-            Intel Brief
+          <span className="text-[11px] font-medium text-tertiary">
+            Opportunity check
           </span>
-          <h2 className="mt-2 font-display text-2xl font-semibold leading-tight text-primary sm:text-3xl">
+          <h2 className="mt-1 font-display text-2xl font-semibold leading-tight text-primary sm:text-3xl">
             Worth saying yes to?
           </h2>
           <p className="mt-2 text-[14px] text-secondary">
             Paste the opportunity in plain words. We score it against your
-            current route and tell you the conditions, tradeoffs, and what to
+            current route and tell you the tradeoffs, conditions, and what to
             cut.
           </p>
         </div>
@@ -50,7 +56,7 @@ export function OpportunityInput({ onEvaluate, busy }: Props) {
         <Textarea
           name="opportunityText"
           label="The opportunity"
-          rows={6}
+          rows={5}
           maxLength={2000}
           showCount
           value={text}
@@ -58,9 +64,25 @@ export function OpportunityInput({ onEvaluate, busy }: Props) {
           error={error}
         />
 
+        <div className="flex flex-wrap items-center gap-1.5">
+          {SUGGESTIONS.map((s) => (
+            <button
+              key={s}
+              type="button"
+              onClick={() => setText(s)}
+              className="rounded-full border border-border bg-surface px-3 py-1 text-[11px] text-secondary transition-colors hover:border-border-strong hover:text-primary"
+            >
+              {s}
+            </button>
+          ))}
+        </div>
+
         <div className="flex items-center justify-between">
-          <span className="text-[10px] uppercase tracking-widest text-secondary">
-            Cmd / Ctrl + Enter to evaluate
+          <span className="text-[11px] text-tertiary">
+            <kbd className="rounded border border-border bg-elevated px-1 text-[10px]">⌘</kbd>{" "}
+            +{" "}
+            <kbd className="rounded border border-border bg-elevated px-1 text-[10px]">↵</kbd>{" "}
+            to evaluate
           </span>
           <Button type="submit" disabled={busy}>
             {busy ? "Evaluating…" : "Evaluate"}

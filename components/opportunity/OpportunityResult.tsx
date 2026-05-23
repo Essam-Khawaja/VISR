@@ -1,6 +1,9 @@
 "use client";
 
 import { motion } from "framer-motion";
+import Link from "next/link";
+import { Badge } from "@/components/ui/Badge";
+import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { FitScoreGauge } from "./FitScoreGauge";
 import { RecommendationStamp } from "./RecommendationStamp";
@@ -9,23 +12,27 @@ import type { OpportunityCheck } from "@/lib/types";
 
 type Props = {
   check: OpportunityCheck;
+  applied: boolean;
+  onApply: () => void;
+  planId: string;
+  isDemo: boolean;
 };
+
+type SectionTone = "success" | "warning" | "accent" | "danger";
 
 type Section = {
   label: string;
   items: string[];
-  tone?: "default" | "success" | "warning" | "danger" | "accent";
+  tone: SectionTone;
 };
 
-const toneColor: Record<NonNullable<Section["tone"]>, string> = {
-  default: "var(--text-secondary)",
-  success: "var(--success)",
-  warning: "var(--warning)",
-  danger: "var(--danger)",
-  accent: "var(--accent)",
-};
-
-export function OpportunityResult({ check }: Props) {
+export function OpportunityResult({
+  check,
+  applied,
+  onApply,
+  planId,
+  isDemo,
+}: Props) {
   const sections: Section[] = [
     { label: "Why it fits", items: check.whyItFits, tone: "success" },
     { label: "Tradeoffs", items: check.tradeoffs, tone: "warning" },
@@ -35,14 +42,12 @@ export function OpportunityResult({ check }: Props) {
 
   return (
     <div className="flex flex-col gap-6">
-      <Card noHover className="relative overflow-hidden">
+      <Card noHover>
         <div className="flex flex-col gap-6 md:flex-row md:items-start md:gap-8">
-          <div className="flex flex-col gap-3">
-            <FitScoreGauge score={check.fitScore} />
-          </div>
+          <FitScoreGauge score={check.fitScore} />
           <div className="flex flex-1 flex-col gap-4">
             <div>
-              <span className="text-[10px] uppercase tracking-widest text-secondary">
+              <span className="text-[11px] font-medium text-tertiary">
                 Verdict
               </span>
               <div className="mt-2">
@@ -52,10 +57,39 @@ export function OpportunityResult({ check }: Props) {
             <p className="text-[15px] leading-relaxed text-primary">
               {check.reasoning}
             </p>
-            <p className="text-[12px] uppercase tracking-widest text-secondary">
-              Asked: <span className="text-primary">{check.opportunityText}</span>
+            <p className="text-[12px] text-tertiary">
+              You asked:{" "}
+              <span className="font-medium text-primary">
+                {check.opportunityText}
+              </span>
             </p>
           </div>
+        </div>
+
+        <div className="mt-6 flex flex-col items-start gap-3 rounded-2xl border border-border bg-elevated p-4 sm:flex-row sm:items-center sm:justify-between">
+          {applied ? (
+            <>
+              <p className="text-[13px] text-success">
+                Applied. Conditions and cuts have been added to your plan.
+              </p>
+              <Link href={`/dashboard/${planId}`}>
+                <Button size="sm" variant="secondary">
+                  Open dashboard
+                </Button>
+              </Link>
+            </>
+          ) : (
+            <>
+              <p className="text-[13px] text-secondary">
+                {isDemo
+                  ? "On the demo plan this is in-session only. On your own plan it persists."
+                  : "Apply this verdict to your plan — adds cuts + conditions and stores it locally."}
+              </p>
+              <Button size="sm" onClick={onApply}>
+                Apply to my plan
+              </Button>
+            </>
+          )}
         </div>
       </Card>
 
@@ -71,23 +105,17 @@ export function OpportunityResult({ check }: Props) {
 }
 
 function SectionList({ section }: { section: Section }) {
-  const color = toneColor[section.tone ?? "default"];
   return (
     <div className="flex flex-col gap-3">
       <div className="flex items-center justify-between">
-        <span
-          className="text-[10px] uppercase tracking-widest"
-          style={{ color }}
-        >
-          {section.label}
-        </span>
-        <span className="text-[10px] uppercase tracking-widest text-secondary tabular">
+        <Badge tone={section.tone}>{section.label}</Badge>
+        <span className="text-[11px] text-tertiary tabular">
           {section.items.length}
         </span>
       </div>
       <ul className="flex flex-col gap-2">
         {section.items.length === 0 ? (
-          <li className="text-[12px] text-secondary opacity-70">None.</li>
+          <li className="text-[12.5px] text-tertiary">None.</li>
         ) : null}
         {section.items.map((it, i) => (
           <motion.li
@@ -100,13 +128,8 @@ function SectionList({ section }: { section: Section }) {
               ease,
               delay: i * stagger.brief,
             }}
-            className="relative pl-4 text-[14px] leading-snug text-primary"
+            className="rounded-xl border border-border bg-surface px-3 py-2 text-[14px] leading-snug text-primary"
           >
-            <span
-              aria-hidden
-              className="absolute left-0 top-2 inline-block h-1 w-2"
-              style={{ backgroundColor: color }}
-            />
             {it}
           </motion.li>
         ))}

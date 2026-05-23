@@ -6,42 +6,38 @@ type Props = {
   tone?: Tone;
   className?: string;
   children: React.ReactNode;
-  /** Show a pulsing leading dot. */
+  /** Show a leading dot. */
   dot?: boolean;
 };
 
-const toneColor: Record<Tone, string> = {
-  default: "var(--text-secondary)",
-  accent: "var(--accent)",
-  success: "var(--success)",
-  warning: "var(--warning)",
-  danger: "var(--danger)",
-  muted: "var(--muted)",
+const toneClass: Record<Tone, { text: string; bg: string; dot: string }> = {
+  default: {
+    text: "text-secondary",
+    bg: "bg-elevated",
+    dot: "bg-tertiary",
+  },
+  accent: { text: "text-accent-strong", bg: "bg-accent-soft", dot: "bg-accent" },
+  success: { text: "text-success", bg: "bg-success-soft", dot: "bg-success" },
+  warning: { text: "text-warning", bg: "bg-warning-soft", dot: "bg-warning" },
+  danger: { text: "text-danger", bg: "bg-danger-soft", dot: "bg-danger" },
+  muted: { text: "text-tertiary", bg: "bg-muted-soft", dot: "bg-muted" },
 };
 
 export function Badge({ tone = "default", className, children, dot }: Props) {
-  const color = toneColor[tone];
+  const c = toneClass[tone];
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1.5 px-2 py-1 text-[10px] font-medium uppercase tracking-widest",
+        "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-medium",
+        c.text,
+        c.bg,
         className,
       )}
-      style={{
-        color,
-        backgroundColor: `${color}14`,
-        boxShadow: `inset 0 0 0 1px ${color}33`,
-      }}
     >
       {dot ? (
         <span
-          className="inline-block animate-breathe rounded-full"
-          style={{
-            width: 5,
-            height: 5,
-            backgroundColor: color,
-            boxShadow: `0 0 8px ${color}`,
-          }}
+          aria-hidden
+          className={cn("inline-block h-1.5 w-1.5 rounded-full", c.dot)}
         />
       ) : null}
       {children}

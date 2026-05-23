@@ -19,7 +19,7 @@ export const Input = forwardRef<HTMLInputElement, Props>(function Input(
       {label ? (
         <label
           htmlFor={inputId}
-          className="text-[10px] uppercase tracking-widest text-secondary"
+          className="text-[12px] font-medium text-secondary"
         >
           {label}
         </label>
@@ -29,16 +29,16 @@ export const Input = forwardRef<HTMLInputElement, Props>(function Input(
         id={inputId}
         aria-invalid={Boolean(error) || undefined}
         className={cn(
-          "h-11 w-full border border-border bg-transparent px-3 text-[15px] text-primary placeholder:text-secondary/70",
-          "transition-colors duration-150 ease-out",
-          "focus:border-accent focus:outline-none",
+          "h-12 w-full rounded-xl border border-border bg-surface px-4 text-[15px] text-primary placeholder:text-tertiary",
+          "transition-colors duration-150 ease-out shadow-soft",
+          "hover:border-border-strong focus:border-accent focus:outline-none focus:shadow-focus",
           error ? "border-danger focus:border-danger" : "",
           className,
         )}
         {...rest}
       />
       {error ? (
-        <span className="flex items-center gap-1.5 text-[11px] text-danger">
+        <span className="flex items-center gap-1.5 text-[12px] text-danger">
           <span
             aria-hidden
             className="inline-block h-1.5 w-1.5 rounded-full bg-danger"
@@ -46,7 +46,7 @@ export const Input = forwardRef<HTMLInputElement, Props>(function Input(
           {error}
         </span>
       ) : hint ? (
-        <span className="text-[11px] text-secondary">{hint}</span>
+        <span className="text-[12px] text-tertiary">{hint}</span>
       ) : null}
     </div>
   );

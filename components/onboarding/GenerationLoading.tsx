@@ -3,11 +3,10 @@
 import { motion, useReducedMotion } from "framer-motion";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/Button";
-import { ScanLine } from "@/components/signature/ScanLine";
 import { ease } from "@/lib/motion";
 
 const MESSAGES = [
-  "Analyzing your goal",
+  "Reading your inputs",
   "Mapping your strategic pillars",
   "Identifying your bottleneck",
   "Building your route",
@@ -34,97 +33,84 @@ export function GenerationLoading({ error, onRetry }: Props) {
     <div
       role="status"
       aria-live="polite"
-      className="fixed inset-0 z-50 flex items-center justify-center bg-base"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-base px-6"
     >
-      {!error ? <ScanLine duration={2.4} /> : null}
-
-      <div className="relative w-full max-w-[560px] px-6">
-        <ConstellationField />
-
-        <div className="relative z-[2] flex flex-col gap-4">
-          <p className="text-[10px] uppercase tracking-widest text-secondary">
-            Pathwise &middot; Generating
-          </p>
+      <div className="relative w-full max-w-[520px] rounded-3xl border border-border bg-surface p-8 shadow-card sm:p-10">
+        <div className="flex flex-col gap-3">
+          <span className="text-[11px] font-medium uppercase tracking-wider text-tertiary">
+            Pathwise · Generating
+          </span>
           <h2 className="font-display text-3xl font-semibold leading-tight text-primary">
             Building your route
           </h2>
+          <p className="text-[14px] leading-relaxed text-secondary">
+            Hold on a moment — naming your bottleneck and choosing what to cut.
+          </p>
+        </div>
 
-          <ul className="mt-4 flex flex-col gap-2 font-mono text-[13px]">
-            {MESSAGES.slice(0, shown).map((m, i) => (
+        <ul className="mt-8 flex flex-col gap-3">
+          {MESSAGES.map((m, i) => {
+            const isActive = i < shown;
+            const isCurrent = i === shown - 1 && !error;
+            return (
               <motion.li
                 key={m}
-                initial={{ opacity: 0, x: -8 }}
-                animate={{ opacity: 1, x: 0 }}
+                initial={reduce ? false : { opacity: 0, x: -8 }}
+                animate={
+                  isActive ? { opacity: 1, x: 0 } : { opacity: 0.25, x: 0 }
+                }
                 transition={{ duration: 0.3, ease }}
-                className="flex items-center gap-2 text-secondary"
+                className="flex items-center gap-3 text-[14px]"
               >
-                <span className="text-accent">{">"}</span>
-                <span>{m}</span>
-                {i === shown - 1 && !error ? <Cursor /> : null}
+                <span
+                  className={
+                    "inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full border " +
+                    (isActive && !isCurrent
+                      ? "border-accent bg-accent text-white"
+                      : isCurrent
+                        ? "border-accent bg-accent-soft text-accent"
+                        : "border-border bg-surface text-tertiary")
+                  }
+                  aria-hidden
+                >
+                  {isActive && !isCurrent ? (
+                    <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+                      <path
+                        d="M2 5.2 L4.2 7.4 L8.2 2.8"
+                        stroke="currentColor"
+                        strokeWidth="1.6"
+                        strokeLinecap="round"
+                      />
+                    </svg>
+                  ) : isCurrent ? (
+                    <span className="block h-1.5 w-1.5 animate-soft-pulse rounded-full bg-accent" />
+                  ) : null}
+                </span>
+                <span
+                  className={
+                    isActive ? "text-primary" : "text-tertiary"
+                  }
+                >
+                  {m}
+                </span>
               </motion.li>
-            ))}
-          </ul>
+            );
+          })}
+        </ul>
 
-          {error ? (
-            <div className="mt-6 flex flex-col gap-3">
-              <p className="text-[13px] text-danger">{error}</p>
-              {onRetry ? (
-                <div>
-                  <Button variant="secondary" onClick={onRetry}>
-                    Retry
-                  </Button>
-                </div>
-              ) : null}
-            </div>
-          ) : null}
-        </div>
+        {error ? (
+          <div className="mt-8 flex flex-col gap-4 rounded-2xl border border-danger/30 bg-danger-soft p-4">
+            <p className="text-[14px] text-danger">{error}</p>
+            {onRetry ? (
+              <div>
+                <Button variant="secondary" onClick={onRetry}>
+                  Try again
+                </Button>
+              </div>
+            ) : null}
+          </div>
+        ) : null}
       </div>
-    </div>
-  );
-}
-
-function Cursor() {
-  return (
-    <span
-      aria-hidden
-      className="ml-1 inline-block h-[1em] w-[7px] animate-breathe"
-      style={{ backgroundColor: "var(--accent)" }}
-    />
-  );
-}
-
-function ConstellationField() {
-  const dots = [
-    { x: 12, y: 14, d: 0.4 },
-    { x: 88, y: 18, d: 0.8 },
-    { x: 22, y: 78, d: 1.0 },
-    { x: 78, y: 70, d: 1.2 },
-    { x: 50, y: 92, d: 1.5 },
-    { x: 6, y: 50, d: 0.6 },
-    { x: 94, y: 50, d: 1.1 },
-    { x: 50, y: 6, d: 0.2 },
-    { x: 34, y: 32, d: 0.3 },
-    { x: 66, y: 32, d: 0.7 },
-    { x: 34, y: 60, d: 0.9 },
-    { x: 66, y: 60, d: 1.3 },
-  ];
-  return (
-    <div aria-hidden className="pointer-events-none absolute inset-0">
-      {dots.map((dot, i) => (
-        <motion.span
-          key={i}
-          initial={{ opacity: 0, scale: 0.4 }}
-          animate={{ opacity: 0.5, scale: 1 }}
-          transition={{ duration: 0.5, ease, delay: dot.d }}
-          className="absolute h-1 w-1 rounded-full"
-          style={{
-            left: `${dot.x}%`,
-            top: `${dot.y}%`,
-            backgroundColor: "var(--accent)",
-            boxShadow: "0 0 10px var(--accent-glow)",
-          }}
-        />
-      ))}
     </div>
   );
 }

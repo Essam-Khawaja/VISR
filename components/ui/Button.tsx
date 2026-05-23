@@ -4,8 +4,8 @@ import Link from "next/link";
 import { forwardRef, type ButtonHTMLAttributes } from "react";
 import { cn } from "@/lib/cn";
 
-type Variant = "primary" | "secondary" | "ghost";
-type Size = "md" | "lg";
+type Variant = "primary" | "secondary" | "ghost" | "danger";
+type Size = "sm" | "md" | "lg";
 
 type CommonProps = {
   variant?: Variant;
@@ -26,39 +26,24 @@ type LinkProps = CommonProps & {
 };
 
 const base =
-  "group relative inline-flex items-center justify-center gap-2 font-medium tracking-tight uppercase text-[12px] transition-colors duration-150 ease-out disabled:cursor-not-allowed disabled:opacity-50";
+  "inline-flex items-center justify-center gap-2 font-medium tracking-tight transition-all duration-150 ease-out disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:shadow-focus";
 
 const sizeMap: Record<Size, string> = {
-  md: "h-10 px-5",
-  lg: "h-12 px-7 text-[13px]",
+  sm: "h-9 px-4 text-[12px] rounded-xl",
+  md: "h-11 px-5 text-[13px] rounded-xl",
+  lg: "h-12 px-7 text-[14px] rounded-2xl",
 };
 
 const variantMap: Record<Variant, string> = {
   primary:
-    "text-base bg-accent hover:bg-accent/90 active:bg-accent/80 [letter-spacing:0.14em]",
+    "bg-accent text-white shadow-soft hover:bg-accent-strong hover:shadow-card active:translate-y-px",
   secondary:
-    "text-primary bg-transparent border border-border hover:border-accent hover:text-accent [letter-spacing:0.14em]",
+    "bg-surface text-primary border border-border-strong hover:border-primary hover:bg-elevated",
   ghost:
-    "text-secondary hover:text-primary [letter-spacing:0.14em]",
+    "bg-transparent text-secondary hover:text-primary hover:bg-elevated",
+  danger:
+    "bg-danger text-white hover:opacity-90 active:translate-y-px",
 };
-
-function inner(variant: Variant, children: React.ReactNode) {
-  if (variant !== "primary") return <span className="relative">{children}</span>;
-  return (
-    <>
-      <span
-        aria-hidden
-        className="pointer-events-none absolute inset-0 overflow-hidden"
-      >
-        <span
-          aria-hidden
-          className="absolute inset-y-0 -left-1/2 w-1/2 -translate-x-full bg-gradient-to-r from-transparent via-white/30 to-transparent transition-transform duration-700 ease-out group-hover:translate-x-[300%]"
-        />
-      </span>
-      <span className="relative text-base mix-blend-normal">{children}</span>
-    </>
-  );
-}
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
   {
@@ -78,7 +63,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
       className={cn(base, sizeMap[size], variantMap[variant], className)}
       {...rest}
     >
-      {inner(variant, children)}
+      {children}
     </button>
   );
 });
@@ -99,7 +84,7 @@ export function LinkButton({
       rel={rel}
       className={cn(base, sizeMap[size], variantMap[variant], className)}
     >
-      {inner(variant, children)}
+      {children}
     </Link>
   );
 }

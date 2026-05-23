@@ -11,41 +11,30 @@ type Props = {
 export function OnboardingProgress({ steps, current, className }: Props) {
   return (
     <div className={cn("flex w-full flex-col gap-3", className)}>
-      <div className="flex items-stretch gap-2">
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-[12px] font-medium text-secondary">
+          Step {current + 1} of {steps.length}
+        </span>
+        <span className="text-[12px] text-tertiary">
+          {steps[current]?.label}
+        </span>
+      </div>
+      <div className="flex items-stretch gap-1.5">
         {steps.map((step, i) => {
           const state =
             i < current ? "done" : i === current ? "active" : "pending";
-          const color =
-            state === "active"
-              ? "var(--accent)"
-              : state === "done"
-                ? "var(--success)"
-                : "var(--border)";
           return (
-            <div key={step.id} className="flex flex-1 flex-col gap-1.5">
-              <span
-                className="block h-[3px] origin-left transition-colors duration-300"
-                style={{
-                  backgroundColor: color,
-                  boxShadow:
-                    state === "active"
-                      ? "0 0 14px var(--accent-glow)"
-                      : undefined,
-                }}
-              />
-              <span
-                className={cn(
-                  "text-[10px] uppercase tracking-widest tabular",
-                  state === "active"
-                    ? "text-primary"
-                    : state === "done"
-                      ? "text-success"
-                      : "text-secondary",
-                )}
-              >
-                {String(i + 1).padStart(2, "0")} · {step.label}
-              </span>
-            </div>
+            <span
+              key={step.id}
+              className={cn(
+                "h-1.5 flex-1 rounded-full transition-colors duration-300",
+                state === "active"
+                  ? "bg-accent"
+                  : state === "done"
+                    ? "bg-accent/70"
+                    : "bg-elevated",
+              )}
+            />
           );
         })}
       </div>

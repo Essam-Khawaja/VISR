@@ -2,7 +2,6 @@
 
 import { motion, useReducedMotion, type HTMLMotionProps } from "framer-motion";
 import { forwardRef } from "react";
-import { CornerBrackets } from "@/components/signature/CornerBrackets";
 import { cn } from "@/lib/cn";
 import { cardEnter, ease } from "@/lib/motion";
 
@@ -15,11 +14,11 @@ type CardProps = Omit<
   index?: number;
   /** Use the elevated background (`--bg-elevated`) instead of surface. */
   elevated?: boolean;
-  /** Disable corner brackets (e.g. when nested inside another framed surface). */
-  noBrackets?: boolean;
   /** Disable hover lift. */
   noHover?: boolean;
-  /** Accent color override for corner brackets. */
+  /** @deprecated kept for source compatibility with feat/01; ignored in light theme. */
+  noBrackets?: boolean;
+  /** @deprecated kept for source compatibility with feat/01; ignored in light theme. */
   bracketColor?: string;
 };
 
@@ -29,9 +28,9 @@ export const Card = forwardRef<HTMLDivElement, CardProps>(function Card(
     children,
     index = 0,
     elevated,
-    noBrackets,
     noHover,
-    bracketColor,
+    noBrackets: _noBrackets,
+    bracketColor: _bracketColor,
     ...rest
   },
   ref,
@@ -50,14 +49,13 @@ export const Card = forwardRef<HTMLDivElement, CardProps>(function Card(
           : { y: -2, transition: { duration: 0.15, ease } }
       }
       className={cn(
-        "relative isolate p-5 sm:p-6",
+        "relative isolate rounded-3xl border border-border p-5 shadow-soft transition-shadow duration-200 sm:p-6",
         elevated ? "bg-elevated" : "bg-surface",
-        "shadow-[0_1px_0_0_var(--border)_inset,0_-1px_0_0_var(--border)_inset]",
+        noHover ? "" : "hover:shadow-card",
         className,
       )}
       {...rest}
     >
-      {!noBrackets ? <CornerBrackets color={bracketColor} /> : null}
       <div className="relative z-[1]">{children}</div>
     </motion.div>
   );

@@ -7,7 +7,6 @@ type Props = TextareaHTMLAttributes<HTMLTextAreaElement> & {
   label?: string;
   hint?: string;
   error?: string;
-  /** Show character count in bottom-right of the field. */
   showCount?: boolean;
 };
 
@@ -22,7 +21,7 @@ export const Textarea = forwardRef<HTMLTextAreaElement, Props>(function Textarea
       {label ? (
         <label
           htmlFor={inputId}
-          className="text-[10px] uppercase tracking-widest text-secondary"
+          className="text-[12px] font-medium text-secondary"
         >
           {label}
         </label>
@@ -35,23 +34,23 @@ export const Textarea = forwardRef<HTMLTextAreaElement, Props>(function Textarea
           maxLength={maxLength}
           aria-invalid={Boolean(error) || undefined}
           className={cn(
-            "block w-full resize-y border border-border bg-transparent p-4 text-[15px] leading-relaxed text-primary placeholder:text-secondary/70",
+            "block w-full resize-y rounded-2xl border border-border bg-surface p-4 text-[15px] leading-relaxed text-primary placeholder:text-tertiary shadow-soft",
             "transition-colors duration-150 ease-out",
-            "focus:border-accent focus:outline-none",
+            "hover:border-border-strong focus:border-accent focus:outline-none focus:shadow-focus",
             error ? "border-danger focus:border-danger" : "",
             className,
           )}
           {...rest}
         />
         {showCount ? (
-          <span className="pointer-events-none absolute bottom-2 right-3 text-[10px] uppercase tracking-widest text-secondary tabular">
+          <span className="pointer-events-none absolute bottom-3 right-4 text-[11px] text-tertiary tabular">
             {length}
             {maxLength ? ` / ${maxLength}` : null}
           </span>
         ) : null}
       </div>
       {error ? (
-        <span className="flex items-center gap-1.5 text-[11px] text-danger">
+        <span className="flex items-center gap-1.5 text-[12px] text-danger">
           <span
             aria-hidden
             className="inline-block h-1.5 w-1.5 rounded-full bg-danger"
@@ -59,7 +58,7 @@ export const Textarea = forwardRef<HTMLTextAreaElement, Props>(function Textarea
           {error}
         </span>
       ) : hint ? (
-        <span className="text-[11px] text-secondary">{hint}</span>
+        <span className="text-[12px] text-tertiary">{hint}</span>
       ) : null}
     </div>
   );

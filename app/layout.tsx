@@ -1,7 +1,5 @@
 import type { Metadata, Viewport } from "next";
 import { Inter, Space_Grotesk } from "next/font/google";
-import { GlowFollow } from "@/components/signature/GlowFollow";
-import { Grain } from "@/components/signature/Grain";
 import "@/styles/globals.css";
 
 const inter = Inter({
@@ -24,8 +22,8 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#080c14",
-  colorScheme: "dark",
+  themeColor: "#ffffff",
+  colorScheme: "light",
 };
 
 export default function RootLayout({
@@ -39,9 +37,7 @@ export default function RootLayout({
         <a href="#main" className="skip-link">
           Skip to content
         </a>
-        <GlowFollow />
-        <Grain />
-        <div className="relative z-[2]">{children}</div>
+        {children}
       </body>
     </html>
   );

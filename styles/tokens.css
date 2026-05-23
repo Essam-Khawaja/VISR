@@ -1,29 +1,51 @@
 :root {
-  /* Color (canonical, mirrors docs/architecture/PRD.md §6) */
-  --bg-base: #080c14;
-  --bg-surface: #0d1424;
-  --bg-elevated: #111827;
-  --border: #1a2640;
-  --accent: #4facfe;
-  --accent-glow: #4facfe33;
-  --danger: #ff4d6d;
-  --danger-glow: #ff4d6d33;
-  --success: #00f5a0;
-  --warning: #ffb547;
-  --muted: #3d4f6b;
-  --text-primary: #f0f4ff;
-  --text-secondary: #6b7fa3;
+  /* Surfaces */
+  --bg-base: #f7f8fa;
+  --bg-surface: #ffffff;
+  --bg-elevated: #f1f3f6;
 
-  /* Structural */
-  --bracket-len: 14px;
-  --bracket-w: 1.5px;
-  --route-dot: 6px;
-  --scan-opacity: 0.06;
-  --grain-opacity: 0.025;
+  /* Borders */
+  --border: #e5e7eb;
+  --border-strong: #d1d5db;
+
+  /* Text */
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-tertiary: #94a3b8;
+
+  /* Accent (single, deeper blue for white contrast) */
+  --accent: #2563eb;
+  --accent-soft: #dbeafe;
+  --accent-glow: #2563eb22;
+  --accent-strong: #1d4ed8;
+
+  /* Status */
+  --success: #059669;
+  --success-soft: #d1fae5;
+  --warning: #d97706;
+  --warning-soft: #fef3c7;
+  --danger: #dc2626;
+  --danger-soft: #fee2e2;
+  --danger-glow: #dc262622;
+  --muted: #cbd5e1;
+  --muted-soft: #f1f5f9;
+
+  /* Radii */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+  --radius-pill: 9999px;
+
+  /* Shadows (subtle, slate-tinted) */
+  --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.04);
+  --shadow-md: 0 4px 12px rgba(15, 23, 42, 0.06);
+  --shadow-lg: 0 12px 32px rgba(15, 23, 42, 0.08);
+  --shadow-focus: 0 0 0 3px rgba(37, 99, 235, 0.18);
 
   /* Motion */
   --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
-  --dur-card: 300ms;
+  --dur-card: 200ms;
   --dur-score: 1200ms;
   --dur-gauge: 800ms;
   --dur-route: 400ms;
