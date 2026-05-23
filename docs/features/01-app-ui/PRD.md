@@ -1,7 +1,7 @@
 # Feature PRD: App UI & Design System
 
 ## Status
-Draft
+Complete
 
 ## Summary
 Pathwise’s entire user-facing surface—landing, onboarding, strategy dashboard shell, supporting cards, opportunity check, loading states, and shared design system. This feature makes the product feel **premium, opinionated, and strategy-first**: the Goal Tree owns ~60% of the dashboard; everything else supports it in restrained dark UI. Visual quality is a demo requirement, not polish.
