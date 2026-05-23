@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter, Space_Grotesk } from "next/font/google";
 import { GlowFollow } from "@/components/signature/GlowFollow";
 import { Grain } from "@/components/signature/Grain";
@@ -21,7 +21,11 @@ export const metadata: Metadata = {
   title: "Pathwise — You say the what. We tell you the how.",
   description:
     "A strategic planning dashboard for ambitious university students. Pathwise tells you what's actually worth executing on.",
+};
+
+export const viewport: Viewport = {
   themeColor: "#080c14",
+  colorScheme: "dark",
 };
 
 export default function RootLayout({
