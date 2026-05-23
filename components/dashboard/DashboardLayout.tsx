@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { Card } from "@/components/ui/Card";
 import { LinkButton } from "@/components/ui/Button";
+import { StrategyHeader } from "./StrategyHeader";
 import type { StrategyPlan } from "@/lib/types";
 
 type Props = {
@@ -17,6 +18,8 @@ export function DashboardLayout({ plan, planId }: Props) {
   return (
     <div className="relative flex min-h-screen flex-col gap-8 px-5 py-6 sm:px-8 sm:py-8 lg:gap-10 lg:px-12 lg:py-10">
       <TopBar planId={planId} />
+
+      <StrategyHeader plan={plan} />
 
       <section className="grid grid-cols-1 gap-4 lg:grid-cols-[1.5fr_1fr] lg:gap-6">
         <Card index={2} className="min-h-[420px] lg:min-h-[560px]">
