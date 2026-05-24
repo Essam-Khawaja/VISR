@@ -4,6 +4,42 @@ const LocalDateSchema = z
   .string()
   .regex(/^\d{4}-\d{2}-\d{2}$/, "Use YYYY-MM-DD.");
 
+export const AcademicTermSchema = z.enum([
+  "Fall",
+  "Winter",
+  "Spring",
+  "Summer",
+]);
+
+export const StrategyGraphScopeSchema = z.enum([
+  "university",
+  "year",
+  "semester",
+  "focus",
+]);
+
+export const StrategyNodeKindSchema = z.enum([
+  "university_outcome",
+  "academic_year",
+  "semester",
+  "course",
+  "club",
+  "work",
+  "project",
+  "research",
+  "strategic_pillar",
+  "commitment",
+  "task",
+]);
+
+export const StrategyNodeStatusSchema = z.enum([
+  "open",
+  "doing",
+  "done",
+  "skipped",
+  "at_risk",
+]);
+
 export const ProfileSchema = z.object({
   university: z.string().max(120).default(""),
   degree: z.string().max(120).default(""),
@@ -130,6 +166,84 @@ export const StrategyTaskSourceSchema = z.enum([
 
 export const StrategyTaskParentKindSchema = z.enum(["goal", "pillar", "task"]);
 
+export const SemesterCommitmentSchema = z.object({
+  id: z.string(),
+  title: z.string().min(1).max(200),
+  kind: z.enum(["club", "work", "research", "project", "family", "other"]),
+  semesters: z.array(AcademicTermSchema).min(1).max(4),
+  hoursPerWeek: z.number().min(0).max(80).optional(),
+});
+
+export const UniversityTaskSeedSchema = z.object({
+  id: z.string(),
+  parentNodeId: z.string().min(1),
+  title: z.string().min(1).max(200),
+  dueDate: LocalDateSchema,
+  priority: z.enum(["High", "Medium", "Low"]),
+});
+
+export const UniversityOnboardingProfileSchema = z.object({
+  endOfUniversityGoal: z.string().min(3).max(280),
+  university: z.string().min(1).max(120),
+  degree: z.string().min(1).max(120),
+  expectedProgramLengthYears: z.number().int().min(1).max(8),
+  expectedGraduationYear: z.number().int().min(2020).max(2100).optional(),
+  totalCoursesRequired: z.number().int().min(1).max(120),
+  coursesCompleted: z.number().int().min(0).max(120).optional(),
+  currentYearIndex: z.number().int().min(1).max(8),
+  currentSemester: AcademicTermSchema,
+  typicalFallCourses: z.number().int().min(0).max(10).optional(),
+  typicalWinterCourses: z.number().int().min(0).max(10).optional(),
+  plansSpringSummerCourses: z.boolean().default(false),
+  currentCourses: z.array(z.string().min(1).max(120)).default([]),
+  recurringCommitments: z.array(SemesterCommitmentSchema).default([]),
+  workHoursPerWeek: z.number().min(0).max(80).default(0),
+  constraints: z.string().max(2000).default(""),
+  bottleneckConcern: z.string().max(2000).default(""),
+  taskSeeds: z.array(UniversityTaskSeedSchema).default([]),
+});
+
+export const StrategyNodeSchema = z.object({
+  id: z.string(),
+  planId: z.string(),
+  parentNodeId: z.string().nullable().optional(),
+  kind: StrategyNodeKindSchema,
+  title: z.string().min(1).max(200),
+  subtitle: z.string().max(280).optional(),
+  status: StrategyNodeStatusSchema.default("open"),
+  scope: StrategyGraphScopeSchema,
+  yearIndex: z.number().int().optional(),
+  term: AcademicTermSchema.optional(),
+  startDate: LocalDateSchema.optional(),
+  endDate: LocalDateSchema.optional(),
+  sortOrder: z.number().int().default(0),
+  metadata: z.record(z.string(), z.unknown()).default({}),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+});
+
+export const StrategyNodeCreateSchema = z.object({
+  planId: z.string().min(1),
+  parentNodeId: z.string().nullable().optional(),
+  kind: StrategyNodeKindSchema,
+  title: z.string().min(1).max(200),
+  subtitle: z.string().max(280).optional(),
+  status: StrategyNodeStatusSchema.default("open"),
+  scope: StrategyGraphScopeSchema,
+  yearIndex: z.number().int().optional(),
+  term: AcademicTermSchema.optional(),
+  startDate: LocalDateSchema.optional(),
+  endDate: LocalDateSchema.optional(),
+  sortOrder: z.number().int().default(0),
+  metadata: z.record(z.string(), z.unknown()).default({}),
+});
+
+export const StrategyNodeUpdateSchema = StrategyNodeCreateSchema.omit({
+  planId: true,
+  kind: true,
+  scope: true,
+}).partial();
+
 export const StrategyTaskSchema = z.object({
   id: z.string(),
   planId: z.string(),
@@ -146,6 +260,7 @@ export const StrategyTaskSchema = z.object({
   completedAt: z.string().nullable().optional(),
   source: StrategyTaskSourceSchema.default("strategy_map"),
   sourceActionId: z.string().nullable().optional(),
+  graphNodeId: z.string().nullable().optional(),
   sortOrder: z.number().int().default(0),
   createdAt: z.string(),
   updatedAt: z.string(),
@@ -173,6 +288,7 @@ export const StrategyTaskCreateSchema = z.object({
   dueDate: LocalDateSchema,
   source: StrategyTaskSourceSchema.default("strategy_map"),
   sourceActionId: z.string().nullable().optional(),
+  graphNodeId: z.string().nullable().optional(),
   sortOrder: z.number().int().default(0),
 });
 
@@ -183,6 +299,23 @@ export const StrategyTaskUpdateSchema = z.object({
   status: StrategyTaskStatusSchema.optional(),
   notes: z.string().max(2000).optional(),
   recommendation: z.string().max(800).optional(),
+  graphNodeId: z.string().nullable().optional(),
+});
+
+export const UniversityGraphDraftSchema = z.object({
+  profile: UniversityOnboardingProfileSchema.partial(),
+  activeLevel: z.enum([
+    "destination",
+    "university_timeline",
+    "current_year",
+    "current_semester",
+    "task_seed",
+    "handoff",
+  ]),
+  activeNodeId: z.string().nullable(),
+  nodes: z.array(StrategyNodeSchema),
+  tasks: z.array(StrategyTaskSchema),
+  insights: z.record(z.string(), z.string()).default({}),
 });
 
 export const OnboardingInsightRequestSchema = z.object({
