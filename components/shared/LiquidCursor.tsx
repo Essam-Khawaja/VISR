@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { usePathname } from "next/navigation";
 
 /**
  * Renders a fixed-position gradient layer behind the app whose colors
@@ -10,6 +11,8 @@ import { useEffect, useRef } from "react";
  * Respects prefers-reduced-motion (renders a static center gradient).
  */
 export function LiquidCursor() {
+  const pathname = usePathname() ?? "";
+  const hideOnDashboard = /^\/2\/dashboard\/[^/]+$/.test(pathname);
   const layerRef = useRef<HTMLDivElement | null>(null);
   const targetRef = useRef({ x: 0.5, y: 0.3 });
   const currentRef = useRef({ x: 0.5, y: 0.3 });
@@ -59,6 +62,10 @@ export function LiquidCursor() {
       if (rafRef.current) window.cancelAnimationFrame(rafRef.current);
     };
   }, []);
+
+  if (hideOnDashboard) {
+    return null;
+  }
 
   return <div ref={layerRef} className="liquid-layer" aria-hidden />;
 }

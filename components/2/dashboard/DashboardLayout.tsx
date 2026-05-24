@@ -2,9 +2,10 @@
 
 import { useCallback, useState } from "react";
 import Link from "next/link";
+import { OrbitalDashboard } from "@/components/2/graph/orbital/OrbitalDashboard";
 import { Button } from "@/components/2/ui/Button";
+import { FIGMA_DASHBOARD_BG } from "@/lib/2/orbitalMap";
 import { PlanProvider, usePlanOptional } from "./PlanProvider";
-import { DashboardWorkspace } from "./DashboardWorkspace";
 import { TodayOverlay } from "./TodayOverlay";
 
 type Props = {
@@ -29,10 +30,12 @@ function DashboardShell() {
   }
 
   return (
-    <div id="main" className="flex h-full min-h-screen flex-col bg-base">
-      <div className="min-w-0 flex-1 overflow-y-auto">
-        <DashboardWorkspace onToggleToday={toggleToday} />
-      </div>
+    <div
+      id="main"
+      className="flex h-screen w-full flex-col overflow-hidden"
+      style={{ backgroundColor: FIGMA_DASHBOARD_BG }}
+    >
+      <OrbitalDashboard onTodayClick={toggleToday} />
       <TodayOverlay open={todayOpen} onClose={() => setTodayOpen(false)} />
     </div>
   );

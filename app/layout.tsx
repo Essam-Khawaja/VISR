@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Plus_Jakarta_Sans, Fraunces } from "next/font/google";
+import { Plus_Jakarta_Sans, Fraunces, Nunito } from "next/font/google";
 import "@/styles/globals.css";
 import { LiquidCursor } from "@/components/shared/LiquidCursor";
 
@@ -16,6 +16,13 @@ const display = Fraunces({
   display: "swap",
   weight: ["400", "500", "600"],
   style: ["normal", "italic"],
+});
+
+const nunito = Nunito({
+  subsets: ["latin"],
+  variable: "--font-nunito",
+  display: "swap",
+  weight: ["600", "700"],
 });
 
 export const metadata: Metadata = {
@@ -35,7 +42,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={`${sans.variable} ${display.variable}`}>
+    <html
+      lang="en"
+      className={`${sans.variable} ${display.variable} ${nunito.variable}`}
+    >
       <body className="min-h-screen bg-base text-primary antialiased">
         <a href="#main" className="skip-link">
           Skip to content
