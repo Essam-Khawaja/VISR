@@ -4,41 +4,132 @@ import { AnimatePresence, motion } from "framer-motion";
 import { useMemo, useState } from "react";
 import { Card } from "@/components/2/ui/Card";
 import { Button } from "@/components/2/ui/Button";
+import { Input } from "@/components/2/ui/Input";
 import { OnboardingProgress } from "./OnboardingProgress";
-import { StepDestination } from "./StepDestination";
-import { StepAcademic } from "./StepAcademic";
-import { StepCommitments } from "./StepCommitments";
-import { StepConstraints } from "./StepConstraints";
-import { StepBrainDump } from "./StepBrainDump";
-import type { OnboardingFormData, StepErrors } from "./onboardingTypes";
+import { ChipInput } from "./ChipInput";
+import type {
+  OnboardingFormData,
+  OnboardingTaskSeed,
+  StepErrors,
+} from "./onboardingTypes";
 import type { OnboardingMapState } from "./onboardingMapTypes";
+import type { AcademicTerm, SemesterCommitment, StrategyNode, StrategyTask, UniversityOnboardingProfile } from "@/lib/2/types";
+import {
+  addLocalDays,
+  todayLocalDate,
+} from "@/lib/2/taskStore";
+import {
+  buildCurrentSemesterNodes,
+  buildSemesterNodes,
+  buildYearNodes,
+} from "@/components/2/graph/buildOnboardingLayout";
 import { ease } from "@/lib/shared/motion";
 
 const STEPS = [
-  { id: "destination", label: "Destination", mapHint: "Setting your goal at the center" },
-  { id: "courses", label: "Classes", mapHint: "Adding your classes to the map" },
-  { id: "commitments", label: "Commitments", mapHint: "Connecting your commitments" },
-  { id: "constraints", label: "Constraints", mapHint: "Noting what limits your route" },
-  { id: "brain-dump", label: "Brain dump", mapHint: "Reading your honest take" },
+  { id: "end_state", label: "End State" },
+  { id: "university_context", label: "University" },
+  { id: "year_zoom", label: "Year" },
+  { id: "current_semester", label: "Semester" },
+  { id: "task_seed", label: "Tasks" },
+  { id: "handoff", label: "Bottleneck" },
 ];
 
-function validate(step: number, value: OnboardingFormData): StepErrors {
-  const errors: StepErrors = {};
-  if (step === 0) {
-    if (!value.targetGoal.trim()) errors.targetGoal = "Required.";
-    if (!value.university.trim()) errors.university = "Required.";
-    if (!value.year.trim()) errors.year = "Required.";
-    if (!value.degree.trim()) errors.degree = "Required.";
-  }
-  if (step === 1) {
-    if (value.currentCourses.length === 0)
-      errors.currentCourses = "Add at least one course.";
-  }
-  if (step === 4) {
-    if (value.brainDump.trim().length < 20)
-      errors.brainDump = "Tell us more — at least 20 characters.";
-  }
-  return errors;
+const TERMS: AcademicTerm[] = ["Fall", "Winter", "Spring", "Summer"];
+const PLAN_ID = "onboarding-preview";
+
+function nowIso(): string {
+  return new Date().toISOString();
+}
+
+function makeNode(input: Omit<StrategyNode, "planId" | "status" | "sortOrder" | "metadata" | "createdAt" | "updatedAt"> & Partial<Pick<StrategyNode, "status" | "sortOrder" | "metadata">>): StrategyNode {
+  const now = nowIso();
+  return {
+    ...input,
+    planId: PLAN_ID,
+    status: input.status ?? "open",
+    sortOrder: input.sortOrder ?? 0,
+    metadata: input.metadata ?? {},
+    createdAt: now,
+    updatedAt: now,
+  };
+}
+
+function rootNode(profile: OnboardingFormData): StrategyNode {
+  return makeNode({
+    id: "onboarding-outcome",
+    parentNodeId: null,
+    kind: "university_outcome",
+    title: profile.endOfUniversityGoal || profile.targetGoal || "End of university",
+    subtitle: profile.degree || "Long-range outcome",
+    scope: "university",
+  });
+}
+
+function currentYearId(profile: OnboardingFormData): string {
+  return `onboarding-year-${profile.currentYearIndex || 1}`;
+}
+
+function currentSemesterId(profile: OnboardingFormData): string {
+  return `onboarding-semester-${profile.currentSemester.toLowerCase()}`;
+}
+
+function recurringCommitments(value: OnboardingFormData): SemesterCommitment[] {
+  if (value.recurringCommitments.length > 0) return value.recurringCommitments;
+  return value.commitments.map((title, i) => ({
+    id: `commitment-${i}`,
+    title,
+    kind: "other" as const,
+    semesters: [value.currentSemester],
+  }));
+}
+
+function commitmentNodes(profile: OnboardingFormData): StrategyNode[] {
+  return recurringCommitments(profile).flatMap((commitment, i) =>
+    commitment.semesters.map((term, termIndex) =>
+      makeNode({
+        id: `onboarding-commitment-${commitment.id}-${term.toLowerCase()}`,
+        parentNodeId: `onboarding-semester-${term.toLowerCase()}`,
+        kind:
+          commitment.kind === "club" ||
+          commitment.kind === "work" ||
+          commitment.kind === "research" ||
+          commitment.kind === "project"
+            ? commitment.kind
+            : "commitment",
+        title: commitment.title,
+        subtitle: commitment.hoursPerWeek
+          ? `${commitment.hoursPerWeek} hours/week`
+          : "Recurring commitment",
+        scope: "year",
+        sortOrder: 20 + i + termIndex,
+      }),
+    ),
+  );
+}
+
+function taskSeedsToTasks(profile: OnboardingFormData): StrategyTask[] {
+  return profile.taskSeeds.map((seed, i) => {
+    const now = nowIso();
+    return {
+      id: seed.id,
+      planId: PLAN_ID,
+      studentId: null,
+      parentNodeId: seed.parentNodeId,
+      parentNodeKind: seed.parentNodeId === "onboarding-outcome" ? "goal" : "pillar",
+      parentTaskId: null,
+      title: seed.title,
+      recommendation: "User-seeded onboarding task",
+      notes: "",
+      priority: seed.priority,
+      status: "open",
+      dueDate: seed.dueDate,
+      completedAt: null,
+      source: "strategy_map",
+      sortOrder: i,
+      createdAt: now,
+      updatedAt: now,
+    };
+  });
 }
 
 function applyMapDelta(
@@ -46,33 +137,102 @@ function applyMapDelta(
   profile: OnboardingFormData,
   prev: OnboardingMapState,
 ): OnboardingMapState {
-  switch (step) {
-    case 0:
-      return {
-        ...prev,
-        goal: profile.targetGoal.trim()
-          ? { label: profile.targetGoal.trim() }
-          : prev.goal,
-      };
-    case 1:
-      return {
-        ...prev,
-        courses: profile.currentCourses.map((c, i) => ({
-          id: `course-${i}`,
-          label: c,
-        })),
-      };
-    case 2:
-      return {
-        ...prev,
-        commitments: profile.commitments.map((c, i) => ({
-          id: `commitment-${i}`,
-          label: c,
-        })),
-      };
-    default:
-      return prev;
+  const root = rootNode(profile);
+  const compatProfile: Partial<UniversityOnboardingProfile> = {
+    ...profile,
+    expectedGraduationYear: profile.expectedGraduationYear ?? undefined,
+    constraints: Array.isArray(profile.constraints)
+      ? profile.constraints.join(", ")
+      : profile.constraints,
+    recurringCommitments: recurringCommitments(profile),
+  };
+  const yearNodes = buildYearNodes(compatProfile);
+  const semesterNodes = buildSemesterNodes(compatProfile, currentYearId(profile));
+  const semesterDetailNodes = buildCurrentSemesterNodes(
+    compatProfile,
+    currentSemesterId(profile),
+  );
+  const tasks = taskSeedsToTasks(profile);
+
+  if (step === 0) {
+    return {
+      ...prev,
+      goal: { label: root.title },
+      activeLevel: "destination",
+      activeNodeId: root.id,
+      nodes: [root],
+      tasks: [],
+    };
   }
+  if (step === 1) {
+    return {
+      ...prev,
+      activeLevel: "university_timeline",
+      activeNodeId: root.id,
+      nodes: [root, ...yearNodes],
+      tasks: [],
+    };
+  }
+  if (step === 2) {
+    return {
+      ...prev,
+      activeLevel: "current_year",
+      activeNodeId: currentYearId(profile),
+      nodes: [root, ...yearNodes, ...semesterNodes, ...commitmentNodes(profile)],
+      tasks: [],
+    };
+  }
+  if (step === 3 || step === 4) {
+    return {
+      ...prev,
+      activeLevel: step === 4 ? "task_seed" : "current_semester",
+      activeNodeId: currentSemesterId(profile),
+      nodes: [
+        root,
+        ...yearNodes,
+        ...semesterNodes,
+        ...commitmentNodes(profile),
+        ...semesterDetailNodes,
+      ],
+      tasks,
+    };
+  }
+  return {
+    ...prev,
+    activeLevel: "handoff",
+    activeNodeId: currentSemesterId(profile),
+    bottleneckPreview: profile.bottleneckConcern || prev.bottleneckPreview,
+    nodes: [
+      root,
+      ...yearNodes,
+      ...semesterNodes,
+      ...commitmentNodes(profile),
+      ...semesterDetailNodes,
+    ],
+    tasks,
+  };
+}
+
+function validate(step: number, value: OnboardingFormData): StepErrors {
+  const errors: StepErrors = {};
+  if (step === 0 && !value.endOfUniversityGoal.trim()) {
+    errors.endOfUniversityGoal = "Required.";
+  }
+  if (step === 1) {
+    if (!value.university.trim()) errors.university = "Required.";
+    if (!value.degree.trim()) errors.degree = "Required.";
+    if (value.expectedProgramLengthYears < 1)
+      errors.expectedProgramLengthYears = "Required.";
+    if (value.totalCoursesRequired < 1)
+      errors.totalCoursesRequired = "Required.";
+  }
+  if (step === 3 && value.currentCourses.length === 0) {
+    errors.currentCourses = "Add at least one current course.";
+  }
+  if (step === 5 && !value.bottleneckConcern.trim()) {
+    errors.bottleneckConcern = "Name the risk.";
+  }
+  return errors;
 }
 
 type Props = {
@@ -99,18 +259,34 @@ export function OnboardingForm({
   onSubmit,
 }: Props) {
   const [errors, setErrors] = useState<StepErrors>({});
+  const [taskDraft, setTaskDraft] = useState<OnboardingTaskSeed>({
+    id: `seed-${Date.now()}`,
+    parentNodeId: currentSemesterId(profile),
+    title: "",
+    dueDate: todayLocalDate(),
+    priority: "High",
+  });
   const stepErrors = useMemo(() => errors, [errors]);
+  const parentOptions = useMemo(
+    () =>
+      mapState.nodes
+        .filter((node) => node.scope === "semester" || node.kind === "semester")
+        .map((node) => ({ id: node.id, title: node.title })),
+    [mapState.nodes],
+  );
+
+  const persistStep = (step: number) => {
+    const updatedMap = applyMapDelta(step, profile, mapState);
+    onMapStateChange(updatedMap);
+    onInsightFetch(Math.min(step, 4));
+  };
 
   const tryNext = () => {
     const next = validate(currentStep, profile);
     setErrors(next);
     if (Object.keys(next).length > 0) return;
-
-    const updatedMap = applyMapDelta(currentStep, profile, mapState);
-    onMapStateChange(updatedMap);
-    const nextStep = Math.min(STEPS.length - 1, currentStep + 1);
-    onStepChange(nextStep);
-    onInsightFetch(currentStep);
+    persistStep(currentStep);
+    onStepChange(Math.min(STEPS.length - 1, currentStep + 1));
   };
 
   const back = () => {
@@ -119,57 +295,82 @@ export function OnboardingForm({
   };
 
   const handleSubmit = () => {
-    const next = validate(4, profile);
+    const next = validate(5, profile);
     setErrors(next);
     if (Object.keys(next).length > 0) return;
+    onMapStateChange(applyMapDelta(5, profile, mapState));
     onSubmit();
+  };
+
+  const addTaskSeed = () => {
+    const title = taskDraft.title.trim();
+    if (!title || !taskDraft.dueDate) return;
+    onProfileChange({
+      taskSeeds: [...profile.taskSeeds, { ...taskDraft, title }],
+    });
+    const nextProfile = {
+      ...profile,
+      taskSeeds: [...profile.taskSeeds, { ...taskDraft, title }],
+    };
+    onMapStateChange(applyMapDelta(4, nextProfile, mapState));
+    setTaskDraft({
+      id: `seed-${Date.now()}`,
+      parentNodeId: currentSemesterId(profile),
+      title: "",
+      dueDate: addLocalDays(todayLocalDate(), 1),
+      priority: "High",
+    });
   };
 
   const isLast = currentStep === STEPS.length - 1;
 
   return (
-    <div className="mx-auto flex w-full max-w-[640px] flex-col gap-6">
+    <div className="flex w-full flex-col gap-3">
       <OnboardingProgress steps={STEPS} current={currentStep} />
-
-      <Card noHover className="min-h-[200px]">
+      <Card noHover className="max-h-[calc(100dvh-7rem)] overflow-y-auto bg-surface/90 p-5 shadow-lift backdrop-blur-xl">
         <AnimatePresence mode="wait">
           <motion.div
             key={currentStep}
-            initial={{ opacity: 0, x: 12 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -12 }}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.22, ease }}
           >
             {currentStep === 0 ? (
-              <StepDestination
+              <EndStateStep
                 value={profile}
                 onChange={onProfileChange}
                 errors={stepErrors}
               />
             ) : null}
             {currentStep === 1 ? (
-              <StepAcademic
+              <UniversityStep
                 value={profile}
                 onChange={onProfileChange}
                 errors={stepErrors}
               />
             ) : null}
             {currentStep === 2 ? (
-              <StepCommitments
-                value={profile}
-                onChange={onProfileChange}
-                errors={stepErrors}
-              />
+              <YearStep value={profile} onChange={onProfileChange} />
             ) : null}
             {currentStep === 3 ? (
-              <StepConstraints
+              <SemesterStep
                 value={profile}
                 onChange={onProfileChange}
                 errors={stepErrors}
               />
             ) : null}
             {currentStep === 4 ? (
-              <StepBrainDump
+              <TaskSeedStep
+                value={profile}
+                taskDraft={taskDraft}
+                setTaskDraft={setTaskDraft}
+                parentOptions={parentOptions}
+                onAdd={addTaskSeed}
+              />
+            ) : null}
+            {currentStep === 5 ? (
+              <HandoffStep
                 value={profile}
                 onChange={onProfileChange}
                 errors={stepErrors}
@@ -179,7 +380,7 @@ export function OnboardingForm({
         </AnimatePresence>
       </Card>
 
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between rounded-2xl border border-border bg-surface/80 px-3 py-2 shadow-soft backdrop-blur">
         {currentStep > 0 ? (
           <Button variant="ghost" onClick={back} disabled={submitting}>
             Back
@@ -189,12 +390,359 @@ export function OnboardingForm({
         )}
         {isLast ? (
           <Button onClick={handleSubmit} disabled={submitting}>
-            {submitting ? "Generating..." : "Generate strategy"}
+            {submitting ? "Building..." : "Build dashboard"}
           </Button>
         ) : (
           <Button onClick={tryNext}>Continue</Button>
         )}
       </div>
     </div>
+  );
+}
+
+function SectionIntro({ title, body }: { title: string; body: string }) {
+  return (
+    <div>
+      <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-tertiary">
+        Pathwise onboarding
+      </p>
+      <h2 className="mt-2 font-display text-2xl font-semibold leading-tight text-primary">
+        {title}
+      </h2>
+      <p className="mt-2 text-[13px] leading-relaxed text-secondary">{body}</p>
+    </div>
+  );
+}
+
+function EndStateStep({
+  value,
+  onChange,
+  errors,
+}: {
+  value: OnboardingFormData;
+  onChange: (patch: Partial<OnboardingFormData>) => void;
+  errors: StepErrors;
+}) {
+  return (
+    <div className="flex flex-col gap-4">
+      <SectionIntro
+        title="What do you want to be at the end of university?"
+        body="Start with the long-range identity. The map will zoom from this outcome down to this semester."
+      />
+      <textarea
+        value={value.endOfUniversityGoal}
+        onChange={(e) =>
+          onChange({
+            endOfUniversityGoal: e.target.value,
+            targetGoal: e.target.value,
+          })
+        }
+        rows={4}
+        placeholder="A software engineering candidate with shipped products and internship experience."
+        className="w-full resize-none rounded-2xl border border-border bg-white/80 px-4 py-3 text-sm text-primary outline-none transition-colors placeholder:text-tertiary focus:border-accent"
+      />
+      {errors.endOfUniversityGoal ? (
+        <p className="text-xs text-danger">{errors.endOfUniversityGoal}</p>
+      ) : null}
+    </div>
+  );
+}
+
+function UniversityStep({
+  value,
+  onChange,
+  errors,
+}: {
+  value: OnboardingFormData;
+  onChange: (patch: Partial<OnboardingFormData>) => void;
+  errors: StepErrors;
+}) {
+  return (
+    <div className="flex flex-col gap-4">
+      <SectionIntro
+        title="Map your university path."
+        body="These answers create the year-by-year route and highlight where you are now."
+      />
+      <Input
+        name="university"
+        label="University"
+        value={value.university}
+        onChange={(e) => onChange({ university: e.target.value })}
+        error={errors.university}
+      />
+      <Input
+        name="degree"
+        label="Degree/program"
+        value={value.degree}
+        onChange={(e) => onChange({ degree: e.target.value })}
+        error={errors.degree}
+      />
+      <div className="grid grid-cols-2 gap-3">
+        <NumberInput
+          label="Program years"
+          value={value.expectedProgramLengthYears}
+          onChange={(n) => onChange({ expectedProgramLengthYears: n })}
+        />
+        <NumberInput
+          label="Current year"
+          value={value.currentYearIndex}
+          onChange={(n) => onChange({ currentYearIndex: n, year: `Year ${n}` })}
+        />
+        <NumberInput
+          label="Required courses"
+          value={value.totalCoursesRequired}
+          onChange={(n) => onChange({ totalCoursesRequired: n })}
+        />
+        <NumberInput
+          label="Completed"
+          value={value.coursesCompleted}
+          onChange={(n) => onChange({ coursesCompleted: n })}
+        />
+      </div>
+    </div>
+  );
+}
+
+function YearStep({
+  value,
+  onChange,
+}: {
+  value: OnboardingFormData;
+  onChange: (patch: Partial<OnboardingFormData>) => void;
+}) {
+  return (
+    <div className="flex flex-col gap-4">
+      <SectionIntro
+        title="Zoom into this year."
+        body="Pathwise will split the year into semesters and place recurring commitments where they belong."
+      />
+      <label className="flex flex-col gap-1.5 text-xs font-semibold text-secondary">
+        Current semester
+        <select
+          value={value.currentSemester}
+          onChange={(e) =>
+            onChange({ currentSemester: e.target.value as AcademicTerm })
+          }
+          className="rounded-xl border border-border bg-white/80 px-3 py-2 text-sm text-primary outline-none focus:border-accent"
+        >
+          {TERMS.map((term) => (
+            <option key={term}>{term}</option>
+          ))}
+        </select>
+      </label>
+      <ChipInput
+        name="commitments"
+        label="Clubs, work, research, projects"
+        placeholder="Club lead, part-time job, research lab"
+        value={value.commitments}
+        onChange={(items) =>
+          onChange({
+            commitments: items,
+            recurringCommitments: items.map((title, i) => ({
+              id: `commitment-${i}`,
+              title,
+              kind: "other",
+              semesters: [value.currentSemester],
+            })),
+          })
+        }
+        hint="For the MVP, these attach to the current semester."
+        maxChips={12}
+      />
+      <label className="flex items-center gap-2 text-xs font-medium text-secondary">
+        <input
+          type="checkbox"
+          checked={value.plansSpringSummerCourses}
+          onChange={(e) =>
+            onChange({ plansSpringSummerCourses: e.target.checked })
+          }
+        />
+        I may take spring or summer courses
+      </label>
+    </div>
+  );
+}
+
+function SemesterStep({
+  value,
+  onChange,
+  errors,
+}: {
+  value: OnboardingFormData;
+  onChange: (patch: Partial<OnboardingFormData>) => void;
+  errors: StepErrors;
+}) {
+  return (
+    <div className="flex flex-col gap-4">
+      <SectionIntro
+        title="Plan the current semester."
+        body="Exact classes and constraints become the context for the dashboard."
+      />
+      <ChipInput
+        name="currentCourses"
+        label="Exact classes"
+        placeholder="Algorithms, Databases, Operating Systems"
+        value={value.currentCourses}
+        onChange={(items) => onChange({ currentCourses: items })}
+        error={errors.currentCourses}
+      />
+      <NumberInput
+        label="Work hours/week"
+        value={value.workHoursPerWeek}
+        onChange={(n) => onChange({ workHoursPerWeek: n })}
+      />
+      <ChipInput
+        name="constraints"
+        label="Constraints"
+        placeholder="No late nights, commute, Fridays lighter"
+        value={value.constraints}
+        onChange={(items) => onChange({ constraints: items })}
+        maxChips={10}
+      />
+    </div>
+  );
+}
+
+function TaskSeedStep({
+  value,
+  taskDraft,
+  setTaskDraft,
+  parentOptions,
+  onAdd,
+}: {
+  value: OnboardingFormData;
+  taskDraft: OnboardingTaskSeed;
+  setTaskDraft: (task: OnboardingTaskSeed) => void;
+  parentOptions: { id: string; title: string }[];
+  onAdd: () => void;
+}) {
+  return (
+    <div className="flex flex-col gap-4">
+      <SectionIntro
+        title="What are the first tasks you know must happen?"
+        body="No AI task generation here. Add only the tasks you actually trust."
+      />
+      <Input
+        name="taskTitle"
+        label="Task"
+        value={taskDraft.title}
+        onChange={(e) => setTaskDraft({ ...taskDraft, title: e.target.value })}
+        placeholder="Push project skeleton to GitHub"
+      />
+      <div className="grid grid-cols-[1fr_auto] gap-2">
+        <input
+          type="date"
+          value={taskDraft.dueDate}
+          onChange={(e) =>
+            setTaskDraft({ ...taskDraft, dueDate: e.target.value })
+          }
+          className="rounded-xl border border-border bg-white/80 px-3 py-2 text-sm text-primary outline-none focus:border-accent"
+        />
+        <select
+          value={taskDraft.priority}
+          onChange={(e) =>
+            setTaskDraft({
+              ...taskDraft,
+              priority: e.target.value as OnboardingTaskSeed["priority"],
+            })
+          }
+          className="rounded-xl border border-border bg-white/80 px-3 py-2 text-sm text-primary outline-none focus:border-accent"
+        >
+          <option>High</option>
+          <option>Medium</option>
+          <option>Low</option>
+        </select>
+      </div>
+      <label className="flex flex-col gap-1.5 text-xs font-semibold text-secondary">
+        Parent node
+        <select
+          value={taskDraft.parentNodeId}
+          onChange={(e) =>
+            setTaskDraft({ ...taskDraft, parentNodeId: e.target.value })
+          }
+          className="rounded-xl border border-border bg-white/80 px-3 py-2 text-sm text-primary outline-none focus:border-accent"
+        >
+          <option value={currentSemesterId(value)}>{value.currentSemester}</option>
+          {parentOptions.map((option) => (
+            <option key={option.id} value={option.id}>
+              {option.title}
+            </option>
+          ))}
+        </select>
+      </label>
+      <Button variant="secondary" onClick={onAdd}>
+        Add task to map
+      </Button>
+      {value.taskSeeds.length > 0 ? (
+        <ul className="space-y-1.5">
+          {value.taskSeeds.map((task) => (
+            <li
+              key={task.id}
+              className="rounded-xl border border-border bg-white/70 px-3 py-2 text-xs text-secondary"
+            >
+              <span className="font-semibold text-primary">{task.title}</span>{" "}
+              · {task.priority} · {task.dueDate}
+            </li>
+          ))}
+        </ul>
+      ) : null}
+    </div>
+  );
+}
+
+function HandoffStep({
+  value,
+  onChange,
+  errors,
+}: {
+  value: OnboardingFormData;
+  onChange: (patch: Partial<OnboardingFormData>) => void;
+  errors: StepErrors;
+}) {
+  return (
+    <div className="flex flex-col gap-4">
+      <SectionIntro
+        title="What is most likely to break this semester?"
+        body="This becomes the first bottleneck Pathwise tracks on the dashboard."
+      />
+      <textarea
+        value={value.bottleneckConcern}
+        onChange={(e) =>
+          onChange({
+            bottleneckConcern: e.target.value,
+            brainDump: e.target.value,
+          })
+        }
+        rows={4}
+        placeholder="I keep adding commitments, but my portfolio project still is not shipped."
+        className="w-full resize-none rounded-2xl border border-border bg-white/80 px-4 py-3 text-sm text-primary outline-none transition-colors placeholder:text-tertiary focus:border-accent"
+      />
+      {errors.bottleneckConcern ? (
+        <p className="text-xs text-danger">{errors.bottleneckConcern}</p>
+      ) : null}
+    </div>
+  );
+}
+
+function NumberInput({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: number;
+  onChange: (value: number) => void;
+}) {
+  return (
+    <label className="flex flex-col gap-1.5 text-xs font-semibold text-secondary">
+      {label}
+      <input
+        type="number"
+        min={0}
+        value={value}
+        onChange={(e) => onChange(Number(e.target.value) || 0)}
+        className="rounded-xl border border-border bg-white/80 px-3 py-2 text-sm text-primary outline-none focus:border-accent"
+      />
+    </label>
   );
 }

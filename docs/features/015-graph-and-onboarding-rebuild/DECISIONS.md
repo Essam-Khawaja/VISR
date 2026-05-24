@@ -60,3 +60,27 @@
 
 **Reason:** This gives the graph useful structure fast without pretending to be a university-specific degree planner.
 
+## D11: Onboarding Nodes Re-IDed On Handoff
+
+**Decision:** During onboarding, nodes use `planId = "onboarding-preview"`. On handoff, all nodes and tasks are re-IDed with the real planId before saving to nodeStore/taskStore.
+
+**Reason:** The onboarding preview plan is transient. Persisting with the real ID ensures the dashboard can load the graph without a separate migration step.
+
+## D12: Dashboard Auto-Drills To Current Semester
+
+**Decision:** When real StrategyNode[] data is present (not legacy pillar conversion), the graph auto-focuses on the current academic year and semester via focusPath.
+
+**Reason:** The user's most relevant context is always the current semester. Starting zoomed out at the university root wastes a click on every dashboard visit.
+
+## D13: Halos Fully Hidden In Unified Node Mode
+
+**Decision:** All Three.js halo, pulseHalo, core, and ring material opacities are forced to 0. The HTML overlay button is the sole visible node.
+
+**Reason:** The dual-layer rendering (glow sprite + HTML disk) created a visible second circle. Hiding the glow layer produces a clean single-disk appearance while preserving Three.js for positioning, edges, and camera control.
+
+## D14: Nucleus Resolution Falls Back To Legacy Pillars
+
+**Decision:** `resolveNucleusLevel` attempts StrategyNode[] hierarchy first. If no real root node or no children are found, it falls back to the legacy `plan.strategicPillars` path.
+
+**Reason:** Demo plans and older saved plans use the legacy pillar model. The fallback ensures the graph still works for these cases without data migration.
+
