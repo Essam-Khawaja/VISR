@@ -1,14 +1,14 @@
 /**
- * Tiny xAI Grok wrapper used by /api/generate and /api/opportunity.
+ * Tiny Groq wrapper used by /api/generate and /api/opportunity.
  * Returns the assistant message text or null when no key / failure.
  *
- * xAI exposes an OpenAI-compatible chat completions surface, so we keep this
+ * Groq exposes an OpenAI-compatible chat completions surface, so we keep this
  * wrapper intentionally small and dependency-free for hackathon reliability.
  */
 
 type ChatMessage = { role: "system" | "user"; content: string };
 
-type GrokOptions = {
+type GroqOptions = {
   temperature?: number;
   maxTokens?: number;
 };
@@ -22,21 +22,21 @@ function stripMarkdownFences(text: string): string {
     .trim();
 }
 
-export async function callGrokJson(
+export async function callGroqJson(
   system: string,
   user: string,
-  opts: GrokOptions = {},
+  opts: GroqOptions = {},
 ): Promise<string | null> {
-  const apiKey = process.env.XAI_API_KEY;
+  const apiKey = process.env.GROQ_API_KEY;
   if (!apiKey) return null;
 
-  const model = process.env.XAI_MODEL || "grok-4-1-fast-non-reasoning";
+  const model = process.env.GROQ_MODEL || "llama-3.3-70b-versatile";
 
   const body = {
     model,
     response_format: { type: "json_object" as const },
     temperature: opts.temperature ?? 0.4,
-    max_tokens: opts.maxTokens ?? 2200,
+    max_completion_tokens: opts.maxTokens ?? 2200,
     messages: [
       { role: "system", content: system },
       { role: "user", content: user },
@@ -46,7 +46,7 @@ export async function callGrokJson(
   try {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 18_000);
-    const res = await fetch("https://api.x.ai/v1/chat/completions", {
+    const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

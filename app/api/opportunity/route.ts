@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { callGrokJson } from "@/lib/grok";
+import { callGroqJson } from "@/lib/groq";
 import { buildDeterministicOpportunity } from "@/lib/deterministicOpportunity";
 import {
   opportunitySystemPrompt,
@@ -43,7 +43,7 @@ export async function POST(req: Request) {
   const id = randomOpportunityId();
   const studentId = plan.studentId;
 
-  const ai = await callGrokJson(
+  const ai = await callGroqJson(
     opportunitySystemPrompt(),
     opportunityUserPrompt(
       summarizePlan(plan),
