@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { IntelligenceDock } from "@/components/dashboard/IntelligenceDock";
 import { NodePopover } from "./NodePopover";
-import { SelectionCard } from "./SelectionCard";
+import { NodeTaskDialog } from "./NodeTaskDialog";
 import { StrategyHUD } from "./StrategyHUD";
 import { useGraphScene, type ActionState } from "./useGraphScene";
 import type { LayoutEdge, LayoutNode } from "./graphTypes";
@@ -16,6 +16,10 @@ export type GoalTreeProps = {
   markAction: (actionId: string, state: ActionState) => void;
   isDemo: boolean;
   onToggleToday: () => void;
+  onAddTasks?: (
+    parentNodeId: string,
+    tasks: { name: string; recommendation: string }[],
+  ) => void;
   displayMode?: "onboarding" | "preview" | "full";
   layoutOverride?: { nodes: LayoutNode[]; edges: LayoutEdge[] };
 };
@@ -27,6 +31,7 @@ export default function GoalTree({
   markAction,
   isDemo,
   onToggleToday,
+  onAddTasks,
   displayMode = "full",
   layoutOverride,
 }: GoalTreeProps) {
@@ -48,6 +53,16 @@ export default function GoalTree({
     });
 
   const toggleDock = useCallback(() => setDockOpen((v) => !v), []);
+
+  const handleAddTasks = useCallback(
+    (
+      parentNodeId: string,
+      tasks: { name: string; recommendation: string }[],
+    ) => {
+      onAddTasks?.(parentNodeId, tasks);
+    },
+    [onAddTasks],
+  );
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -86,7 +101,11 @@ export default function GoalTree({
       <div
         ref={containerRef}
         className="absolute inset-0"
-        aria-label={onboarding ? "Strategy map preview, updating as you answer" : "Goal tree visualization"}
+        aria-label={
+          onboarding
+            ? "Strategy map preview, updating as you answer"
+            : "Goal tree visualization"
+        }
       />
       <div
         ref={labelsRef}
@@ -107,13 +126,14 @@ export default function GoalTree({
       {selection || onboarding ? null : <NodePopover hover={hover} />}
 
       {hideChrome ? null : (
-        <SelectionCard
+        <NodeTaskDialog
           plan={plan}
           selection={selection}
           actionStates={actionStates}
           onSelect={select}
           onClose={clearSelection}
           onToggleAction={markAction}
+          onAddTasks={handleAddTasks}
           isDemo={isDemo}
         />
       )}
@@ -133,7 +153,7 @@ export default function GoalTree({
         <div className="pointer-events-none absolute bottom-4 left-1/2 z-20 -translate-x-1/2 text-[11px] text-tertiary md:bottom-6">
           {selection
             ? "Click goal or press Esc to return"
-            : "Click a pillar to expand · drag to pan · scroll to zoom · press T for today"}
+            : "Click a pillar to expand \u00b7 drag to pan \u00b7 scroll to zoom \u00b7 press T for today"}
         </div>
       )}
     </div>
