@@ -1,6 +1,8 @@
 import { createSupabaseAnonClient } from "@/lib/shared/supabase";
 import type {
+  ActionItem,
   Priority,
+  StrategyPlan,
   StrategyTask,
   StrategyTaskParentKind,
   StrategyTaskSource,
@@ -44,6 +46,11 @@ export type NodeRollup = {
   doneCount: number;
   completionRatio: number;
   derivedStatus: StrategyTaskStatus;
+};
+
+type MatchedAction = {
+  pillarId: string;
+  actionId: string;
 };
 
 const KEY_MIGRATED = "pathwise.tasks.migrated.v1";
@@ -261,6 +268,80 @@ export function markStrategyTasksMigrated(): void {
   } catch {}
 }
 
+export function todayLocalDate(): string {
+  const d = new Date();
+  return formatLocalDate(d);
+}
+
+export function addLocalDays(date: string, days: number): string {
+  const [year, month, day] = date.split("-").map(Number);
+  const d = new Date(year, month - 1, day);
+  d.setDate(d.getDate() + days);
+  return formatLocalDate(d);
+}
+
+export function materializeStrategyTasks(
+  plan: StrategyPlan,
+  baseDate = todayLocalDate(),
+): StrategyTask[] {
+  return plan.nextSevenDays.map((item, index) => {
+    const now = nowIso();
+    const match = findMatchingAction(plan, item);
+    const dueDate = dueDateForAction(item.priority, index, baseDate);
+    return {
+      id: stableTaskId(plan.id, item.id, index),
+      planId: plan.id,
+      studentId: plan.studentId,
+      parentNodeId: match?.pillarId ?? "goal",
+      parentNodeKind: match ? "pillar" : "goal",
+      parentTaskId: null,
+      title: item.title,
+      recommendation: "",
+      notes: "",
+      priority: item.priority,
+      status: "open",
+      dueDate,
+      completedAt: null,
+      source: "generated_plan",
+      sourceActionId: match?.actionId ?? item.id,
+      sortOrder: index,
+      createdAt: now,
+      updatedAt: now,
+    };
+  });
+}
+
+export function ensureMaterializedTasks(plan: StrategyPlan): StrategyTask[] {
+  const existing = loadTasks(plan.id);
+  if (existing.length > 0) return existing;
+  const tasks = materializeStrategyTasks(plan);
+  saveTasks(plan.id, tasks);
+  return tasks;
+}
+
+export function migrateActionStatesToTasks(
+  planId: string,
+  actionStates: Record<string, StrategyTaskStatus>,
+): StrategyTask[] {
+  const tasks = loadTasks(planId);
+  if (tasks.length === 0) return tasks;
+  let changed = false;
+  const next = tasks.map((task) => {
+    const legacyState =
+      actionStates[task.sourceActionId ?? ""] ?? actionStates[task.id];
+    if (!legacyState || legacyState === task.status) return task;
+    changed = true;
+    return {
+      ...task,
+      status: legacyState,
+      completedAt: legacyState === "done" ? task.completedAt ?? nowIso() : null,
+      updatedAt: nowIso(),
+    };
+  });
+  if (changed) saveTasks(planId, next);
+  return next;
+}
+
 function mergeTasks(
   existing: StrategyTask[],
   incoming: StrategyTask[],
@@ -274,6 +355,46 @@ function mergeTasks(
       a.sortOrder - b.sortOrder ||
       a.createdAt.localeCompare(b.createdAt),
   );
+}
+
+function formatLocalDate(d: Date): string {
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
+  return `${yyyy}-${mm}-${dd}`;
+}
+
+function stableTaskId(planId: string, actionItemId: string, index: number): string {
+  return `${planId}-task-${actionItemId || index}`.replace(/[^a-zA-Z0-9-]/g, "-");
+}
+
+function normalizeTitle(title: string): string {
+  return title.trim().toLowerCase().replace(/\s+/g, " ");
+}
+
+function findMatchingAction(
+  plan: StrategyPlan,
+  item: ActionItem,
+): MatchedAction | null {
+  const title = normalizeTitle(item.title);
+  for (const pillar of plan.strategicPillars) {
+    for (const action of pillar.actions) {
+      if (normalizeTitle(action.name) === title) {
+        return { pillarId: pillar.id, actionId: action.id };
+      }
+    }
+  }
+  return null;
+}
+
+function dueDateForAction(
+  priority: Priority,
+  index: number,
+  baseDate: string,
+): string {
+  if (priority === "High") return addLocalDays(baseDate, Math.min(index, 1));
+  if (priority === "Medium") return addLocalDays(baseDate, 2 + (index % 4));
+  return addLocalDays(baseDate, 5 + (index % 3));
 }
 
 function applyFilters(tasks: StrategyTask[], filters: TaskFilters): StrategyTask[] {

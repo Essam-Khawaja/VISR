@@ -19,6 +19,10 @@ import {
   type ActionState,
   type StoredPlan,
 } from "@/lib/2/planStore";
+import {
+  ensureMaterializedTasks,
+  migrateActionStatesToTasks,
+} from "@/lib/2/taskStore";
 import { DEMO_PLAN_ID, fixturePlan } from "@/lib/2/fixture";
 import type { ActionNode, OpportunityCheck, StrategyPlan } from "@/lib/2/types";
 
@@ -63,6 +67,7 @@ export function PlanProvider({ planId, initialPlan, children }: Props) {
         opportunityHistory: [],
         lastReviewedAt: new Date().toISOString(),
       });
+      ensureMaterializedTasks(demoPlan);
       setIsReady(true);
       return;
     }
@@ -71,10 +76,13 @@ export function PlanProvider({ planId, initialPlan, children }: Props) {
     const fromCache = loadStoredPlan(planId);
     if (fromCache) {
       setStored(fromCache);
+      ensureMaterializedTasks(fromCache.plan);
+      migrateActionStatesToTasks(planId, fromCache.actionStates);
     } else if (initialPlan) {
       savePlan(planId, initialPlan);
       const fresh = loadStoredPlan(planId);
       setStored(fresh);
+      ensureMaterializedTasks(initialPlan);
     } else {
       setStored(null);
     }
@@ -84,7 +92,11 @@ export function PlanProvider({ planId, initialPlan, children }: Props) {
     (async () => {
       const fromSupabase = await fetchStoredPlanFromSupabase(planId);
       if (cancelled) return;
-      if (fromSupabase) setStored(fromSupabase);
+      if (fromSupabase) {
+        setStored(fromSupabase);
+        ensureMaterializedTasks(fromSupabase.plan);
+        migrateActionStatesToTasks(planId, fromSupabase.actionStates);
+      }
     })();
 
     // 3) One-time push of any leftover local-only plans up to Supabase.
