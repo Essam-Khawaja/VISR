@@ -4,20 +4,15 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import { cssVar, hexToThreeColor } from "@/lib/shared/cssColor";
 import {
-  bottleneckPulse,
   CAMERA_END_Z,
   CAMERA_MAX_Z,
   CAMERA_MIN_Z,
   CAMERA_START_Z,
   HOVER_SCALE,
-  PULSE_MAX_SCALE,
-  PULSE_MIN_SCALE,
-  PULSE_OPACITY,
-  PULSE_SPEED,
 } from "./graphAnimations";
 import { createEdgeRender, type EdgeRender } from "./graphEdges";
 import { buildGraphLayout, graphRadii } from "./graphLayout";
-import { createNodeMesh, haloStrength, type NodeMesh } from "./graphNodes";
+import { createNodeMesh, type NodeMesh } from "./graphNodes";
 import type {
   GraphLayoutResult,
   GraphNodeData,
@@ -707,11 +702,7 @@ export function useGraphScene({
         const coreMat = nm.core.material as THREE.MeshBasicMaterial;
         coreMat.opacity = 0;
         const haloMat = nm.halo.material as THREE.SpriteMaterial;
-        const isSelected =
-          selectionRef.current?.nodeId === nm.data.id &&
-          (selectionRef.current?.kind === "pillar" ||
-            selectionRef.current?.kind === "action");
-        haloMat.opacity = nm.currentOpacity * haloStrength(nm, isSelected);
+        haloMat.opacity = 0;
 
         const ringMat = nm.ring.material as THREE.MeshBasicMaterial;
         ringMat.opacity = 0;
@@ -733,20 +724,7 @@ export function useGraphScene({
           nm.group.position.copy(nm.basePosition);
         }
 
-        // Pulse halo animation
-        if (nm.currentOpacity > 0.1 && !reduceMotion) {
-          const p = Math.sin(
-            seconds * PULSE_SPEED * Math.PI * 2 + nm.bobPhase,
-          );
-          const s =
-            PULSE_MIN_SCALE +
-            (PULSE_MAX_SCALE - PULSE_MIN_SCALE) * (p * 0.5 + 0.5);
-          nm.pulseHalo.scale.setScalar(nm.data.radius * 9 * s);
-          (nm.pulseHalo.material as THREE.SpriteMaterial).opacity =
-            nm.currentOpacity * PULSE_OPACITY * (p * 0.5 + 0.5);
-        } else {
-          (nm.pulseHalo.material as THREE.SpriteMaterial).opacity = 0;
-        }
+        (nm.pulseHalo.material as THREE.SpriteMaterial).opacity = 0;
       });
 
       edges.forEach((er) => {
@@ -757,16 +735,9 @@ export function useGraphScene({
           er.currentOpacity;
       });
 
-      const pulseT = seconds;
       bottleneckMeshes.forEach((nm) => {
-        if (nm.currentOpacity < 0.1) return;
-        const mat = nm.halo.material as THREE.SpriteMaterial;
-        const base = haloStrength(
-          nm,
-          selectionRef.current?.nodeId === nm.data.id,
-        );
-        mat.opacity =
-          nm.currentOpacity * (base * 0.7 + bottleneckPulse(pulseT) * 0.35);
+        (nm.halo.material as THREE.SpriteMaterial).opacity = 0;
+        (nm.pulseHalo.material as THREE.SpriteMaterial).opacity = 0;
       });
 
       if (labelsContainer) {
