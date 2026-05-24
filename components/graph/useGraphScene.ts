@@ -178,7 +178,7 @@ export function useGraphScene({
         el.style.padding = "2px 8px";
         el.style.borderRadius = "8px";
         el.style.background = "rgba(255,255,255,0.9)";
-        el.style.border = "1px solid rgba(37,99,235,0.16)";
+        el.style.border = "1px solid rgba(139,107,90,0.12)";
         el.style.backdropFilter = "blur(4px)";
         el.textContent = nm.data.name;
         if (nm.data.kind === "goal") {
