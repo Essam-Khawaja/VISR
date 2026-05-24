@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AnimatePresence } from "framer-motion";
 import { OnboardingForm } from "./OnboardingForm";
@@ -19,8 +19,8 @@ import { savePlan, setActivePlanId } from "@/lib/2/planStore";
 import { saveNodes } from "@/lib/2/nodeStore";
 import { saveTasks } from "@/lib/2/taskStore";
 import type { StrategyPlan } from "@/lib/2/types";
-
-const DRAFT_KEY = "pathwise-onboarding-draft-v3";
+import { applyMapDelta } from "./applyMapDelta";
+import { ONBOARDING_DRAFT_KEY } from "@/lib/2/replayOnboarding";
 
 type Draft = {
   profile: OnboardingFormData;
@@ -31,7 +31,7 @@ type Draft = {
 function loadDraft(): Draft | null {
   if (typeof window === "undefined") return null;
   try {
-    const raw = window.sessionStorage.getItem(DRAFT_KEY);
+    const raw = window.sessionStorage.getItem(ONBOARDING_DRAFT_KEY);
     if (!raw) return null;
     return JSON.parse(raw) as Draft;
   } catch {
@@ -42,7 +42,7 @@ function loadDraft(): Draft | null {
 function persistDraft(draft: Draft) {
   if (typeof window === "undefined") return;
   try {
-    window.sessionStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
+    window.sessionStorage.setItem(ONBOARDING_DRAFT_KEY, JSON.stringify(draft));
   } catch {}
 }
 
@@ -68,6 +68,26 @@ export function OnboardingShell() {
   useEffect(() => {
     persistDraft({ profile, map: mapState, step });
   }, [profile, mapState, step]);
+
+  const stepRef = useRef(step);
+  const profileRef = useRef(profile);
+  stepRef.current = step;
+  profileRef.current = profile;
+
+  useEffect(() => {
+    setMapState((prev) =>
+      applyMapDelta(stepRef.current, profileRef.current, prev),
+    );
+  }, [step]);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      setMapState((prev) =>
+        applyMapDelta(stepRef.current, profileRef.current, prev),
+      );
+    }, 300);
+    return () => window.clearTimeout(timer);
+  }, [profile]);
 
   const onProfileChange = useCallback((patch: Partial<OnboardingFormData>) => {
     setProfile((prev) => ({ ...prev, ...patch }));
@@ -140,7 +160,7 @@ export function OnboardingShell() {
       });
       if (!res.ok) {
         if (res.status === 404) {
-          window.sessionStorage.removeItem(DRAFT_KEY);
+          window.sessionStorage.removeItem(ONBOARDING_DRAFT_KEY);
           router.push(`/2/dashboard/${demoPlanId}`);
           return;
         }
@@ -173,7 +193,7 @@ export function OnboardingShell() {
       }
 
       setActivePlanId(realPlanId);
-      window.sessionStorage.removeItem(DRAFT_KEY);
+      window.sessionStorage.removeItem(ONBOARDING_DRAFT_KEY);
       router.push(`/2/dashboard/${realPlanId}`);
     } catch (e) {
       setSubmitError(

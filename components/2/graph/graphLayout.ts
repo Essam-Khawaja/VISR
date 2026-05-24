@@ -194,7 +194,7 @@ export function buildNucleusLayout(
       isBottleneck: false,
       position: pos,
       radius: PILLAR_NODE_RADIUS,
-      parentId: null,
+      parentId: nucleus.id,
       pastelColor: child.pastelColor,
       progressPercent: 0,
       actionCount: child.childCount,

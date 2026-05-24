@@ -128,6 +128,14 @@ export async function POST(req: Request) {
     plan = buildDeterministicPlan(profile, planId, studentId);
   }
 
+  const profileFields = profile as Record<string, unknown>;
+  const endGoal = String(
+    profileFields.endOfUniversityGoal ?? profile.targetGoal ?? "",
+  ).trim();
+  if (endGoal) {
+    plan = { ...plan, destination: endGoal };
+  }
+
   await persistToSupabase(profile as Record<string, unknown>, plan, studentId);
 
   return NextResponse.json({ ok: true, planId, plan });

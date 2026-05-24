@@ -84,3 +84,21 @@
 
 **Reason:** Demo plans and older saved plans use the legacy pillar model. The fallback ensures the graph still works for these cases without data migration.
 
+## D15: Demo Replay Reset And University Node Task Dialog
+
+**Decision:** Dashboard exposes a "Replay onboarding" demo control that clears local and Supabase plan graph data (`strategy_plans`, `strategy_nodes`, `strategy_tasks`) plus the onboarding session draft, then routes to `/2/onboarding`. Explore mode opens `NodeTaskDialog` only on nucleus clicks; `NodeTaskDialog` resolves `StrategyNode` ids (not only legacy `goal`/pillar ids).
+
+**Reason:** Stale duplicate nodes from earlier onboarding bugs require a full reset for demo testing without dedupe logic. University explore nuclei use non-legacy ids (`onboarding-semester-fall`, etc.), so the dialog must resolve saved graph nodes for the add-task flow to work.
+
+## D16: Preview Nucleus Layout And Aggregated Task List
+
+**Decision:** Client replay reset uses anon Supabase only (no service role in browser). Preview/explore nucleus layouts (`layoutOverride`) render all nodes at full opacity without label-spacing push. `PlanProvider` filters to university subtree when university nodes exist. Center-node dialog lists tasks on the nucleus and direct child nodes via `tasksForNucleus`.
+
+**Reason:** Service client throws in browser; pillar drill-down opacity hid preview orbit nodes; mixed legacy pillar + university nodes polluted semester view; semester dialog must show tasks attached to courses/clubs on the orbit.
+
+## D17: Preview Map Camera Lock And Shared Radial Layout
+
+**Decision:** Dashboard preview locks the graph camera at nucleus origin (`layoutOverride` never pans to orbit nodes). Preview canvas uses `pointer-events: none`; explore is opened via a dedicated bottom affordance (graph not wrapped in a button). Dashboard preview reuses `buildRadialLayoutFromCenter` from onboarding layout.
+
+**Reason:** Orbit-node camera pan and accidental drag shifted the semester nucleus off-screen; shared radial layout matches onboarding centering and ring spacing for many children.
+
