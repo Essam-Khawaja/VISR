@@ -1,18 +1,36 @@
 /**
- * Tiny OpenAI wrapper used by /api/generate and /api/opportunity.
+ * Tiny xAI Grok wrapper used by /api/generate and /api/opportunity.
  * Returns the assistant message text or null when no key / failure.
+ *
+ * xAI exposes an OpenAI-compatible chat completions surface, so we keep this
+ * wrapper intentionally small and dependency-free for hackathon reliability.
  */
 
 type ChatMessage = { role: "system" | "user"; content: string };
 
-export async function callOpenAIJson(
+type GrokOptions = {
+  temperature?: number;
+  maxTokens?: number;
+};
+
+function stripMarkdownFences(text: string): string {
+  return text
+    .trim()
+    .replace(/^```json\s*/i, "")
+    .replace(/^```\s*/i, "")
+    .replace(/```$/i, "")
+    .trim();
+}
+
+export async function callGrokJson(
   system: string,
   user: string,
-  opts: { temperature?: number; maxTokens?: number } = {},
+  opts: GrokOptions = {},
 ): Promise<string | null> {
-  const apiKey = process.env.OPENAI_API_KEY;
+  const apiKey = process.env.XAI_API_KEY;
   if (!apiKey) return null;
-  const model = process.env.OPENAI_MODEL || "gpt-4o-mini";
+
+  const model = process.env.XAI_MODEL || "grok-4-1-fast-non-reasoning";
 
   const body = {
     model,
@@ -28,7 +46,7 @@ export async function callOpenAIJson(
   try {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 18_000);
-    const res = await fetch("https://api.openai.com/v1/chat/completions", {
+    const res = await fetch("https://api.x.ai/v1/chat/completions", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -38,11 +56,14 @@ export async function callOpenAIJson(
       signal: controller.signal,
     });
     clearTimeout(timeout);
+
     if (!res.ok) return null;
+
     const data = (await res.json()) as {
       choices?: Array<{ message?: { content?: string } }>;
     };
-    return data.choices?.[0]?.message?.content ?? null;
+    const content = data.choices?.[0]?.message?.content;
+    return content ? stripMarkdownFences(content) : null;
   } catch {
     return null;
   }

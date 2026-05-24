@@ -12,6 +12,8 @@ docs/architecture/DATA_MODEL.md
 
 ## Schema
 
+The canonical schema is defined in `docs/features/000-project-foundation-and-data-contract/TECH_SPEC.md`. It is repeated here only as an implementation reference.
+
 ```sql
 create table if not exists student_profiles (
   id uuid primary key,
@@ -68,4 +70,3 @@ For MVP, direct route-local mapping is acceptable if it stays small.
 ## RLS
 
 Hackathon MVP can use permissive policies or disabled RLS. Before production, add Supabase Auth and row-level security.
-

@@ -13,7 +13,7 @@ As a student, I want Pathwise to read my messy situation and tell me my destinat
 ## Scope
 
 - `POST /api/generate`
-- `lib/anthropic.ts`
+- `lib/grok.ts`
 - `lib/prompts/strategyPrompt.ts`
 - `lib/validation.ts`
 - Supabase insert into `student_profiles`
@@ -37,7 +37,7 @@ The generated plan must include:
 ## Acceptance Criteria
 
 - Incoming profile is saved.
-- Claude returns strict JSON.
+- Grok returns strict JSON.
 - JSON is parsed and validated with `StrategyPlanSchema`.
 - Invalid output retries once with a correction prompt.
 - Valid plan is saved as JSONB.

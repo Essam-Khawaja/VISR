@@ -52,9 +52,9 @@ Architectural and product decisions for the 24-hour MVP.
 
 ---
 
-## D5: Claude Sonnet for Structured Strategy Output
+## D5: Grok for Structured Strategy Output
 
-**Decision:** Use Anthropic Claude via `@anthropic-ai/sdk`, default model `claude-sonnet-4-5`.
+**Decision:** Use xAI Grok API via direct HTTP, default model `grok-4-1-fast-non-reasoning`.
 
 **Reason:** Structured JSON reliability matters more than marginal cost for the MVP.
 
@@ -66,7 +66,7 @@ Architectural and product decisions for the 24-hour MVP.
 
 ## D6: Validate Every AI Response with Zod
 
-**Decision:** Claude output is never trusted until it passes `StrategyPlanSchema` or `OpportunityCheckSchema`.
+**Decision:** Grok output is never trusted until it passes `StrategyPlanSchema` or `OpportunityCheckSchema`.
 
 **Reason:** Invalid JSON or invalid enum values would break the dashboard.
 
@@ -121,4 +121,3 @@ Architectural and product decisions for the 24-hour MVP.
 **Tradeoff:** Shared state patterns may need revisiting later.
 
 **Mitigation:** Keep state close to components and pass typed props.
-

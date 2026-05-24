@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { callOpenAIJson } from "@/lib/aiClient";
+import { callGrokJson } from "@/lib/grok";
 import { buildDeterministicPlan } from "@/lib/deterministicPlan";
 import {
   strategySystemPrompt,
@@ -42,8 +42,9 @@ export async function POST(req: Request) {
   const planId = randomPlanId();
   const studentId = planId.replace("plan-", "student-");
 
-  // Try AI first.
-  const ai = await callOpenAIJson(
+  // Try Grok first. Missing key, request failure, invalid JSON, or schema
+  // mismatch all fall through to the deterministic demo-safe generator.
+  const ai = await callGrokJson(
     strategySystemPrompt(),
     strategyUserPrompt(profile, planId),
     { temperature: 0.5, maxTokens: 2400 },

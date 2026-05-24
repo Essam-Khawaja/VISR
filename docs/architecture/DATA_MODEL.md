@@ -123,7 +123,7 @@ export interface OpportunityCheck {
 Notes:
 
 - `StrategyPlan` and `OpportunityCheck` intentionally do not include persistence metadata. Route/API wrappers can carry `planId`, `studentId`, or timestamps separately.
-- This keeps the AI schema small and prevents Claude from inventing database metadata.
+- This keeps the AI schema small and prevents Grok from inventing database metadata.
 
 ---
 

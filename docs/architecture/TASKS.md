@@ -8,7 +8,7 @@ Functional completeness beats broken ambition. The goal is a polished core loop,
 
 ## Phase 1: Foundation
 
-- [ ] Install required dependencies: `next`, `react`, `react-dom`, `typescript`, `tailwindcss`, `framer-motion`, `three`, `@types/three`, `@anthropic-ai/sdk`, `@supabase/supabase-js`, `zod`, `uuid`, `@types/uuid`
+- [ ] Install required dependencies: `next`, `react`, `react-dom`, `typescript`, `tailwindcss`, `framer-motion`, `three`, `@types/three`, direct HTTP to xAI chat completions, `@supabase/supabase-js`, `zod`, `uuid`, `@types/uuid`
 - [ ] Create `lib/types.ts` with canonical Pathwise types
 - [ ] Create `lib/validation.ts` with Zod schemas
 - [ ] Create `lib/statusColors.ts`
@@ -83,7 +83,7 @@ Hard rule:
 - [ ] Create `POST /api/opportunity`
 - [ ] Fetch existing plan by `planId`
 - [ ] Build opportunity prompt
-- [ ] Call Claude
+- [ ] Call Grok
 - [ ] Validate with `OpportunityCheckSchema`
 - [ ] Save to `opportunity_checks`
 - [ ] Return structured result
@@ -114,14 +114,14 @@ Hard rule:
 
 ## Phase 7: Strategy Generation API
 
-- [ ] Create `lib/anthropic.ts`
+- [ ] Create `lib/grok.ts`
 - [ ] Create `lib/prompts/strategyPrompt.ts`
 - [ ] Create `lib/prompts/opportunityPrompt.ts`
 - [ ] Create `lib/supabase.ts`
 - [ ] Create `POST /api/generate`
 - [ ] Generate student UUID
 - [ ] Save profile to `student_profiles`
-- [ ] Call Claude with strict JSON strategy prompt
+- [ ] Call Grok with strict JSON strategy prompt
 - [ ] Validate with `StrategyPlanSchema`
 - [ ] Retry once with correction prompt on validation failure
 - [ ] Save plan JSONB to `strategy_plans`
