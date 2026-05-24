@@ -40,10 +40,7 @@ export function OpportunityInput({ onEvaluate, busy }: Props) {
         className="flex flex-col gap-4"
       >
         <div>
-          <span className="text-[11px] font-medium text-tertiary">
-            Opportunity check
-          </span>
-          <h2 className="mt-1 font-display text-2xl font-semibold leading-tight text-primary sm:text-3xl">
+          <h2 className="font-display text-2xl font-semibold leading-tight text-primary sm:text-3xl">
             Worth saying yes to?
           </h2>
           <p className="mt-2 text-[14px] text-secondary">

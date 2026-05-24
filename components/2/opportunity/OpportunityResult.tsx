@@ -46,14 +46,10 @@ export function OpportunityResult({
         <div className="flex flex-col gap-6 md:flex-row md:items-start md:gap-8">
           <FitScoreGauge score={check.fitScore} />
           <div className="flex flex-1 flex-col gap-4">
-            <div>
-              <span className="text-[11px] font-medium text-tertiary">
-                Verdict
-              </span>
-              <div className="mt-2">
-                <RecommendationStamp recommendation={check.recommendation} />
-              </div>
-            </div>
+            <span className="text-[11px] font-medium uppercase tracking-wider text-tertiary">
+              Pathwise says
+            </span>
+            <RecommendationStamp recommendation={check.recommendation} />
             <p className="text-[15px] leading-relaxed text-primary">
               {check.reasoning}
             </p>
