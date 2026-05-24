@@ -1,5 +1,3 @@
-"use client";
-
 import { createSupabaseAnonClient } from "@/lib/shared/supabase";
 import type {
   Priority,
