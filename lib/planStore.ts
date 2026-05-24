@@ -3,7 +3,7 @@
 import { createSupabaseAnonClient } from "./supabase";
 import type { OpportunityCheck, StrategyPlan } from "./types";
 
-export type ActionState = "open" | "done" | "skipped";
+export type ActionState = "open" | "doing" | "done" | "skipped";
 
 export type JournalEntry = {
   id: string;

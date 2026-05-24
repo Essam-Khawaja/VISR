@@ -20,8 +20,9 @@ import { buildGraphLayout, graphRadii } from "./graphLayout";
 import { createNodeMesh, haloStrength, type NodeMesh } from "./graphNodes";
 import type { GraphNodeData, GraphSelection } from "./graphTypes";
 import type { StrategicPillar } from "@/lib/types";
+import type { ActionState } from "@/lib/planStore";
 
-export type ActionState = "open" | "done" | "skipped";
+export type { ActionState };
 
 export type HoverState = {
   node: GraphNodeData;
