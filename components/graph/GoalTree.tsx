@@ -39,6 +39,7 @@ export default function GoalTree({
   const labelsRef = useRef<HTMLDivElement>(null);
   const [dockOpen, setDockOpen] = useState(false);
   const onboarding = displayMode === "onboarding";
+  const preview = displayMode === "preview";
 
   const { hover, selection, select, clearSelection, selectBottleneck } =
     useGraphScene({
@@ -48,7 +49,8 @@ export default function GoalTree({
       destination: plan.destination,
       mainBottleneck: plan.mainBottleneck,
       actionStates,
-      isReadOnly: onboarding,
+      isReadOnly: onboarding || preview,
+      showAllNodes: preview,
       layoutOverride,
     });
 
@@ -93,7 +95,6 @@ export default function GoalTree({
   const hasBottleneck = plan.strategicPillars.some(
     (p) => p.status === "Weak" || p.status === "Missing",
   );
-  const preview = displayMode === "preview";
   const hideChrome = preview || onboarding;
 
   return (

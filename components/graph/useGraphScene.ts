@@ -38,6 +38,7 @@ type Props = {
   mainBottleneck: string;
   actionStates?: Record<string, ActionState>;
   isReadOnly?: boolean;
+  showAllNodes?: boolean;
   layoutOverride?: {
     nodes: import("./graphTypes").LayoutNode[];
     edges: import("./graphTypes").LayoutEdge[];
@@ -61,6 +62,7 @@ export function useGraphScene({
   mainBottleneck,
   actionStates,
   isReadOnly = false,
+  showAllNodes = false,
   layoutOverride,
 }: Props) {
   const [hover, setHoverState] = useState<HoverState>(null);
@@ -151,7 +153,8 @@ export function useGraphScene({
     scene.add(root);
 
     const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 100);
-    camera.position.set(0, 0, CAMERA_START_Z);
+    const startZ = showAllNodes ? CAMERA_END_Z + 4 : CAMERA_START_Z;
+    camera.position.set(0, 0, startZ);
     camera.lookAt(0, 0, 0);
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
@@ -225,7 +228,12 @@ export function useGraphScene({
     if (labelsContainer) {
       labelsContainer.innerHTML = "";
       nodeMeshes.forEach((nm) => {
-        if (nm.data.kind !== "goal" && nm.data.kind !== "pillar") return;
+        const showLabel =
+          nm.data.kind === "goal" ||
+          nm.data.kind === "pillar" ||
+          (showAllNodes && nm.data.kind === "action");
+        if (!showLabel) return;
+
         const el = document.createElement("div");
         el.style.willChange = "transform, opacity";
         el.style.transform = "translate(-9999px,-9999px)";
@@ -243,7 +251,7 @@ export function useGraphScene({
             <div style="margin:4px auto 0;width:28px;height:3px;border-radius:2px;background:rgba(0,0,0,0.25)">
               <div style="width:0%;height:100%;border-radius:2px;background:#C4A55A"></div>
             </div>`;
-        } else {
+        } else if (nm.data.kind === "pillar") {
           const count = nm.data.actionCount ?? 0;
           const pct = Math.round((nm.data.progressPercent ?? 0) * 100);
           el.style.color = "#FDFBF7";
@@ -255,6 +263,12 @@ export function useGraphScene({
             <div style="margin:3px auto 0;width:24px;height:3px;border-radius:2px;background:rgba(0,0,0,0.25)">
               <div style="width:${pct}%;height:100%;border-radius:2px;background:#C4A55A;transition:width 0.3s"></div>
             </div>`;
+        } else {
+          el.style.color = "#FDFBF7";
+          el.style.fontSize = "9px";
+          el.style.fontWeight = "500";
+          el.style.textShadow = "0 1px 2px rgba(0,0,0,0.4)";
+          el.innerHTML = `<span>${nm.data.name}</span>`;
         }
 
         labelsContainer.appendChild(el);
@@ -285,7 +299,7 @@ export function useGraphScene({
 
     let cameraTargetX = 0;
     let cameraTargetY = 0;
-    let cameraTargetZ = CAMERA_END_Z;
+    let cameraTargetZ = showAllNodes ? CAMERA_END_Z + 4 : CAMERA_END_Z;
     let lookAtTargetX = 0;
     let lookAtTargetY = 0;
     let currentLookX = 0;
@@ -465,6 +479,19 @@ export function useGraphScene({
     canvas.addEventListener("wheel", onWheel, { passive: false });
 
     const computeTargets = (elapsed: number) => {
+      const introT = Math.min(1, elapsed / 800);
+
+      if (showAllNodes) {
+        nodeMeshes.forEach((nm) => {
+          nm.targetOpacity = 1 * introT;
+          nm.targetScale = 1;
+        });
+        edges.forEach((er) => {
+          er.targetOpacity = er.baseOpacity * introT;
+        });
+        return;
+      }
+
       const sel = selectionRef.current;
       const isOverview = !sel;
       const selectedPillarId =
@@ -474,7 +501,6 @@ export function useGraphScene({
             ? nodeMeshes.find((n) => n.data.id === sel.nodeId)?.parentId ?? null
             : null;
       const selectedActionId = sel?.kind === "action" ? sel.nodeId : null;
-      const introT = Math.min(1, elapsed / 800);
 
       nodeMeshes.forEach((nm) => {
         const isHovered = nm.data.id === hoveredIdRef.current;
@@ -687,6 +713,7 @@ export function useGraphScene({
     destination,
     mainBottleneck,
     isReadOnly,
+    showAllNodes,
     layoutOverride,
   ]);
 
