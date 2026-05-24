@@ -19,6 +19,14 @@ import {
   type StoredPlan,
 } from "@/lib/2/planStore";
 import {
+  createStrategyNode,
+  type CreateStrategyNodeInput,
+  fetchNodesFromSupabase,
+  loadNodes,
+  type UpdateStrategyNodeInput,
+  updateStrategyNode,
+} from "@/lib/2/nodeStore";
+import {
   computeNodeRollup,
   createStrategyTask,
   type CreateStrategyTaskInput,
@@ -33,6 +41,7 @@ import {
 import { DEMO_PLAN_ID, fixturePlan } from "@/lib/2/fixture";
 import type {
   OpportunityCheck,
+  StrategyNode,
   StrategyPlan,
   StrategyTask,
   StrategyTaskStatus,
@@ -42,11 +51,17 @@ type PlanContextValue = {
   planId: string;
   plan: StrategyPlan;
   stored: StoredPlan;
+  nodes: StrategyNode[];
   tasks: StrategyTask[];
   rollups: Record<string, NodeRollup>;
   isDemo: boolean;
   isReady: boolean;
   markAction: (actionId: string, state: ActionState) => void;
+  createNode: (input: CreateStrategyNodeInput) => Promise<StrategyNode>;
+  updateNode: (
+    nodeId: string,
+    patch: UpdateStrategyNodeInput,
+  ) => Promise<void>;
   createTask: (input: Omit<CreateStrategyTaskInput, "planId">) => Promise<void>;
   updateTask: (
     taskId: string,
@@ -69,9 +84,60 @@ type Props = {
   children: React.ReactNode;
 };
 
+function planToNodes(plan: StrategyPlan): StrategyNode[] {
+  const now = new Date().toISOString();
+  const root: StrategyNode = {
+    id: "goal",
+    planId: plan.id,
+    parentNodeId: null,
+    kind: "university_outcome",
+    title: plan.destination,
+    subtitle: plan.currentStage,
+    status: "open",
+    scope: "focus",
+    sortOrder: 0,
+    metadata: {},
+    createdAt: now,
+    updatedAt: now,
+  };
+  const pillarNodes = plan.strategicPillars.flatMap((pillar, pillarIndex) => {
+    const pillarNode: StrategyNode = {
+      id: pillar.id,
+      planId: plan.id,
+      parentNodeId: root.id,
+      kind: "strategic_pillar",
+      title: pillar.name,
+      subtitle: pillar.reason,
+      status: pillar.status === "Weak" || pillar.status === "Missing" ? "at_risk" : "open",
+      scope: "focus",
+      sortOrder: pillarIndex + 1,
+      metadata: {},
+      createdAt: now,
+      updatedAt: now,
+    };
+    const actionNodes: StrategyNode[] = pillar.actions.map((action, actionIndex) => ({
+      id: action.id,
+      planId: plan.id,
+      parentNodeId: pillar.id,
+      kind: "task",
+      title: action.name,
+      subtitle: action.recommendation,
+      status: action.status === "At Risk" ? "at_risk" : "open",
+      scope: "focus",
+      sortOrder: actionIndex,
+      metadata: { legacyAction: true },
+      createdAt: now,
+      updatedAt: now,
+    }));
+    return [pillarNode, ...actionNodes];
+  });
+  return [root, ...pillarNodes];
+}
+
 export function PlanProvider({ planId, initialPlan, children }: Props) {
   const isDemo = planId === DEMO_PLAN_ID || planId.startsWith("demo-");
   const [stored, setStored] = useState<StoredPlan | null>(null);
+  const [nodes, setNodes] = useState<StrategyNode[]>([]);
   const [tasks, setTasks] = useState<StrategyTask[]>([]);
   const [isReady, setIsReady] = useState(false);
 
@@ -88,6 +154,7 @@ export function PlanProvider({ planId, initialPlan, children }: Props) {
         opportunityHistory: [],
         lastReviewedAt: new Date().toISOString(),
       });
+      setNodes(loadNodes(planId).length > 0 ? loadNodes(planId) : planToNodes(demoPlan));
       setTasks(ensureMaterializedTasks(demoPlan));
       setIsReady(true);
       return;
@@ -97,15 +164,18 @@ export function PlanProvider({ planId, initialPlan, children }: Props) {
     const fromCache = loadStoredPlan(planId);
     if (fromCache) {
       setStored(fromCache);
+      setNodes(loadNodes(planId).length > 0 ? loadNodes(planId) : planToNodes(fromCache.plan));
       ensureMaterializedTasks(fromCache.plan);
       setTasks(migrateActionStatesToTasks(planId, fromCache.actionStates));
     } else if (initialPlan) {
       savePlan(planId, initialPlan);
       const fresh = loadStoredPlan(planId);
       setStored(fresh);
+      setNodes(loadNodes(planId).length > 0 ? loadNodes(planId) : planToNodes(initialPlan));
       setTasks(ensureMaterializedTasks(initialPlan));
     } else {
       setStored(null);
+      setNodes([]);
     }
     setIsReady(true);
 
@@ -115,10 +185,15 @@ export function PlanProvider({ planId, initialPlan, children }: Props) {
       if (cancelled) return;
       if (fromSupabase) {
         setStored(fromSupabase);
+        setNodes(loadNodes(planId).length > 0 ? loadNodes(planId) : planToNodes(fromSupabase.plan));
         ensureMaterializedTasks(fromSupabase.plan);
         setTasks(migrateActionStatesToTasks(planId, fromSupabase.actionStates));
       }
     })();
+
+    void fetchNodesFromSupabase(planId).then((fromNodes) => {
+      if (!cancelled && fromNodes.length > 0) setNodes(fromNodes);
+    });
 
     void fetchTasksFromSupabase({ planId }).then((fromTasks) => {
       if (!cancelled && fromTasks.length > 0) setTasks(fromTasks);
@@ -137,9 +212,48 @@ export function PlanProvider({ planId, initialPlan, children }: Props) {
     setTasks(fromTasks);
   }, [planId]);
 
+  const refreshNodes = useCallback(async () => {
+    const fromNodes = await fetchNodesFromSupabase(planId);
+    setNodes(fromNodes);
+  }, [planId]);
+
+  const createNode = useCallback(async (input: CreateStrategyNodeInput) => {
+    const node = await createStrategyNode(input);
+    setNodes((prev) => [...prev.filter((n) => n.id !== node.id), node]);
+    return node;
+  }, []);
+
+  const updateNode = useCallback(
+    async (nodeId: string, patch: UpdateStrategyNodeInput) => {
+      const node = await updateStrategyNode(planId, nodeId, patch);
+      if (!node) return;
+      setNodes((prev) => [...prev.filter((n) => n.id !== node.id), node]);
+    },
+    [planId],
+  );
+
   const createTask = useCallback(
     async (input: Omit<CreateStrategyTaskInput, "planId">) => {
-      const task = await createStrategyTask({ ...input, planId });
+      const graphNode = await createStrategyNode({
+        planId,
+        parentNodeId: input.parentNodeId,
+        kind: "task",
+        title: input.title,
+        subtitle: input.recommendation,
+        status: "open",
+        scope: "focus",
+        sortOrder: input.sortOrder ?? 0,
+        metadata: { dueDate: input.dueDate, priority: input.priority ?? "Medium" },
+      });
+      setNodes((prev) => [
+        ...prev.filter((node) => node.id !== graphNode.id),
+        graphNode,
+      ]);
+      const task = await createStrategyTask({
+        ...input,
+        planId,
+        graphNodeId: graphNode.id,
+      });
       setTasks((prev) => [...prev.filter((t) => t.id !== task.id), task]);
     },
     [planId],
@@ -261,11 +375,14 @@ export function PlanProvider({ planId, initialPlan, children }: Props) {
       planId,
       plan: stored.plan,
       stored,
+      nodes,
       tasks,
       rollups,
       isDemo,
       isReady,
       markAction,
+      createNode,
+      updateNode,
       createTask,
       updateTask,
       markTask,
@@ -274,16 +391,20 @@ export function PlanProvider({ planId, initialPlan, children }: Props) {
       refresh: () => {
         refresh();
         void refreshTasks();
+        void refreshNodes();
       },
     };
   }, [
     planId,
     stored,
+    nodes,
     tasks,
     rollups,
     isDemo,
     isReady,
     markAction,
+    createNode,
+    updateNode,
     createTask,
     updateTask,
     markTask,
@@ -291,6 +412,7 @@ export function PlanProvider({ planId, initialPlan, children }: Props) {
     applyOpportunityResult,
     refresh,
     refreshTasks,
+    refreshNodes,
   ]);
 
   return (
