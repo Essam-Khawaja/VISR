@@ -18,7 +18,12 @@ import {
 import { createEdgeRender, type EdgeRender } from "./graphEdges";
 import { buildGraphLayout, graphRadii } from "./graphLayout";
 import { createNodeMesh, haloStrength, type NodeMesh } from "./graphNodes";
-import type { GraphNodeData, GraphSelection, LayoutNode } from "./graphTypes";
+import type {
+  GraphLayoutResult,
+  GraphNodeData,
+  GraphSelection,
+  LayoutNode,
+} from "./graphTypes";
 import type { StrategicPillar } from "@/lib/2/types";
 import type { ActionState } from "@/lib/2/planStore";
 import type { NodeRollup } from "@/lib/2/taskStore";
@@ -81,9 +86,13 @@ function darkenHex(hex: string, amount = 0.24): string {
 
 function labelSize(name: string, kind: GraphNodeData["kind"]) {
   const length = name.length;
-  if (kind === "goal") return { width: Math.min(172, Math.max(118, length * 7)), height: 74 };
-  if (kind === "pillar") return { width: Math.min(150, Math.max(104, length * 6)), height: 64 };
-  return { width: Math.min(126, Math.max(82, length * 5.5)), height: 52 };
+  if (kind === "goal") {
+    return { width: Math.min(180, Math.max(118, length * 7)), height: 74 };
+  }
+  if (kind === "pillar") {
+    return { width: Math.min(158, Math.max(106, length * 6)), height: 66 };
+  }
+  return { width: Math.min(136, Math.max(86, length * 5.5)), height: 54 };
 }
 
 function nodeLabelHtml(node: LayoutNode): string {
@@ -105,6 +114,26 @@ function nodeLabelHtml(node: LayoutNode): string {
         ${escapeHtml(node.name)}
       </div>
     </div>`;
+}
+
+function applyLabelSpacing(layout: Pick<GraphLayoutResult, "nodes" | "edges">) {
+  const byId = new Map(layout.nodes.map((node) => [node.id, node]));
+  layout.nodes.forEach((node) => {
+    if (node.kind === "goal") return;
+    const { width } = labelSize(node.name, node.kind);
+    const pressure = Math.max(0, width - (node.kind === "pillar" ? 122 : 96));
+    const scale = 1 + Math.min(0.28, pressure / 360);
+    node.position = [
+      node.position[0] * scale,
+      node.position[1] * scale,
+      node.position[2],
+    ];
+  });
+  layout.edges.forEach((edge) => {
+    const from = byId.get(edge.from);
+    const to = byId.get(edge.to);
+    if (from && to) edge.points = [from.position, to.position];
+  });
 }
 
 export function useGraphScene({
@@ -207,6 +236,7 @@ export function useGraphScene({
         e.progressPercent = pillarNode?.progressPercent ?? 0;
       }
     });
+    applyLabelSpacing(layout);
 
     const reduceMotion =
       typeof window !== "undefined" &&
@@ -294,12 +324,6 @@ export function useGraphScene({
     if (labelsContainer) {
       labelsContainer.innerHTML = "";
       nodeMeshes.forEach((nm) => {
-        const showLabel =
-          nm.data.kind === "goal" ||
-          nm.data.kind === "pillar" ||
-          (showAllNodes && nm.data.kind === "action");
-        if (!showLabel) return;
-
         const el = document.createElement("div");
         el.style.willChange = "transform, opacity";
         el.style.transform = "translate(-9999px,-9999px)";
