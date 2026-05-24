@@ -35,6 +35,14 @@ import ICSImportButton from "@/components/1/import/ICSImportButton";
 import WeekChart from "@/components/1/week-chart/WeekChart";
 import { Plus, Loader2, Settings as SettingsIcon } from "lucide-react";
 import Link from "next/link";
+import { demoPlanId } from "@/lib/shared/env";
+import { fixturePlan } from "@/lib/2/fixture";
+import {
+  ensureMaterializedTasks,
+  fetchTasksFromSupabase,
+  updateStrategyTask,
+} from "@/lib/2/taskStore";
+import type { StrategyTask } from "@/lib/2/types";
 
 const TRANSIT_MARKER = "auto-transit";
 
@@ -45,6 +53,115 @@ type LinkedItem = {
   is_one_time: boolean;
   items: Item;
 };
+
+function StrategyTasksPanel({
+  tasks,
+  selectedDate,
+  onToggle,
+}: {
+  tasks: StrategyTask[];
+  selectedDate: string;
+  onToggle: (task: StrategyTask) => void;
+}) {
+  const openCount = tasks.filter((task) => task.status !== "done").length;
+  const doneCount = tasks.length - openCount;
+
+  return (
+    <section className="glass-card p-4">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h2 className="text-sm font-semibold text-primary">
+            Strategy tasks
+          </h2>
+          <p className="mt-0.5 text-[11px] text-tertiary">
+            Synced from your strategy map for {selectedDate}
+          </p>
+        </div>
+        <Link
+          href={`/2/dashboard/${demoPlanId}`}
+          className="rounded-full border border-border px-3 py-1 text-[11px] font-semibold text-secondary transition-colors hover:border-accent hover:text-accent"
+        >
+          Open map
+        </Link>
+      </div>
+
+      {tasks.length === 0 ? (
+        <p className="mt-4 rounded-xl border border-dashed border-border px-3 py-4 text-center text-xs text-tertiary">
+          No strategy tasks due today.
+        </p>
+      ) : (
+        <div className="mt-3 space-y-2">
+          {tasks.map((task) => {
+            const done = task.status === "done";
+            return (
+              <div
+                key={task.id}
+                className="flex items-start gap-3 rounded-xl border border-border bg-white/70 px-3 py-2"
+              >
+                <button
+                  type="button"
+                  onClick={() => onToggle(task)}
+                  aria-label={`${done ? "Reopen" : "Complete"} ${task.title}`}
+                  className={
+                    "mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-md border transition-colors " +
+                    (done
+                      ? "border-success bg-success text-white"
+                      : "border-border-strong bg-white text-transparent hover:border-accent")
+                  }
+                >
+                  <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
+                    <path
+                      d="M2 5.5 L4.5 8 L9 3"
+                      stroke="currentColor"
+                      strokeWidth="1.8"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                </button>
+                <div className="min-w-0 flex-1">
+                  <p
+                    className={
+                      "text-sm font-medium leading-snug " +
+                      (done ? "text-tertiary line-through" : "text-primary")
+                    }
+                  >
+                    {task.title}
+                  </p>
+                  <div className="mt-1 flex flex-wrap items-center gap-1.5 text-[11px]">
+                    <span className="rounded-full bg-slate-100 px-2 py-0.5 font-medium text-slate-600">
+                      {task.parentNodeKind}
+                    </span>
+                    <span className={priorityClass(task.priority)}>
+                      {task.priority}
+                    </span>
+                    <span className="text-tertiary">Due {task.dueDate}</span>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {tasks.length > 0 ? (
+        <p className="mt-3 text-[11px] font-medium text-tertiary">
+          {doneCount} done · {openCount} open
+        </p>
+      ) : null}
+    </section>
+  );
+}
+
+function priorityClass(priority: StrategyTask["priority"]): string {
+  if (priority === "High") {
+    return "rounded-full bg-red-50 px-2 py-0.5 font-semibold text-red-600";
+  }
+  if (priority === "Medium") {
+    return "rounded-full bg-amber-50 px-2 py-0.5 font-semibold text-amber-700";
+  }
+  return "rounded-full bg-slate-100 px-2 py-0.5 font-semibold text-slate-600";
+}
 
 function DashboardInner() {
   const [selectedDate, setSelectedDate] = useSelectedDate();
@@ -68,6 +185,7 @@ function DashboardInner() {
   const [checklistItems, setChecklistItems] = useState<ChecklistItem[]>([]);
   const [checklistLoading, setChecklistLoading] = useState(true);
   const [manualItems, setManualItems] = useState<ManualChecklistItem[]>([]);
+  const [strategyTasks, setStrategyTasks] = useState<StrategyTask[]>([]);
   const [weather, setWeather] = useState<WeatherData | null>(null);
   const [weatherAdvice, setWeatherAdvice] = useState<WeatherAdvice[]>([]);
   const [weatherLoading, setWeatherLoading] = useState(false);
@@ -174,6 +292,12 @@ function DashboardInner() {
       const res = await fetch(`/api/1/manual-checklist?date=${date}`);
       if (res.ok) setManualItems(await res.json());
     } catch {}
+  }, []);
+
+  const loadStrategyTasks = useCallback(async (date: string) => {
+    ensureMaterializedTasks({ ...fixturePlan, id: demoPlanId });
+    const tasks = await fetchTasksFromSupabase({ planId: demoPlanId, date });
+    setStrategyTasks(tasks);
   }, []);
 
   const loadWeather = useCallback(
@@ -409,7 +533,8 @@ function DashboardInner() {
   useEffect(() => {
     loadEvents(selectedDate);
     loadManualItems(selectedDate);
-  }, [selectedDate, loadEvents, loadManualItems]);
+    void loadStrategyTasks(selectedDate);
+  }, [selectedDate, loadEvents, loadManualItems, loadStrategyTasks]);
 
   useEffect(() => {
     if (settings) {
@@ -483,6 +608,17 @@ function DashboardInner() {
     } catch {
       setManualItems(previous);
     }
+  }
+
+  async function toggleStrategyTask(task: StrategyTask) {
+    const nextStatus = task.status === "done" ? "open" : "done";
+    setStrategyTasks((prev) =>
+      prev.map((item) =>
+        item.id === task.id ? { ...item, status: nextStatus } : item,
+      ),
+    );
+    await updateStrategyTask(demoPlanId, task.id, { status: nextStatus });
+    await loadStrategyTasks(selectedDate);
   }
 
   async function maybeAddTransitBlocks(event: TimelineEvent) {
@@ -672,6 +808,12 @@ function DashboardInner() {
             onToggleManual={toggleManualItem}
           />
         )}
+
+        <StrategyTasksPanel
+          tasks={strategyTasks}
+          selectedDate={selectedDate}
+          onToggle={toggleStrategyTask}
+        />
 
         {events.length > 0 && (
           <VoiceBriefingButton
