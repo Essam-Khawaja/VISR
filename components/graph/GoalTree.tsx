@@ -15,6 +15,7 @@ export type GoalTreeProps = {
   markAction: (actionId: string, state: ActionState) => void;
   isDemo: boolean;
   onToggleToday: () => void;
+  displayMode?: "preview" | "full";
 };
 
 export default function GoalTree({
@@ -24,6 +25,7 @@ export default function GoalTree({
   markAction,
   isDemo,
   onToggleToday,
+  displayMode = "full",
 }: GoalTreeProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const labelsRef = useRef<HTMLDivElement>(null);
@@ -70,6 +72,7 @@ export default function GoalTree({
   const hasBottleneck = plan.strategicPillars.some(
     (p) => p.status === "Weak" || p.status === "Missing",
   );
+  const preview = displayMode === "preview";
 
   return (
     <div className="relative h-full w-full min-h-0 overflow-hidden bg-base">
@@ -84,40 +87,48 @@ export default function GoalTree({
         aria-hidden
       />
 
-      <StrategyHUD
-        plan={plan}
-        planId={planId}
-        hasBottleneck={hasBottleneck}
-        onFocusBottleneck={selectBottleneck}
-        isDemo={isDemo}
-      />
+      {preview ? null : (
+        <StrategyHUD
+          plan={plan}
+          planId={planId}
+          hasBottleneck={hasBottleneck}
+          onFocusBottleneck={selectBottleneck}
+          isDemo={isDemo}
+        />
+      )}
 
       {selection ? null : <NodePopover hover={hover} />}
 
-      <SelectionCard
-        plan={plan}
-        selection={selection}
-        actionStates={actionStates}
-        onSelect={select}
-        onClose={clearSelection}
-        onToggleAction={markAction}
-        isDemo={isDemo}
-      />
+      {preview ? null : (
+        <SelectionCard
+          plan={plan}
+          selection={selection}
+          actionStates={actionStates}
+          onSelect={select}
+          onClose={clearSelection}
+          onToggleAction={markAction}
+          isDemo={isDemo}
+        />
+      )}
 
-      <IntelligenceDock
-        plan={plan}
-        actionStates={actionStates}
-        onToggleAction={markAction}
-        open={dockOpen}
-        onToggle={toggleDock}
-        isDemo={isDemo}
-      />
+      {preview ? null : (
+        <IntelligenceDock
+          plan={plan}
+          actionStates={actionStates}
+          onToggleAction={markAction}
+          open={dockOpen}
+          onToggle={toggleDock}
+          isDemo={isDemo}
+        />
+      )}
 
-      <div className="pointer-events-none absolute bottom-4 left-1/2 z-20 -translate-x-1/2 text-[11px] text-tertiary md:bottom-6">
-        {selection
-          ? "Click goal or press Esc to return"
-          : "Click a pillar to expand · drag to pan · scroll to zoom · press T for today"}
-      </div>
+      {preview ? null : (
+        <div className="pointer-events-none absolute bottom-4 left-1/2 z-20 -translate-x-1/2 text-[11px] text-tertiary md:bottom-6">
+          {selection
+            ? "Click goal or press Esc to return"
+            : "Click a pillar to expand · drag to pan · scroll to zoom · press T for today"}
+        </div>
+      )}
     </div>
   );
 }

@@ -11,9 +11,10 @@ const GoalTree = dynamic(() => import("@/components/graph/GoalTree"), {
 
 type Props = {
   onToggleToday: () => void;
+  displayMode?: "preview" | "full";
 };
 
-export function GoalTreeSlot({ onToggleToday }: Props) {
+export function GoalTreeSlot({ onToggleToday, displayMode = "full" }: Props) {
   const { plan, planId, stored, markAction, isDemo } = usePlan();
   return (
     <GoalTree
@@ -23,6 +24,7 @@ export function GoalTreeSlot({ onToggleToday }: Props) {
       markAction={markAction}
       isDemo={isDemo}
       onToggleToday={onToggleToday}
+      displayMode={displayMode}
     />
   );
 }
