@@ -131,3 +131,45 @@ User asked to “see the strategy map below being made.” Matches dashboard com
 
 **Consequence:**  
 `OnboardingShell` uses `flex-col` and `min-h-[100dvh]`.
+
+---
+
+### 2026-05-23 — Onboarding reuses existing graph node kinds ("goal", "pillar") for rendering
+
+**Decision:**  
+Onboarding course/commitment nodes use the existing `"pillar"` kind in `GraphNodeKind` rather than adding new kinds like `"course"` or `"commitment"`.
+
+**Reason:**  
+The Three.js rendering pipeline (`createNodeMesh`, `createEdgeRender`) already handles `"goal"` and `"pillar"` kinds correctly. Adding new kinds would require forking or extending all rendering code. Visual distinction is achieved through color and radius instead.
+
+**Alternatives Considered:**  
+- Extend `GraphNodeKind` union — more typing but forced changes in switch statements across graph files.
+
+**Consequence:**  
+`buildOnboardingLayout` outputs nodes with `kind: "goal"` and `kind: "pillar"` only. Courses use `var(--text-secondary)` color; commitments use `var(--muted)`.
+
+---
+
+### 2026-05-23 — useGraphScene uses layoutOverride prop instead of forked hook
+
+**Decision:**  
+Extend `useGraphScene` with optional `layoutOverride` and `isReadOnly` props rather than creating a separate `useOnboardingScene` hook.
+
+**Reason:**  
+The scene setup (WebGL renderer, camera, animation loop, labels, pan/zoom) is identical between dashboard and onboarding. Only the layout source and interaction mode differ. A single hook with optional overrides avoids duplicating 590 lines.
+
+**Consequence:**  
+`layoutOverride` bypasses `buildGraphLayout()` call; `isReadOnly` disables click/hover raycasting while preserving pan and zoom.
+
+---
+
+### 2026-05-23 — GenerationLoading renders as frosted overlay on map, not full-page replacement
+
+**Decision:**  
+When generating from onboarding, `GenerationLoading` renders as `absolute inset-0 bg-base/60 backdrop-blur-sm` overlay on the map panel instead of replacing the entire page.
+
+**Reason:**  
+The live map stays visible underneath, making the transition feel like the map is "morphing" rather than disappearing. This is the premium feel described in the PRD.
+
+**Consequence:**  
+`GenerationLoading` accepts an `overlay` boolean prop. `OnboardingShell` renders it inside the map container with `AnimatePresence`.

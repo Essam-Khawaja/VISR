@@ -1,7 +1,7 @@
 # Feature Tech Spec: Progressive Onboarding Strategy Map
 
 ## Status
-Draft
+Complete
 
 ## Related Docs
 - Global PRD: `docs/architecture/PRD.md`

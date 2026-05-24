@@ -75,6 +75,8 @@ export function ChipInput({
           error ? "border-danger focus-within:border-danger" : "border-border",
         )}
         onClick={() => inputRef.current?.focus()}
+        role="group"
+        aria-label={label ? `${label} — ${value.length} added` : undefined}
       >
         {value.map((chip) => (
           <span
