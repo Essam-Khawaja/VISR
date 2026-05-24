@@ -18,7 +18,7 @@ import { demoPlanId } from "@/lib/shared/env";
 import { savePlan } from "@/lib/2/planStore";
 import type { StrategyPlan } from "@/lib/2/types";
 
-const DRAFT_KEY = "pathwise-onboarding-draft-v2";
+const DRAFT_KEY = "pathwise-onboarding-draft-v3";
 
 type Draft = {
   profile: OnboardingFormData;
