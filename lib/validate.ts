@@ -20,6 +20,9 @@ export const ActionNodeSchema: z.ZodType<import("./types").ActionNode> =
     status: z.enum(["On Track", "Behind", "At Risk", "Deferred", "Cut"]),
     recommendation: z.string().max(400),
     children: z.lazy(() => z.array(ActionNodeSchema)).optional(),
+    dueDate: z.string().optional(),
+    priority: z.enum(["High", "Medium", "Low"]).optional(),
+    notes: z.string().max(1000).optional(),
   });
 
 export const TaskGenerationRequestSchema = z.object({

@@ -31,6 +31,9 @@ export type ActionNode = {
   status: NodeStatus;
   recommendation: string;
   children?: ActionNode[];
+  dueDate?: string;
+  priority?: Priority;
+  notes?: string;
 };
 
 export type StrategicPillar = {
