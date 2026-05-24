@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { Badge } from "@/components/ui/Badge";
 import type { ActionNode, StrategicPillar } from "@/lib/types";
@@ -17,16 +17,17 @@ const PILLAR_PASTELS = [
 
 type Column = "todo" | "doing" | "done";
 
-const COLUMNS: { key: Column; label: string; stateMatch: (s: ActionState | undefined) => boolean }[] = [
+const COLUMNS: {
+  key: Column;
+  label: string;
+  stateMatch: (s: ActionState | undefined) => boolean;
+}[] = [
   { key: "todo", label: "To Do", stateMatch: (s) => !s || s === "open" },
   { key: "doing", label: "Doing", stateMatch: (s) => s === "doing" },
   { key: "done", label: "Done", stateMatch: (s) => s === "done" },
 ];
 
-type BreadcrumbEntry = {
-  id: string;
-  name: string;
-};
+type BreadcrumbEntry = { id: string; name: string };
 
 type Props = {
   pillar: StrategicPillar;
@@ -54,6 +55,12 @@ function findActionDeep(
   return null;
 }
 
+function stateForColumn(col: Column): ActionState {
+  if (col === "todo") return "open";
+  if (col === "doing") return "doing";
+  return "done";
+}
+
 export function KanbanBoard({
   pillar,
   pillarIndex,
@@ -65,6 +72,7 @@ export function KanbanBoard({
   const [breadcrumb, setBreadcrumb] = useState<BreadcrumbEntry[]>([]);
   const [adding, setAdding] = useState(false);
   const [newTaskName, setNewTaskName] = useState("");
+  const [dragTaskId, setDragTaskId] = useState<string | null>(null);
 
   const currentParentId =
     breadcrumb.length > 0
@@ -76,12 +84,9 @@ export function KanbanBoard({
       ? pillar.actions
       : findActionDeep(pillar.actions, currentParentId)?.children ?? [];
 
-  const drillInto = useCallback(
-    (action: ActionNode) => {
-      setBreadcrumb((prev) => [...prev, { id: action.id, name: action.name }]);
-    },
-    [],
-  );
+  const drillInto = useCallback((action: ActionNode) => {
+    setBreadcrumb((prev) => [...prev, { id: action.id, name: action.name }]);
+  }, []);
 
   const navigateTo = useCallback((index: number) => {
     setBreadcrumb((prev) => prev.slice(0, index));
@@ -97,17 +102,36 @@ export function KanbanBoard({
     setAdding(false);
   }, [newTaskName, currentParentId, addTasks]);
 
-  const stateForColumn = (col: Column): ActionState => {
-    if (col === "todo") return "open";
-    if (col === "doing") return "doing";
-    return "done";
-  };
+  const handleDragStart = useCallback((taskId: string) => {
+    setDragTaskId(taskId);
+  }, []);
+
+  const handleDrop = useCallback(
+    (targetCol: Column) => {
+      if (dragTaskId) {
+        markAction(dragTaskId, stateForColumn(targetCol));
+        setDragTaskId(null);
+      }
+    },
+    [dragTaskId, markAction],
+  );
 
   const pastel = PILLAR_PASTELS[pillarIndex % PILLAR_PASTELS.length];
 
+  const tasksWithDue = useMemo(() => {
+    const collect = (actions: ActionNode[]): ActionNode[] => {
+      const result: ActionNode[] = [];
+      for (const a of actions) {
+        if (a.dueDate) result.push(a);
+        if (a.children) result.push(...collect(a.children));
+      }
+      return result;
+    };
+    return collect(pillar.actions);
+  }, [pillar.actions]);
+
   return (
     <div className="flex h-full flex-col">
-      {/* Breadcrumb */}
       <div className="flex shrink-0 items-center gap-1.5 border-b border-border bg-surface px-5 py-3">
         <Link
           href={`/dashboard/${planId}`}
@@ -151,112 +175,199 @@ export function KanbanBoard({
         ))}
       </div>
 
-      {/* Kanban columns */}
-      <div className="flex min-h-0 flex-1 gap-4 overflow-x-auto p-5">
-        {COLUMNS.map((col) => {
-          const tasks = currentTasks.filter((t) =>
-            col.stateMatch(actionStates[t.id]),
-          );
-          return (
-            <div
-              key={col.key}
-              className="flex w-[300px] shrink-0 flex-col rounded-xl border border-border bg-elevated/50"
-            >
-              <div className="flex items-center justify-between px-4 py-3">
-                <div className="flex items-center gap-2">
-                  <h3 className="text-[13px] font-semibold text-primary">
-                    {col.label}
-                  </h3>
-                  <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-surface px-1.5 text-[11px] font-medium text-tertiary">
-                    {tasks.length}
-                  </span>
-                </div>
-                {col.key === "todo" ? (
-                  <button
-                    type="button"
-                    onClick={() => setAdding(true)}
-                    className="flex h-6 w-6 items-center justify-center rounded-md text-tertiary transition-colors hover:bg-surface hover:text-primary"
-                    aria-label="Add task"
-                  >
-                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                      <path
-                        d="M7 2v10M2 7h10"
-                        stroke="currentColor"
-                        strokeWidth="1.5"
-                        strokeLinecap="round"
-                      />
-                    </svg>
-                  </button>
-                ) : null}
-              </div>
-
-              <div className="flex flex-1 flex-col gap-2 overflow-y-auto px-3 pb-3">
-                {col.key === "todo" && adding ? (
-                  <div className="rounded-lg border border-accent/40 bg-surface p-3">
-                    <input
-                      type="text"
+      <div className="flex min-h-0 flex-1 overflow-hidden">
+        {/* Kanban columns */}
+        <div className="flex min-w-0 flex-1 gap-4 overflow-x-auto p-5">
+          {COLUMNS.map((col) => {
+            const tasks = currentTasks.filter((t) =>
+              col.stateMatch(actionStates[t.id]),
+            );
+            return (
+              <KanbanColumn
+                key={col.key}
+                column={col}
+                tasks={tasks}
+                actionStates={actionStates}
+                isDragging={!!dragTaskId}
+                onDrop={() => handleDrop(col.key)}
+                onDragStart={handleDragStart}
+                onMove={(taskId, targetCol) =>
+                  markAction(taskId, stateForColumn(targetCol))
+                }
+                onDrillIn={drillInto}
+                onAddClick={
+                  col.key === "todo" ? () => setAdding(true) : undefined
+                }
+                addForm={
+                  col.key === "todo" && adding ? (
+                    <AddTaskForm
                       value={newTaskName}
-                      onChange={(e) => setNewTaskName(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") handleAdd();
-                        if (e.key === "Escape") {
-                          setAdding(false);
-                          setNewTaskName("");
-                        }
+                      onChange={setNewTaskName}
+                      onSubmit={handleAdd}
+                      onCancel={() => {
+                        setAdding(false);
+                        setNewTaskName("");
                       }}
-                      placeholder="Task name..."
-                      autoFocus
-                      className="w-full rounded-md border border-border bg-base px-2.5 py-1.5 text-[13px] text-primary placeholder:text-tertiary focus:border-accent focus:outline-none"
                     />
-                    <div className="mt-2 flex gap-2">
-                      <button
-                        type="button"
-                        onClick={handleAdd}
-                        disabled={!newTaskName.trim()}
-                        className="rounded-md bg-accent px-3 py-1 text-[12px] font-medium text-white disabled:opacity-40"
-                      >
-                        Add
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setAdding(false);
-                          setNewTaskName("");
-                        }}
-                        className="rounded-md px-3 py-1 text-[12px] font-medium text-tertiary hover:text-primary"
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  </div>
-                ) : null}
+                  ) : null
+                }
+              />
+            );
+          })}
+        </div>
 
-                {tasks.map((task) => (
-                  <KanbanCard
-                    key={task.id}
-                    task={task}
-                    currentColumn={col.key}
-                    actionStates={actionStates}
-                    onMove={(targetCol) =>
-                      markAction(task.id, stateForColumn(targetCol))
-                    }
-                    onDrillIn={
-                      task.children && task.children.length > 0
-                        ? () => drillInto(task)
-                        : undefined
-                    }
-                  />
-                ))}
+        {/* Calendar panel */}
+        <div className="w-[280px] shrink-0 border-l border-border bg-surface">
+          <CalendarPanel
+            tasks={tasksWithDue}
+            actionStates={actionStates}
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
 
-                {tasks.length === 0 && !(col.key === "todo" && adding) ? (
-                  <p className="py-8 text-center text-[12px] text-tertiary">
-                    No tasks
-                  </p>
-                ) : null}
-              </div>
-            </div>
-          );
-        })}
+function KanbanColumn({
+  column,
+  tasks,
+  actionStates,
+  isDragging,
+  onDrop,
+  onDragStart,
+  onMove,
+  onDrillIn,
+  onAddClick,
+  addForm,
+}: {
+  column: (typeof COLUMNS)[number];
+  tasks: ActionNode[];
+  actionStates: Record<string, ActionState>;
+  isDragging: boolean;
+  onDrop: () => void;
+  onDragStart: (id: string) => void;
+  onMove: (taskId: string, col: Column) => void;
+  onDrillIn: (action: ActionNode) => void;
+  onAddClick?: () => void;
+  addForm: React.ReactNode;
+}) {
+  const [dragOver, setDragOver] = useState(false);
+
+  return (
+    <div
+      className={
+        "flex min-w-[260px] flex-1 flex-col rounded-xl border transition-colors " +
+        (dragOver && isDragging
+          ? "border-accent bg-accent-soft/30"
+          : "border-border bg-elevated/50")
+      }
+      onDragOver={(e) => {
+        e.preventDefault();
+        setDragOver(true);
+      }}
+      onDragLeave={() => setDragOver(false)}
+      onDrop={(e) => {
+        e.preventDefault();
+        setDragOver(false);
+        onDrop();
+      }}
+    >
+      <div className="flex items-center justify-between px-4 py-3">
+        <div className="flex items-center gap-2">
+          <h3 className="text-[13px] font-semibold text-primary">
+            {column.label}
+          </h3>
+          <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-surface px-1.5 text-[11px] font-medium text-tertiary">
+            {tasks.length}
+          </span>
+        </div>
+        {onAddClick ? (
+          <button
+            type="button"
+            onClick={onAddClick}
+            className="flex h-6 w-6 items-center justify-center rounded-md text-tertiary transition-colors hover:bg-surface hover:text-primary"
+            aria-label="Add task"
+          >
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+              <path
+                d="M7 2v10M2 7h10"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+              />
+            </svg>
+          </button>
+        ) : null}
+      </div>
+
+      <div className="flex flex-1 flex-col gap-2 overflow-y-auto px-3 pb-3">
+        {addForm}
+        {tasks.map((task) => (
+          <KanbanCard
+            key={task.id}
+            task={task}
+            currentColumn={column.key}
+            actionStates={actionStates}
+            onMove={(targetCol) => onMove(task.id, targetCol)}
+            onDrillIn={
+              task.children && task.children.length > 0
+                ? () => onDrillIn(task)
+                : undefined
+            }
+            onDragStart={() => onDragStart(task.id)}
+          />
+        ))}
+        {tasks.length === 0 && !addForm ? (
+          <p className="py-8 text-center text-[12px] text-tertiary">
+            {isDragging ? "Drop here" : "No tasks"}
+          </p>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
+function AddTaskForm({
+  value,
+  onChange,
+  onSubmit,
+  onCancel,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  onSubmit: () => void;
+  onCancel: () => void;
+}) {
+  return (
+    <div className="rounded-lg border border-accent/40 bg-surface p-3">
+      <input
+        type="text"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") onSubmit();
+          if (e.key === "Escape") onCancel();
+        }}
+        placeholder="Task name..."
+        autoFocus
+        className="w-full rounded-md border border-border bg-base px-2.5 py-1.5 text-[13px] text-primary placeholder:text-tertiary focus:border-accent focus:outline-none"
+      />
+      <div className="mt-2 flex gap-2">
+        <button
+          type="button"
+          onClick={onSubmit}
+          disabled={!value.trim()}
+          className="rounded-md bg-accent px-3 py-1 text-[12px] font-medium text-white disabled:opacity-40"
+        >
+          Add
+        </button>
+        <button
+          type="button"
+          onClick={onCancel}
+          className="rounded-md px-3 py-1 text-[12px] font-medium text-tertiary hover:text-primary"
+        >
+          Cancel
+        </button>
       </div>
     </div>
   );
@@ -268,12 +379,14 @@ function KanbanCard({
   actionStates,
   onMove,
   onDrillIn,
+  onDragStart,
 }: {
   task: ActionNode;
   currentColumn: Column;
   actionStates: Record<string, ActionState>;
   onMove: (col: Column) => void;
   onDrillIn?: () => void;
+  onDragStart: () => void;
 }) {
   const childCount = task.children?.length ?? 0;
   const childDone = task.children
@@ -281,7 +394,14 @@ function KanbanCard({
     : 0;
 
   return (
-    <div className="group rounded-lg border border-border bg-surface p-3 shadow-soft transition-shadow hover:shadow-card">
+    <div
+      draggable
+      onDragStart={(e) => {
+        e.dataTransfer.effectAllowed = "move";
+        onDragStart();
+      }}
+      className="group cursor-grab rounded-lg border border-border bg-surface p-3 shadow-soft transition-shadow active:cursor-grabbing hover:shadow-card"
+    >
       <div className="flex items-start gap-2">
         <div className="min-w-0 flex-1">
           <p className="text-[13px] font-medium leading-snug text-primary">
@@ -348,6 +468,190 @@ function KanbanCard({
         ) : null}
         {currentColumn !== "done" ? (
           <MoveButton onClick={() => onMove("done")}>Done</MoveButton>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
+// --- Calendar Panel ---
+
+function CalendarPanel({
+  tasks,
+  actionStates,
+}: {
+  tasks: ActionNode[];
+  actionStates: Record<string, ActionState>;
+}) {
+  const today = new Date();
+  const [viewMonth, setViewMonth] = useState(today.getMonth());
+  const [viewYear, setViewYear] = useState(today.getFullYear());
+
+  const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
+  const firstDayOfWeek = new Date(viewYear, viewMonth, 1).getDay();
+
+  const dueDateMap = useMemo(() => {
+    const map: Record<string, ActionNode[]> = {};
+    for (const t of tasks) {
+      if (!t.dueDate) continue;
+      const d = new Date(t.dueDate);
+      if (d.getMonth() === viewMonth && d.getFullYear() === viewYear) {
+        const key = d.getDate().toString();
+        if (!map[key]) map[key] = [];
+        map[key].push(t);
+      }
+    }
+    return map;
+  }, [tasks, viewMonth, viewYear]);
+
+  const prevMonth = () => {
+    if (viewMonth === 0) {
+      setViewMonth(11);
+      setViewYear((y) => y - 1);
+    } else {
+      setViewMonth((m) => m - 1);
+    }
+  };
+
+  const nextMonth = () => {
+    if (viewMonth === 11) {
+      setViewMonth(0);
+      setViewYear((y) => y + 1);
+    } else {
+      setViewMonth((m) => m + 1);
+    }
+  };
+
+  const monthLabel = new Date(viewYear, viewMonth).toLocaleDateString(
+    "en-US",
+    { month: "long", year: "numeric" },
+  );
+
+  const isToday = (day: number) =>
+    day === today.getDate() &&
+    viewMonth === today.getMonth() &&
+    viewYear === today.getFullYear();
+
+  return (
+    <div className="flex h-full flex-col">
+      <div className="flex items-center justify-between border-b border-border px-4 py-3">
+        <h3 className="text-[13px] font-semibold text-primary">Calendar</h3>
+        <div className="flex items-center gap-1">
+          <button
+            type="button"
+            onClick={prevMonth}
+            className="flex h-6 w-6 items-center justify-center rounded-md text-tertiary hover:bg-elevated hover:text-primary"
+            aria-label="Previous month"
+          >
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+              <path d="M8 2L4 6l4 4" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </button>
+          <span className="min-w-[110px] text-center text-[12px] font-medium text-primary">
+            {monthLabel}
+          </span>
+          <button
+            type="button"
+            onClick={nextMonth}
+            className="flex h-6 w-6 items-center justify-center rounded-md text-tertiary hover:bg-elevated hover:text-primary"
+            aria-label="Next month"
+          >
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+              <path d="M4 2l4 4-4 4" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <div className="px-3 pt-3">
+        <div className="grid grid-cols-7 gap-0">
+          {["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"].map((d) => (
+            <div
+              key={d}
+              className="pb-2 text-center text-[10px] font-semibold text-tertiary"
+            >
+              {d}
+            </div>
+          ))}
+          {Array.from({ length: firstDayOfWeek }, (_, i) => (
+            <div key={`empty-${i}`} />
+          ))}
+          {Array.from({ length: daysInMonth }, (_, i) => {
+            const day = i + 1;
+            const dayTasks = dueDateMap[day.toString()];
+            const hasTasks = dayTasks && dayTasks.length > 0;
+            return (
+              <div
+                key={day}
+                className={
+                  "relative flex h-8 items-center justify-center text-[11px] " +
+                  (isToday(day)
+                    ? "font-bold text-accent"
+                    : "text-primary")
+                }
+              >
+                {day}
+                {hasTasks ? (
+                  <span className="absolute bottom-0.5 left-1/2 h-1 w-1 -translate-x-1/2 rounded-full bg-accent" />
+                ) : null}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      <div className="mx-3 my-2 h-px bg-border" />
+
+      <div className="flex-1 overflow-y-auto px-3 pb-3">
+        <p className="mb-2 text-[10px] font-semibold uppercase tracking-widest text-tertiary">
+          Upcoming
+        </p>
+        {tasks
+          .filter((t) => {
+            if (!t.dueDate) return false;
+            const d = new Date(t.dueDate);
+            return d >= today;
+          })
+          .sort(
+            (a, b) =>
+              new Date(a.dueDate!).getTime() - new Date(b.dueDate!).getTime(),
+          )
+          .slice(0, 10)
+          .map((task) => {
+            const state = actionStates[task.id];
+            const isDone = state === "done";
+            return (
+              <div
+                key={task.id}
+                className="flex items-center gap-2 rounded-md py-1.5"
+              >
+                <span
+                  className={
+                    "h-1.5 w-1.5 shrink-0 rounded-full " +
+                    (isDone ? "bg-success" : "bg-accent")
+                  }
+                />
+                <span
+                  className={
+                    "min-w-0 flex-1 truncate text-[11px] " +
+                    (isDone
+                      ? "text-tertiary line-through"
+                      : "text-primary")
+                  }
+                >
+                  {task.name}
+                </span>
+                <span className="shrink-0 text-[10px] text-tertiary">
+                  {formatDate(task.dueDate!)}
+                </span>
+              </div>
+            );
+          })}
+        {tasks.filter((t) => t.dueDate && new Date(t.dueDate) >= today)
+          .length === 0 ? (
+          <p className="py-4 text-center text-[11px] text-tertiary">
+            No upcoming dates
+          </p>
         ) : null}
       </div>
     </div>
