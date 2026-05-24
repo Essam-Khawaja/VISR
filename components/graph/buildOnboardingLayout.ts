@@ -1,14 +1,17 @@
 import type { OnboardingMapState } from "@/components/onboarding/onboardingMapTypes";
 import type { LayoutEdge, LayoutNode } from "./graphTypes";
 
-const GOAL_NODE_RADIUS = 0.5;
-const COURSE_NODE_RADIUS = 0.22;
-const COMMITMENT_NODE_RADIUS = 0.18;
-const CONCERN_NODE_RADIUS = 0.12;
+const GOAL_NODE_RADIUS = 0.42;
+const PILLAR_NODE_RADIUS = 0.28;
+const CONCERN_NODE_RADIUS = 0.2;
 
-const COURSE_RING_RADIUS = 2.8;
-const COMMITMENT_RING_RADIUS = 4.2;
-const CONCERN_RING_RADIUS = 5.6;
+const PILLAR_RING_RADIUS = 3;
+const CONCERN_RING_RADIUS = 5;
+
+const GOAL_PASTEL = "#7D9B8A";
+const COURSE_PASTELS = ["#8B4A6B", "#9B9267", "#B5707E", "#C4A882", "#8FA68B"];
+const COMMITMENT_PASTELS = ["#7E6B8A", "#9B9267", "#C4A882", "#8FA68B"];
+const CONCERN_PASTEL = "#A85A6B";
 
 export function buildOnboardingLayout(mapState: OnboardingMapState): {
   nodes: LayoutNode[];
@@ -31,33 +34,51 @@ export function buildOnboardingLayout(mapState: OnboardingMapState): {
     position: goalPos,
     radius: GOAL_NODE_RADIUS,
     parentId: null,
+    pastelColor: GOAL_PASTEL,
+    progressPercent: 0,
+    actionCount: 0,
   });
 
-  const numCourses = mapState.courses.length;
-  mapState.courses.forEach((course, i) => {
-    const angle = (i / Math.max(numCourses, 1)) * Math.PI * 2 - Math.PI / 2;
+  const allPillars = [
+    ...mapState.courses.map((c) => ({ ...c, type: "course" as const })),
+    ...mapState.commitments.map((c) => ({ ...c, type: "commitment" as const })),
+  ];
+  const numPillars = allPillars.length;
+
+  allPillars.forEach((item, i) => {
+    const angle = (i / Math.max(numPillars, 1)) * Math.PI * 2 - Math.PI / 2;
     const pos: [number, number, number] = [
-      Math.cos(angle) * COURSE_RING_RADIUS,
-      Math.sin(angle) * COURSE_RING_RADIUS,
+      Math.cos(angle) * PILLAR_RING_RADIUS,
+      Math.sin(angle) * PILLAR_RING_RADIUS,
       0,
     ];
-    const nodeId = `onboarding-course-${course.id}`;
+    const prefix = item.type === "course" ? "course" : "commitment";
+    const nodeId = `onboarding-${prefix}-${item.id}`;
+    const palette =
+      item.type === "course" ? COURSE_PASTELS : COMMITMENT_PASTELS;
 
     nodes.push({
       id: nodeId,
       kind: "pillar",
-      name: course.label,
-      status: "Okay",
-      recommendation: "Academic commitment on your route.",
-      color: "var(--text-secondary)",
+      name: item.label,
+      status: item.type === "course" ? "Okay" : "Strong",
+      recommendation:
+        item.type === "course"
+          ? "Academic commitment on your route."
+          : "This competes for the same hours as your goal.",
+      color:
+        item.type === "course" ? "var(--text-secondary)" : "var(--muted)",
       isBottleneck: false,
       position: pos,
-      radius: COURSE_NODE_RADIUS,
+      radius: PILLAR_NODE_RADIUS,
       parentId: null,
+      pastelColor: palette[i % palette.length],
+      progressPercent: 0,
+      actionCount: 0,
     });
 
     edges.push({
-      id: `onboarding-edge-goal-${course.id}`,
+      id: `onboarding-edge-goal-${prefix}-${item.id}`,
       from: "onboarding-goal",
       to: nodeId,
       kind: "goal-pillar",
@@ -66,45 +87,8 @@ export function buildOnboardingLayout(mapState: OnboardingMapState): {
     });
   });
 
-  const numCommitments = mapState.commitments.length;
-  const commitmentOffset = numCourses > 0 ? Math.PI / numCourses / 2 : 0;
-  mapState.commitments.forEach((commitment, i) => {
-    const angle =
-      (i / Math.max(numCommitments, 1)) * Math.PI * 2 -
-      Math.PI / 2 +
-      commitmentOffset;
-    const pos: [number, number, number] = [
-      Math.cos(angle) * COMMITMENT_RING_RADIUS,
-      Math.sin(angle) * COMMITMENT_RING_RADIUS,
-      0,
-    ];
-    const nodeId = `onboarding-commitment-${commitment.id}`;
-
-    nodes.push({
-      id: nodeId,
-      kind: "pillar",
-      name: commitment.label,
-      status: "Okay",
-      recommendation: "This competes for the same hours as your goal.",
-      color: "var(--muted)",
-      isBottleneck: false,
-      position: pos,
-      radius: COMMITMENT_NODE_RADIUS,
-      parentId: null,
-    });
-
-    edges.push({
-      id: `onboarding-edge-goal-${commitment.id}`,
-      from: "onboarding-goal",
-      to: nodeId,
-      kind: "goal-pillar",
-      parentPillarId: nodeId,
-      points: [goalPos, pos],
-    });
-  });
-
+  const numConcerns = mapState.concerns.length;
   mapState.concerns.forEach((concern, i) => {
-    const numConcerns = mapState.concerns.length;
     const angle =
       (i / Math.max(numConcerns, 1)) * Math.PI * 2 + Math.PI / 4;
     const pos: [number, number, number] = [
@@ -125,6 +109,9 @@ export function buildOnboardingLayout(mapState: OnboardingMapState): {
       position: pos,
       radius: CONCERN_NODE_RADIUS,
       parentId: null,
+      pastelColor: CONCERN_PASTEL,
+      progressPercent: 0,
+      actionCount: 0,
     });
 
     edges.push({
