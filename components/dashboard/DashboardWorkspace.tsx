@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -20,8 +20,6 @@ import type {
 type Props = {
   onToggleToday: () => void;
 };
-
-type Tab = "overview" | "explore" | "insights";
 
 const routeTone: Record<RouteStatus, "success" | "warning" | "danger"> = {
   "On Track": "success",
@@ -54,76 +52,96 @@ const cutOrder: CutRecommendation[] = ["Cut", "Defer", "Keep", "Double Down"];
 export function DashboardWorkspace({ onToggleToday }: Props) {
   const ctx = usePlan();
   const { plan, planId, stored, markAction, isDemo } = ctx;
-  const [tab, setTab] = useState<Tab>("overview");
+  const [exploreOpen, setExploreOpen] = useState(false);
 
-  return (
-    <div className="flex h-full flex-col">
-      <div className="flex shrink-0 items-center gap-1 border-b border-border bg-surface px-4">
-        <TabButton active={tab === "overview"} onClick={() => setTab("overview")}>
-          Overview
-        </TabButton>
-        <TabButton active={tab === "explore"} onClick={() => setTab("explore")}>
-          Explore
-        </TabButton>
-        <TabButton active={tab === "insights"} onClick={() => setTab("insights")}>
-          Insights
-        </TabButton>
-      </div>
+  const openExplore = useCallback(() => setExploreOpen(true), []);
+  const closeExplore = useCallback(() => setExploreOpen(false), []);
 
-      {tab === "overview" ? (
-        <div className="min-h-0 flex-1">
-          <GoalTreeSlot
-            onToggleToday={onToggleToday}
-            displayMode="preview"
-          />
+  useEffect(() => {
+    if (!exploreOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.stopPropagation();
+      }
+    };
+    window.addEventListener("keydown", onKey, true);
+    return () => window.removeEventListener("keydown", onKey, true);
+  }, [exploreOpen]);
+
+  if (exploreOpen) {
+    return (
+      <div className="flex h-full flex-col">
+        <div className="flex shrink-0 items-center gap-2 border-b border-border bg-surface px-4 py-2">
+          <button
+            type="button"
+            onClick={closeExplore}
+            className="flex h-7 items-center gap-1.5 rounded-lg border border-border bg-elevated px-2.5 text-[12px] font-medium text-secondary transition-colors hover:text-primary"
+          >
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+              <path
+                d="M9 3L5 7l4 4"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+            Dashboard
+          </button>
+          <span className="text-[13px] font-semibold text-primary">
+            Explore Map
+          </span>
         </div>
-      ) : tab === "explore" ? (
         <div className="min-h-0 flex-1">
           <GoalTreeSlot
             onToggleToday={onToggleToday}
             displayMode="full"
           />
         </div>
-      ) : (
-        <div className="flex-1 overflow-y-auto">
-          <InsightsContent
-            plan={plan}
-            isDemo={isDemo}
-            actionStates={stored.actionStates}
-            markAction={markAction}
-            onToggleToday={onToggleToday}
-          />
-        </div>
-      )}
-    </div>
-  );
-}
+      </div>
+    );
+  }
 
-function TabButton({
-  active,
-  onClick,
-  children,
-}: {
-  active: boolean;
-  onClick: () => void;
-  children: React.ReactNode;
-}) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={
-        "relative px-4 py-3 text-[13px] font-medium transition-colors " +
-        (active
-          ? "text-primary"
-          : "text-tertiary hover:text-secondary")
-      }
-    >
-      {children}
-      {active ? (
-        <span className="absolute bottom-0 left-2 right-2 h-[2px] rounded-full bg-accent" />
-      ) : null}
-    </button>
+    <div className="flex-1 overflow-y-auto">
+      <div className="mx-auto flex w-full max-w-[1500px] flex-col gap-5 px-4 py-5 sm:px-6 lg:px-8 lg:py-7">
+        {/* Overview map card */}
+        <button
+          type="button"
+          onClick={openExplore}
+          className="group relative w-full overflow-hidden rounded-2xl border border-border bg-base shadow-card transition-shadow hover:shadow-lift"
+        >
+          <div className="h-[340px]">
+            <GoalTreeSlot
+              onToggleToday={onToggleToday}
+              displayMode="preview"
+            />
+          </div>
+          <div className="absolute inset-0 flex items-end justify-center bg-gradient-to-t from-base/80 via-transparent to-transparent pb-5 opacity-0 transition-opacity group-hover:opacity-100">
+            <span className="flex items-center gap-2 rounded-full border border-border bg-surface/95 px-4 py-2 text-[13px] font-medium text-primary shadow-soft backdrop-blur-sm">
+              Click to explore map
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                <path
+                  d="M5 3l4 4-4 4"
+                  stroke="currentColor"
+                  strokeWidth="1.4"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </span>
+          </div>
+        </button>
+
+        <InsightsContent
+          plan={plan}
+          isDemo={isDemo}
+          actionStates={stored.actionStates}
+          markAction={markAction}
+          onToggleToday={onToggleToday}
+        />
+      </div>
+    </div>
   );
 }
 

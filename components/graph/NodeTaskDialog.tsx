@@ -53,6 +53,28 @@ function resolveNode(
   selection: GraphSelection,
 ): ResolvedNode | null {
   if (!selection) return null;
+
+  if (selection.nodeId === "goal") {
+    const syntheticPillar: StrategicPillar = {
+      id: "goal",
+      name: plan.destination,
+      status: "Strong",
+      reason: "Your destination — everything routes through here.",
+      actions: [],
+    };
+    return {
+      kind: "pillar",
+      pillar: syntheticPillar,
+      node: {
+        id: "goal",
+        name: plan.destination,
+        status: "Goal",
+        recommendation: "Your destination — everything routes through here.",
+      },
+      children: plan.strategicPillars.flatMap((p) => p.actions),
+    };
+  }
+
   for (const pillar of plan.strategicPillars) {
     if (pillar.id === selection.nodeId) {
       return {

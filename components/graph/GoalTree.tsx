@@ -7,7 +7,7 @@ import { NodeTaskDialog } from "./NodeTaskDialog";
 import { StrategyHUD } from "./StrategyHUD";
 import { buildNucleusLayout, type NucleusChild } from "./graphLayout";
 import { useGraphScene, type ActionState } from "./useGraphScene";
-import type { LayoutEdge, LayoutNode } from "./graphTypes";
+import type { LayoutEdge, LayoutNode, GraphSelection } from "./graphTypes";
 import type { ActionNode, StrategyPlan } from "@/lib/types";
 
 const PILLAR_PASTELS = [
@@ -49,6 +49,16 @@ function findActionDeep(
     }
   }
   return null;
+}
+
+function findNodeName(plan: StrategyPlan, nodeId: string): string {
+  if (nodeId === "goal") return plan.destination;
+  for (const p of plan.strategicPillars) {
+    if (p.id === nodeId) return p.name;
+    const found = findActionDeep(p.actions, nodeId);
+    if (found) return found.name;
+  }
+  return "Unknown";
 }
 
 function resolveNucleusLevel(
@@ -159,6 +169,7 @@ export default function GoalTree({
   const labelsRef = useRef<HTMLDivElement>(null);
   const [dockOpen, setDockOpen] = useState(false);
   const [focusPath, setFocusPath] = useState<FocusBreadcrumb[]>([]);
+  const [exploreDialogId, setExploreDialogId] = useState<string | null>(null);
 
   const onboarding = displayMode === "onboarding";
   const preview = displayMode === "preview";
@@ -181,22 +192,6 @@ export default function GoalTree({
       nucleusLevel.children,
     );
   }, [nucleusLevel]);
-
-  const childCountMap = useMemo(() => {
-    const map = new Map<string, number>();
-    map.set("goal", plan.strategicPillars.length);
-    plan.strategicPillars.forEach((p) => {
-      map.set(p.id, p.actions.length);
-      const traverse = (actions: ActionNode[]) => {
-        actions.forEach((a) => {
-          map.set(a.id, a.children?.length ?? 0);
-          if (a.children) traverse(a.children);
-        });
-      };
-      traverse(p.actions);
-    });
-    return map;
-  }, [plan]);
 
   const { hover, selection, select, clearSelection, selectBottleneck } =
     useGraphScene({
@@ -223,6 +218,7 @@ export default function GoalTree({
     [onAddTasks],
   );
 
+  // Handle clicks in Explore mode
   useEffect(() => {
     if (!explore || !selection) return;
     const nodeId = selection.nodeId;
@@ -233,36 +229,41 @@ export default function GoalTree({
         : focusPath[focusPath.length - 1].id;
 
     if (nodeId === currentNucleusId) {
+      // Clicked the nucleus — show task dialog for it
+      setExploreDialogId(nodeId);
       clearSelection();
       return;
     }
 
-    const childCount = childCountMap.get(nodeId) ?? 0;
-    if (childCount > 0) {
-      let name = "Unknown";
-      for (const p of plan.strategicPillars) {
-        if (p.id === nodeId) {
-          name = p.name;
-          break;
-        }
-        const found = findActionDeep(p.actions, nodeId);
-        if (found) {
-          name = found.name;
-          break;
-        }
-      }
-      setFocusPath((prev) => [...prev, { id: nodeId, name }]);
-    }
+    // Clicked an orbit node — always drill in + show dialog
+    const name = findNodeName(plan, nodeId);
+    setFocusPath((prev) => [...prev, { id: nodeId, name }]);
+    setExploreDialogId(nodeId);
     clearSelection();
-  }, [selection, explore, focusPath, childCountMap, plan, clearSelection]);
+  }, [selection, explore, focusPath, plan, clearSelection]);
+
+  const closeExploreDialog = useCallback(() => {
+    setExploreDialogId(null);
+  }, []);
 
   const navigateToLevel = useCallback((index: number) => {
     setFocusPath((prev) => prev.slice(0, index));
+    setExploreDialogId(null);
   }, []);
+
+  // Build selection object for NodeTaskDialog from exploreDialogId
+  const exploreSelection: GraphSelection = useMemo(() => {
+    if (!explore || !exploreDialogId) return null;
+    return { kind: "pillar", nodeId: exploreDialogId };
+  }, [explore, exploreDialogId]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
+        if (exploreDialogId) {
+          setExploreDialogId(null);
+          return;
+        }
         if (explore && focusPath.length > 0) {
           setFocusPath((prev) => prev.slice(0, -1));
           return;
@@ -290,12 +291,12 @@ export default function GoalTree({
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [clearSelection, onToggleToday, explore, focusPath]);
+  }, [clearSelection, onToggleToday, explore, focusPath, exploreDialogId]);
 
   const hasBottleneck = plan.strategicPillars.some(
     (p) => p.status === "Weak" || p.status === "Missing",
   );
-  const hideChrome = preview || onboarding || explore;
+  const hideNonExploreChrome = preview || onboarding || explore;
 
   return (
     <div className="relative h-full w-full min-h-0 overflow-hidden bg-base">
@@ -322,7 +323,7 @@ export default function GoalTree({
         />
       ) : null}
 
-      {hideChrome ? null : (
+      {hideNonExploreChrome ? null : (
         <StrategyHUD
           plan={plan}
           planId={planId}
@@ -336,7 +337,19 @@ export default function GoalTree({
         <NodePopover hover={hover} />
       )}
 
-      {hideChrome ? null : (
+      {/* Task dialog: shown in both normal and explore modes */}
+      {explore ? (
+        <NodeTaskDialog
+          plan={plan}
+          selection={exploreSelection}
+          actionStates={actionStates}
+          onSelect={select}
+          onClose={closeExploreDialog}
+          onToggleAction={markAction}
+          onAddTasks={handleAddTasks}
+          isDemo={isDemo}
+        />
+      ) : hideNonExploreChrome ? null : (
         <NodeTaskDialog
           plan={plan}
           selection={selection}
@@ -349,7 +362,7 @@ export default function GoalTree({
         />
       )}
 
-      {hideChrome ? null : (
+      {hideNonExploreChrome ? null : (
         <IntelligenceDock
           plan={plan}
           actionStates={actionStates}
@@ -362,9 +375,9 @@ export default function GoalTree({
 
       {explore ? (
         <div className="pointer-events-none absolute bottom-4 left-1/2 z-20 -translate-x-1/2 text-[11px] text-tertiary md:bottom-6">
-          Click a node to drill in · Esc to go back
+          Click a node to add tasks · Esc to go back
         </div>
-      ) : hideChrome ? null : (
+      ) : hideNonExploreChrome ? null : (
         <div className="pointer-events-none absolute bottom-4 left-1/2 z-20 -translate-x-1/2 text-[11px] text-tertiary md:bottom-6">
           {selection
             ? "Click goal or press Esc to return"
