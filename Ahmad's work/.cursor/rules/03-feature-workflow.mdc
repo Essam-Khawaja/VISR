@@ -1,0 +1,33 @@
+---
+description: Feature-level workflow
+alwaysApply: true
+---
+
+# Feature-Level Workflow
+
+Before implementing any feature, check whether a feature folder exists.
+
+A valid feature folder should contain:
+- `PRD.md`
+- `TECH_SPEC.md`
+- `TASKS.md`
+- `DECISIONS.md`
+
+If the feature folder does not exist:
+1. Create it under `docs/features/[next-number]-[kebab-case-feature-name]/`
+2. Copy from `docs/templates/`
+3. Fill in the docs based on global architecture
+4. Do not write application code yet
+
+When implementing:
+- Follow the feature PRD.
+- Follow the feature tech spec.
+- Complete tasks one at a time.
+- Do not build items listed as out of scope.
+- Do not change global architecture unless necessary.
+
+After implementing:
+- Update feature `TASKS.md`.
+- Update feature status if complete.
+- Add decisions to feature `DECISIONS.md`.
+- If global architecture changes, update `docs/architecture/DECISIONS.md`.
