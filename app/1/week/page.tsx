@@ -18,11 +18,31 @@ import { getCategoryStyles, getCategoryIcon } from "@/lib/1/category-colors";
 import ScrollingText from "@/components/1/ui/ScrollingText";
 import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import Link from "next/link";
+import { demoPlanId } from "@/lib/shared/env";
+import { fixturePlan } from "@/lib/2/fixture";
+import {
+  ensureMaterializedTasks,
+  fetchTasksFromSupabase,
+} from "@/lib/2/taskStore";
+import type { StrategyTask } from "@/lib/2/types";
 
 function startOfWeek(d: Date): Date {
   const day = d.getDay();
   const diff = d.getDate() - day;
   return new Date(d.getFullYear(), d.getMonth(), diff);
+}
+
+function strategyTaskClass(task: StrategyTask): string {
+  if (task.status === "done") {
+    return "border-slate-200 bg-slate-50 text-slate-400 line-through";
+  }
+  if (task.dueDate < isoDateFromDate(new Date())) {
+    return "border-red-200 bg-red-50 text-red-700";
+  }
+  if (task.priority === "High") {
+    return "border-orange-200 bg-orange-50 text-orange-700";
+  }
+  return "border-sky-200 bg-sky-50 text-sky-700";
 }
 
 export default function WeekPage() {
@@ -31,17 +51,26 @@ export default function WeekPage() {
     Record<string, TimelineEvent[]>
   >({});
   const [personalBlocks, setPersonalBlocks] = useState<PersonalTimeBlock[]>([]);
+  const [strategyTasksByDay, setStrategyTasksByDay] = useState<
+    Record<string, StrategyTask[]>
+  >({});
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async (start: Date) => {
     setLoading(true);
     try {
       const end = addDays(start, 6);
-      const [eventsRes, personalRes] = await Promise.all([
+      ensureMaterializedTasks({ ...fixturePlan, id: demoPlanId });
+      const [eventsRes, personalRes, strategyTasks] = await Promise.all([
         fetch(
           `/api/1/events?date=${isoDateFromDate(start)}&date_end=${isoDateFromDate(end)}`
         ),
         fetch("/api/1/personal-time"),
+        fetchTasksFromSupabase({
+          planId: demoPlanId,
+          dateFrom: isoDateFromDate(start),
+          dateTo: isoDateFromDate(end),
+        }),
       ]);
       if (eventsRes.ok) {
         const all = (await eventsRes.json()) as TimelineEvent[];
@@ -56,6 +85,12 @@ export default function WeekPage() {
       if (personalRes.ok) {
         setPersonalBlocks(await personalRes.json());
       }
+      const groupedTasks: Record<string, StrategyTask[]> = {};
+      for (const task of strategyTasks) {
+        if (!groupedTasks[task.dueDate]) groupedTasks[task.dueDate] = [];
+        groupedTasks[task.dueDate].push(task);
+      }
+      setStrategyTasksByDay(groupedTasks);
     } finally {
       setLoading(false);
     }
@@ -132,6 +167,7 @@ export default function WeekPage() {
                   new Date(a.start_time).getTime() -
                   new Date(b.start_time).getTime()
               );
+              const strategyTasks = strategyTasksByDay[key] ?? [];
               const isCurrentDay = isSameDay(day, today);
               return (
                 <Link
@@ -154,10 +190,11 @@ export default function WeekPage() {
                     </p>
                   </div>
                   <div className="space-y-1 flex-1">
-                    {dayEvents.length === 0 ? (
+                    {dayEvents.length === 0 && strategyTasks.length === 0 ? (
                       <p className="text-[11px] text-stone-400 italic">Empty</p>
                     ) : (
-                      dayEvents.map((e) => {
+                      <>
+                        {dayEvents.map((e) => {
                         const styles = getCategoryStyles(e.category);
                         const Icon = getCategoryIcon(e.category);
                         const dur = getDurationMinutes(
@@ -185,7 +222,24 @@ export default function WeekPage() {
                             </div>
                           </div>
                         );
-                      })
+                        })}
+                        {strategyTasks.map((task) => (
+                          <div
+                            key={task.id}
+                            className={
+                              "rounded-lg border px-1.5 py-1 " +
+                              strategyTaskClass(task)
+                            }
+                          >
+                            <p className="line-clamp-2 text-[11px] font-semibold leading-tight">
+                              {task.title}
+                            </p>
+                            <p className="mt-0.5 text-[10px] font-medium leading-tight opacity-70">
+                              {task.priority} · Strategy
+                            </p>
+                          </div>
+                        ))}
+                      </>
                     )}
                   </div>
                 </Link>

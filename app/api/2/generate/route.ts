@@ -14,6 +14,10 @@ import {
   StrategyPlanSchema,
 } from "@/lib/2/validate";
 import type { StrategyPlan } from "@/lib/2/types";
+import {
+  materializeStrategyTasks,
+  taskToRow,
+} from "@/lib/2/taskStore";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -67,6 +71,13 @@ async function persistToSupabase(
       plan,
       state: {},
     });
+
+    const tasks = materializeStrategyTasks(plan);
+    if (tasks.length > 0) {
+      await sb
+        .from("strategy_tasks")
+        .upsert(tasks.map(taskToRow), { onConflict: "id" });
+    }
   } catch {
     // Non-critical -- localStorage stays in sync as the demo fallback
   }

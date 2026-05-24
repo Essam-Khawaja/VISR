@@ -15,10 +15,12 @@ import {
   type OnboardingMapState,
 } from "./onboardingMapTypes";
 import { demoPlanId } from "@/lib/shared/env";
-import { savePlan } from "@/lib/2/planStore";
+import { savePlan, setActivePlanId } from "@/lib/2/planStore";
+import { saveNodes } from "@/lib/2/nodeStore";
+import { saveTasks } from "@/lib/2/taskStore";
 import type { StrategyPlan } from "@/lib/2/types";
 
-const DRAFT_KEY = "pathwise-onboarding-draft-v2";
+const DRAFT_KEY = "pathwise-onboarding-draft-v3";
 
 type Draft = {
   profile: OnboardingFormData;
@@ -151,15 +153,35 @@ export function OnboardingShell() {
         plan: StrategyPlan;
       };
       if (data.plan) savePlan(data.planId, data.plan);
+
+      const realPlanId = data.planId;
+
+      if (mapState.nodes.length > 0) {
+        const reIdNodes = mapState.nodes.map((n) => ({
+          ...n,
+          planId: realPlanId,
+        }));
+        saveNodes(realPlanId, reIdNodes);
+      }
+
+      if (mapState.tasks.length > 0) {
+        const reIdTasks = mapState.tasks.map((t) => ({
+          ...t,
+          planId: realPlanId,
+        }));
+        saveTasks(realPlanId, reIdTasks);
+      }
+
+      setActivePlanId(realPlanId);
       window.sessionStorage.removeItem(DRAFT_KEY);
-      router.push(`/2/dashboard/${data.planId}`);
+      router.push(`/2/dashboard/${realPlanId}`);
     } catch (e) {
       setSubmitError(
         e instanceof Error ? e.message : "Something went wrong. Try again.",
       );
       setSubmitting(false);
     }
-  }, [profile, router]);
+  }, [profile, mapState, router]);
 
   const handleRetry = useCallback(() => {
     setSubmitError(null);
@@ -167,8 +189,17 @@ export function OnboardingShell() {
   }, [handleSubmit]);
 
   return (
-    <div className="flex h-[100dvh] flex-col overflow-hidden bg-base">
-      <div className="shrink-0 overflow-y-auto px-4 py-4 sm:px-6 sm:py-6" style={{ maxHeight: "50vh" }}>
+    <div className="relative h-[100dvh] overflow-hidden bg-base">
+      <div className="absolute inset-0">
+        <OnboardingMapPanel
+          mapState={mapState}
+          insight={insight}
+          isInsightLoading={isInsightLoading}
+        />
+      </div>
+
+      <div className="pointer-events-none absolute left-0 top-0 z-30 flex h-full w-full items-start p-4 sm:p-6">
+        <div className="pointer-events-auto w-full max-w-[430px]">
         <OnboardingForm
           profile={profile}
           onProfileChange={onProfileChange}
@@ -180,24 +211,18 @@ export function OnboardingShell() {
           submitting={submitting}
           onSubmit={handleSubmit}
         />
+        </div>
       </div>
 
-      <div className="relative min-h-[320px] flex-1 border-t border-border">
-        <OnboardingMapPanel
-          mapState={mapState}
-          insight={insight}
-          isInsightLoading={isInsightLoading}
-        />
-        <AnimatePresence>
-          {submitting ? (
-            <GenerationLoading
-              error={submitError}
-              onRetry={handleRetry}
-              overlay
-            />
-          ) : null}
-        </AnimatePresence>
-      </div>
+      <AnimatePresence>
+        {submitting ? (
+          <GenerationLoading
+            error={submitError}
+            onRetry={handleRetry}
+            overlay
+          />
+        ) : null}
+      </AnimatePresence>
     </div>
   );
 }

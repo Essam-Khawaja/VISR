@@ -32,6 +32,8 @@ Each feature must explain both product behavior and technical implementation arc
 | 11 | [011-node-task-dialog](011-node-task-dialog/) | Node Task Dialog and AI Generator | Tabbed dialog with task list, manual add, AI task generation, recursive expansion |
 | 12 | [012-project-sidebar](012-project-sidebar/) | Project Sidebar | Collapsible sidebar with pillar-based projects, task checkboxes, inline add |
 | 13 | [013-kanban-dashboard](013-kanban-dashboard/) | Kanban Dashboard | Tabbed Map/Insights workspace, per-pillar Kanban boards, navbar dropdown |
+| 14 | [014-integration](014-integration/) | Integration | Unified app shell, canonical strategy tasks, Today/Week sync, graph completion rollups |
+| 15 | [015-graph-and-onboarding-rebuild](015-graph-and-onboarding-rebuild/) | Graph and Onboarding Rebuild | One-circle graph nodes, task nodes that grow the graph, first-run university strategy onboarding |
 
 ---
 
@@ -39,6 +41,16 @@ Each feature must explain both product behavior and technical implementation arc
 
 For **onboarding UX** (split layout, progressive map, chip inputs), use **[008-progressive-onboarding-strategy-map](008-progressive-onboarding-strategy-map/)**.  
 [001-landing-and-onboarding](001-landing-and-onboarding/) remains the reference for the landing page only.
+
+## Integration source of truth
+
+For unifying the daily-flow app and strategy app, use **[014-integration](014-integration/)**.
+It supersedes the split Perspective 1 / Perspective 2 product framing and makes Strategy Map tasks the same tasks that appear in Today and Week views.
+
+## Current graph/onboarding source of truth
+
+For the next graph and onboarding pass, use **[015-graph-and-onboarding-rebuild](015-graph-and-onboarding-rebuild/)**.
+It supersedes the onboarding flow in `008` and extends the task sync in `014` with one visible node body, task nodes that visibly grow the graph, and first-run university-life strategy setup.
 
 ---
 

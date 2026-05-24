@@ -48,7 +48,7 @@ export async function GET(request: NextRequest) {
 
     const res = await fetch(url, {
       headers: {
-        "User-Agent": "StraighterNoodles/1.0 (hackathon student app)",
+        "User-Agent": "Pathwise/1.0 (hackathon student app)",
       },
     });
 

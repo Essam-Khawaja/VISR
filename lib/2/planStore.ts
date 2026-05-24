@@ -31,6 +31,7 @@ export type StoredPlan = {
 
 const KEY_INDEX = "pathwise.plans";
 const KEY_MIGRATED = "pathwise.migrated.v1";
+const KEY_ACTIVE_PLAN = "pathwise.activePlanId";
 const planKey = (id: string) => `pathwise.plan.${id}`;
 
 function isBrowser(): boolean {
@@ -55,6 +56,29 @@ export function loadPlanIndex(): string[] {
   } catch {
     return [];
   }
+}
+
+export function getActivePlanId(): string | null {
+  if (!isBrowser()) return null;
+  try {
+    return window.localStorage.getItem(KEY_ACTIVE_PLAN);
+  } catch {
+    return null;
+  }
+}
+
+export function setActivePlanId(planId: string): void {
+  if (!isBrowser()) return;
+  try {
+    window.localStorage.setItem(KEY_ACTIVE_PLAN, planId);
+  } catch {}
+}
+
+export function clearActivePlanId(): void {
+  if (!isBrowser()) return;
+  try {
+    window.localStorage.removeItem(KEY_ACTIVE_PLAN);
+  } catch {}
 }
 
 function saveIndex(ids: string[]) {
@@ -226,6 +250,7 @@ export function savePlan(planId: string, plan: StrategyPlan): void {
     ? { ...existing, plan, lastReviewedAt: new Date().toISOString() }
     : emptyStored(plan);
   writeLocal(planId, next);
+  setActivePlanId(planId);
   syncStoredToSupabase(planId, next);
 }
 
@@ -369,6 +394,7 @@ export function deletePlan(planId: string): void {
   try {
     window.localStorage.removeItem(planKey(planId));
     saveIndex(loadPlanIndex().filter((id) => id !== planId));
+    if (getActivePlanId() === planId) clearActivePlanId();
   } catch {}
   if (isDemoOrPreview(planId)) return;
   const sb = createSupabaseAnonClient();
