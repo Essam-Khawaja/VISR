@@ -2,7 +2,9 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { AnimatePresence } from "framer-motion";
 import { OnboardingForm } from "./OnboardingForm";
+import { GenerationLoading } from "./GenerationLoading";
 import { OnboardingMapPanel } from "./OnboardingMapPanel";
 import {
   emptyForm,
@@ -177,8 +179,6 @@ export function OnboardingShell() {
           onInsightFetch={fetchInsight}
           submitting={submitting}
           onSubmit={handleSubmit}
-          submitError={submitError}
-          onRetry={handleRetry}
         />
       </div>
 
@@ -188,6 +188,15 @@ export function OnboardingShell() {
           insight={insight}
           isInsightLoading={isInsightLoading}
         />
+        <AnimatePresence>
+          {submitting ? (
+            <GenerationLoading
+              error={submitError}
+              onRetry={handleRetry}
+              overlay
+            />
+          ) : null}
+        </AnimatePresence>
       </div>
     </div>
   );

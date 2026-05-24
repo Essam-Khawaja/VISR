@@ -1,7 +1,6 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
@@ -11,13 +10,9 @@ import { StepAcademic } from "./StepAcademic";
 import { StepCommitments } from "./StepCommitments";
 import { StepConstraints } from "./StepConstraints";
 import { StepBrainDump } from "./StepBrainDump";
-import { GenerationLoading } from "./GenerationLoading";
 import type { OnboardingFormData, StepErrors } from "./onboardingTypes";
 import type { OnboardingMapState } from "./onboardingMapTypes";
-import { demoPlanId } from "@/lib/env";
 import { ease } from "@/lib/motion";
-import { savePlan } from "@/lib/planStore";
-import type { StrategyPlan } from "@/lib/types";
 
 const STEPS = [
   { id: "destination", label: "Destination", mapHint: "Setting your goal at the center" },
@@ -90,8 +85,6 @@ type Props = {
   onInsightFetch: (step: number) => void;
   submitting: boolean;
   onSubmit: () => void;
-  submitError: string | null;
-  onRetry: () => void;
 };
 
 export function OnboardingForm({
@@ -104,8 +97,6 @@ export function OnboardingForm({
   onInsightFetch,
   submitting,
   onSubmit,
-  submitError,
-  onRetry,
 }: Props) {
   const [errors, setErrors] = useState<StepErrors>({});
   const stepErrors = useMemo(() => errors, [errors]);
@@ -136,20 +127,11 @@ export function OnboardingForm({
 
   const isLast = currentStep === STEPS.length - 1;
 
-  if (submitting) {
-    return (
-      <GenerationLoading
-        error={submitError}
-        onRetry={onRetry}
-      />
-    );
-  }
-
   return (
     <div className="mx-auto flex w-full max-w-[640px] flex-col gap-6">
       <OnboardingProgress steps={STEPS} current={currentStep} />
 
-      <Card noHover className="min-h-[260px]">
+      <Card noHover className="min-h-[200px]">
         <AnimatePresence mode="wait">
           <motion.div
             key={currentStep}
@@ -199,22 +181,20 @@ export function OnboardingForm({
 
       <div className="flex items-center justify-between">
         {currentStep > 0 ? (
-          <Button variant="ghost" onClick={back}>
+          <Button variant="ghost" onClick={back} disabled={submitting}>
             Back
           </Button>
         ) : (
           <span />
         )}
         {isLast ? (
-          <Button onClick={handleSubmit}>Generate strategy</Button>
+          <Button onClick={handleSubmit} disabled={submitting}>
+            {submitting ? "Generating..." : "Generate strategy"}
+          </Button>
         ) : (
           <Button onClick={tryNext}>Continue</Button>
         )}
       </div>
-
-      {submitError && !submitting ? (
-        <p className="text-center text-[12px] text-danger">{submitError}</p>
-      ) : null}
     </div>
   );
 }
