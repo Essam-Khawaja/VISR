@@ -6,10 +6,8 @@ import { usePathname } from "next/navigation";
 import {
   Sparkles,
   Calendar,
-  StickyNote,
   Settings as SettingsIcon,
   Compass,
-  GitBranch,
   Lightbulb,
   Home,
   Users,
@@ -38,52 +36,35 @@ export function Sidebar() {
 
   const groups: NavGroup[] = [
     {
-      id: "1",
-      title: "StraighterNoodles",
+      id: "pathwise",
+      title: "Workspace",
       accent: "var(--amaranth)",
       items: [
         {
           href: "/1",
-          label: "Flowgram",
+          label: "Today",
           icon: <Sparkles className="size-[15px]" strokeWidth={1.7} />,
           exact: true,
         },
         {
           href: "/1/week",
-          label: "Week View",
+          label: "Week",
           icon: <Calendar className="size-[15px]" strokeWidth={1.7} />,
         },
         {
-          href: "/1/notes",
-          label: "Notes Hub",
-          icon: <StickyNote className="size-[15px]" strokeWidth={1.7} />,
+          href: `/2/dashboard/${demoPlanId}`,
+          label: "Strategy Map",
+          icon: <Compass className="size-[15px]" strokeWidth={1.7} />,
+        },
+        {
+          href: `/2/opportunity/${demoPlanId}`,
+          label: "Opportunities",
+          icon: <Lightbulb className="size-[15px]" strokeWidth={1.7} />,
         },
         {
           href: "/1/settings",
           label: "Settings",
           icon: <SettingsIcon className="size-[15px]" strokeWidth={1.7} />,
-        },
-      ],
-    },
-    {
-      id: "2",
-      title: "Pathwise Strategy",
-      accent: "var(--sage)",
-      items: [
-        {
-          href: `/2/dashboard/${demoPlanId}`,
-          label: "Strategy Web",
-          icon: <Compass className="size-[15px]" strokeWidth={1.7} />,
-        },
-        {
-          href: "/2/onboarding",
-          label: "Assessments",
-          icon: <GitBranch className="size-[15px]" strokeWidth={1.7} />,
-        },
-        {
-          href: `/2/opportunity/${demoPlanId}`,
-          label: "Opportunity Validation",
-          icon: <Lightbulb className="size-[15px]" strokeWidth={1.7} />,
         },
       ],
     },
@@ -113,7 +94,7 @@ export function Sidebar() {
                 Pathwise
               </span>
               <span className="mt-1 text-[9px] font-medium uppercase tracking-[0.18em] text-tertiary">
-                Two ways to plan
+                Strategy to day
               </span>
             </div>
           </Link>

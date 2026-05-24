@@ -15,8 +15,8 @@ export default function NotFound() {
           Off route.
         </h1>
         <p className="mt-3 max-w-md text-[15px] leading-relaxed text-secondary">
-          That destination isn&rsquo;t on the map. Pick a perspective from the
-          left, jump into the demo, or start onboarding.
+          That destination isn&rsquo;t on the map. Open the demo, start a new
+          strategy, or jump back into today.
         </p>
         <div className="mt-6 flex flex-wrap items-center gap-3">
           <LinkButton href="/2/onboarding">Start a new strategy</LinkButton>

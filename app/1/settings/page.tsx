@@ -12,7 +12,7 @@ export default function SettingsPage() {
             Settings
           </h1>
           <p className="text-xs text-stone-500 mt-0.5">
-            Personalize how StraighterNoodles thinks about your day.
+            Personalize how Pathwise plans your day.
           </p>
         </div>
 

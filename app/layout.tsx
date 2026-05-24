@@ -19,9 +19,9 @@ const display = Fraunces({
 });
 
 export const metadata: Metadata = {
-  title: "Pathwise — Two ways to plan your week",
+  title: "Pathwise — Student Strategy Dashboard",
   description:
-    "Pathwise is one home for two perspectives on student life: StraighterNoodles for your daily flow, and Pathwise Strategy for the big-picture map.",
+    "Pathwise connects the student strategy map to the day and week execution views, so goals, cuts, and dated tasks stay in sync.",
 };
 
 export const viewport: Viewport = {

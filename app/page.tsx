@@ -3,10 +3,8 @@ import {
   ArrowUpRight,
   Calendar,
   Compass,
-  GitBranch,
   Lightbulb,
   Sparkles,
-  StickyNote,
 } from "lucide-react";
 import { demoPlanId } from "@/lib/shared/env";
 import { AppShell } from "@/components/shared/AppShell";
@@ -29,47 +27,71 @@ function HomeBody() {
     <>
       <section className="relative mx-auto mt-10 flex w-full max-w-4xl flex-col items-center text-center sm:mt-16">
         <h1 className="font-display text-[44px] font-medium leading-[1.04] tracking-tight text-primary text-balance sm:text-[68px] lg:text-[84px]">
-          One home for two ways
+          Stop organizing chaos.
           <br />
           <span className="bg-gradient-to-r from-amaranth via-thulian to-amaranth bg-clip-text italic text-transparent">
-            to plan your week.
+            Find the route.
           </span>
         </h1>
         <p className="mt-7 max-w-2xl text-[16px] leading-relaxed text-secondary sm:text-[17px]">
-          Some weeks you need a calm map of today. Some weeks you need a
-          ruthless strategist asking what to cut. Pathwise is both, in one
-          place.
+          Pathwise turns a messy student life into one connected workspace:
+          the bottleneck, the strategy map, the tasks due today, and the
+          tradeoffs behind every new opportunity.
         </p>
+        <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+          <Link
+            href={`/2/dashboard/${demoPlanId}`}
+            className="btn-primary inline-flex items-center gap-2 px-5 py-2.5 text-sm font-semibold"
+          >
+            Open Strategy Map
+            <ArrowUpRight className="size-4" strokeWidth={1.8} />
+          </Link>
+          <Link
+            href="/1"
+            className="rounded-full border border-border bg-white/70 px-5 py-2.5 text-sm font-semibold text-secondary transition-colors hover:border-border-strong hover:text-primary"
+          >
+            Today
+          </Link>
+        </div>
       </section>
 
-      <section className="relative mx-auto mt-16 grid w-full max-w-6xl gap-6 sm:mt-20 md:grid-cols-2">
-        <PerspectiveCard
+      <section className="relative mx-auto mt-16 grid w-full max-w-6xl gap-4 sm:mt-20 md:grid-cols-4">
+        <WorkspaceCard
           href="/1"
-          eyebrow="Perspective 1"
-          title="StraighterNoodles"
-          subtitle="Daily flow"
-          description="A calm vertical timeline for today. Packing list, weather-aware reminders, free-time finder, routines, voice briefing. Built for chaotic mornings."
-          accent="var(--amaranth)"
-          gradient="linear-gradient(135deg, rgba(147,59,91,0.10) 0%, rgba(181,114,138,0.08) 60%, transparent 100%)"
-          features={[
-            { icon: <Sparkles className="size-3.5" strokeWidth={1.7} />, label: "Today's Flowgram" },
-            { icon: <Calendar className="size-3.5" strokeWidth={1.7} />, label: "Week View" },
-            { icon: <StickyNote className="size-3.5" strokeWidth={1.7} />, label: "Notes Hub" },
-          ]}
+          title="Today"
+          description="The dated strategy tasks, events, routines, and free-time blocks that matter now."
+          icon={<Sparkles className="size-4" strokeWidth={1.7} />}
         />
-        <PerspectiveCard
+        <WorkspaceCard
+          href="/1/week"
+          title="Week"
+          description="Future strategy tasks land on the correct day beside your actual calendar."
+          icon={<Calendar className="size-4" strokeWidth={1.7} />}
+        />
+        <WorkspaceCard
           href={`/2/dashboard/${demoPlanId}`}
-          eyebrow="Perspective 2"
-          title="Pathwise Strategy"
-          subtitle="Big picture"
-          description="A strategy dashboard that names your bottleneck, builds a strategy map, recommends what to cut or defer, and evaluates new opportunities against your real plan."
-          accent="var(--sage)"
-          gradient="linear-gradient(135deg, rgba(138,154,91,0.12) 0%, rgba(170,186,174,0.10) 60%, transparent 100%)"
-          features={[
-            { icon: <Compass className="size-3.5" strokeWidth={1.7} />, label: "Strategy Web" },
-            { icon: <GitBranch className="size-3.5" strokeWidth={1.7} />, label: "Assessments" },
-            { icon: <Lightbulb className="size-3.5" strokeWidth={1.7} />, label: "Opportunity Validation" },
-          ]}
+          title="Strategy Map"
+          description="Your destination, bottleneck, cut list, risks, and graph are in one dashboard."
+          icon={<Compass className="size-4" strokeWidth={1.7} />}
+        />
+        <WorkspaceCard
+          href={`/2/opportunity/${demoPlanId}`}
+          title="Opportunities"
+          description="Check whether a new commitment fits the strategy before saying yes."
+          icon={<Lightbulb className="size-4" strokeWidth={1.7} />}
+        />
+      </section>
+
+      <section className="relative mx-auto mt-6 grid w-full max-w-6xl gap-4 md:grid-cols-[1.2fr_0.8fr]">
+        <PreviewPanel
+          href="/1"
+          title="Today pulls from the map"
+          body="Add a task to a goal or pillar, give it a due date, and it appears in Today and Week automatically."
+        />
+        <PreviewPanel
+          href={`/2/dashboard/${demoPlanId}`}
+          title="Demo-ready CS strategy"
+          body="Software engineering internship, bottleneck identified, cut list visible, seven-day route ready."
         />
       </section>
 
@@ -78,86 +100,71 @@ function HomeBody() {
   );
 }
 
-type Feature = { icon: React.ReactNode; label: string };
-
-function PerspectiveCard({
+function WorkspaceCard({
   href,
-  eyebrow,
   title,
-  subtitle,
   description,
-  accent,
-  gradient,
-  features,
+  icon,
 }: {
   href: string;
-  eyebrow: string;
   title: string;
-  subtitle: string;
   description: string;
-  accent: string;
-  gradient: string;
-  features: Feature[];
+  icon: React.ReactNode;
 }) {
   return (
     <Link
       href={href}
-      className="group relative flex flex-col gap-7 overflow-hidden rounded-[28px] border border-border bg-surface/70 p-7 backdrop-blur-sm transition-all duration-300 ease-out hover:-translate-y-0.5 hover:border-border-strong hover:shadow-card"
+      className="group relative flex min-h-48 flex-col justify-between overflow-hidden rounded-2xl border border-border bg-surface/80 p-5 backdrop-blur-sm transition-all duration-300 ease-out hover:-translate-y-0.5 hover:border-border-strong hover:shadow-card"
     >
-      <div
-        aria-hidden
-        className="absolute inset-0 opacity-90 transition-opacity duration-500 group-hover:opacity-100"
-        style={{ background: gradient }}
-      />
-      <div
-        aria-hidden
-        className="absolute -right-20 -top-20 h-56 w-56 rounded-full opacity-70 blur-3xl transition-opacity duration-500 group-hover:opacity-100"
-        style={{ background: gradient }}
-      />
-
-      <div className="relative flex items-center justify-between">
-        <span
-          className="text-[10px] font-semibold uppercase tracking-[0.18em]"
-          style={{ color: accent }}
-        >
-          {eyebrow}
-        </span>
-        <span className="inline-flex items-center gap-1 rounded-full border border-border bg-white/70 px-2.5 py-1 text-[11px] font-medium text-secondary transition-all duration-300 group-hover:border-border-strong group-hover:text-primary">
-          Open
-          <ArrowUpRight
-            className="size-3 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
-            strokeWidth={1.8}
-          />
-        </span>
+      <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-accent-soft text-accent-strong">
+        {icon}
       </div>
-
-      <div className="relative">
-        <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-tertiary">
-          {subtitle}
-        </p>
-        <h2 className="mt-2 font-display text-[36px] font-medium leading-[1.05] tracking-tight text-primary sm:text-[40px]">
+      <div>
+        <h2 className="font-display text-2xl font-medium tracking-tight text-primary">
           {title}
         </h2>
+        <p className="mt-2 text-sm leading-relaxed text-secondary">
+          {description}
+        </p>
       </div>
-
-      <p className="relative text-[14px] leading-relaxed text-secondary">
-        {description}
-      </p>
-
-      <div className="relative flex flex-wrap gap-2">
-        {features.map((f) => (
-          <span
-            key={f.label}
-            className="inline-flex items-center gap-1.5 rounded-full border border-border bg-white/60 px-3 py-1 text-[12px] font-medium text-secondary backdrop-blur-sm"
-          >
-            <span style={{ color: accent }} className="flex">
-              {f.icon}
-            </span>
-            {f.label}
-          </span>
-        ))}
-      </div>
+      <span className="inline-flex items-center gap-1 text-[12px] font-semibold text-accent-strong">
+        Open
+        <ArrowUpRight
+          className="size-3 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
+          strokeWidth={1.8}
+        />
+      </span>
     </Link>
   );
 }
 
+function PreviewPanel({
+  href,
+  title,
+  body,
+}: {
+  href: string;
+  title: string;
+  body: string;
+}) {
+  return (
+    <Link
+      href={href}
+      className="group rounded-2xl border border-border bg-white/65 p-6 transition-all duration-300 hover:-translate-y-0.5 hover:border-border-strong hover:bg-white/85 hover:shadow-soft"
+    >
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h2 className="font-display text-2xl font-medium tracking-tight text-primary">
+            {title}
+          </h2>
+          <p className="mt-2 max-w-xl text-sm leading-relaxed text-secondary">
+            {body}
+          </p>
+        </div>
+        <span className="rounded-full border border-border bg-white px-3 py-1 text-[11px] font-semibold text-secondary">
+          Connected
+        </span>
+      </div>
+    </Link>
+  );
+}
