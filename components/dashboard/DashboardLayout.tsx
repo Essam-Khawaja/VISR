@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/Button";
 import { PlanProvider, usePlanOptional } from "./PlanProvider";
 import { GoalTreeSlot } from "./GoalTreeSlot";
 import { TodayOverlay } from "./TodayOverlay";
+import { StrategyPanels } from "./StrategyPanels";
 
 type Props = {
   planId: string;
@@ -38,6 +39,7 @@ function DashboardShell({ planId }: { planId: string }) {
       <div className="relative min-h-0 flex-1">
         <GoalTreeSlot onToggleToday={toggleToday} />
       </div>
+      <StrategyPanels plan={ctx.plan} />
       <TodayOverlay open={todayOpen} onClose={() => setTodayOpen(false)} />
     </main>
   );
