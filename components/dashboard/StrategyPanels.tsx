@@ -3,6 +3,7 @@
 import { Badge } from "@/components/ui/Badge";
 import { Card } from "@/components/ui/Card";
 import { NumberDial } from "@/components/ui/NumberDial";
+import { EmbeddedOpportunityChecker } from "./EmbeddedOpportunityChecker";
 import type {
   CutRecommendation,
   Priority,
@@ -50,6 +51,7 @@ export function StrategyPanels({ plan }: Props) {
       <SemesterPrioritiesPanel plan={plan} />
       <CutListPanel plan={plan} />
       <NextSevenDaysPanel plan={plan} />
+      <EmbeddedOpportunityChecker />
       <RiskPanel plan={plan} />
     </aside>
   );
