@@ -24,6 +24,15 @@ export type Recommendation =
 export type CutRecommendation = "Cut" | "Defer" | "Keep" | "Double Down";
 export type Priority = "High" | "Medium" | "Low";
 export type Severity = "High" | "Medium" | "Low";
+export type StrategyTaskStatus = "open" | "doing" | "done" | "skipped";
+export type StrategyTaskSource =
+  | "strategy_map"
+  | "daily"
+  | "week"
+  | "ai"
+  | "opportunity"
+  | "generated_plan";
+export type StrategyTaskParentKind = "goal" | "pillar" | "task";
 
 export type ActionNode = {
   id: string;
@@ -94,4 +103,25 @@ export type OpportunityCheck = {
   conditions: string[];
   cutsRequired: string[];
   createdAt: string;
+};
+
+export type StrategyTask = {
+  id: string;
+  planId: string;
+  studentId?: string | null;
+  parentNodeId: string;
+  parentNodeKind: StrategyTaskParentKind;
+  parentTaskId?: string | null;
+  title: string;
+  recommendation: string;
+  notes: string;
+  priority: Priority;
+  status: StrategyTaskStatus;
+  dueDate: string;
+  completedAt?: string | null;
+  source: StrategyTaskSource;
+  sourceActionId?: string | null;
+  sortOrder: number;
+  createdAt: string;
+  updatedAt: string;
 };

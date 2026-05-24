@@ -1,5 +1,9 @@
 import { z } from "zod";
 
+const LocalDateSchema = z
+  .string()
+  .regex(/^\d{4}-\d{2}-\d{2}$/, "Use YYYY-MM-DD.");
+
 export const ProfileSchema = z.object({
   university: z.string().max(120).default(""),
   degree: z.string().max(120).default(""),
@@ -106,6 +110,79 @@ export const OpportunityCheckSchema = z.object({
 
 export const GenerateRequestSchema = z.object({
   profile: ProfileSchema,
+});
+
+export const StrategyTaskStatusSchema = z.enum([
+  "open",
+  "doing",
+  "done",
+  "skipped",
+]);
+
+export const StrategyTaskSourceSchema = z.enum([
+  "strategy_map",
+  "daily",
+  "week",
+  "ai",
+  "opportunity",
+  "generated_plan",
+]);
+
+export const StrategyTaskParentKindSchema = z.enum(["goal", "pillar", "task"]);
+
+export const StrategyTaskSchema = z.object({
+  id: z.string(),
+  planId: z.string(),
+  studentId: z.string().nullable().optional(),
+  parentNodeId: z.string(),
+  parentNodeKind: StrategyTaskParentKindSchema,
+  parentTaskId: z.string().nullable().optional(),
+  title: z.string().min(1).max(200),
+  recommendation: z.string().max(800).default(""),
+  notes: z.string().max(2000).default(""),
+  priority: z.enum(["High", "Medium", "Low"]).default("Medium"),
+  status: StrategyTaskStatusSchema.default("open"),
+  dueDate: LocalDateSchema,
+  completedAt: z.string().nullable().optional(),
+  source: StrategyTaskSourceSchema.default("strategy_map"),
+  sourceActionId: z.string().nullable().optional(),
+  sortOrder: z.number().int().default(0),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+});
+
+export const StrategyTaskQuerySchema = z.object({
+  planId: z.string().min(1),
+  date: LocalDateSchema.optional(),
+  dateFrom: LocalDateSchema.optional(),
+  dateTo: LocalDateSchema.optional(),
+  parentNodeId: z.string().optional(),
+  parentTaskId: z.string().optional(),
+});
+
+export const StrategyTaskCreateSchema = z.object({
+  planId: z.string().min(1),
+  studentId: z.string().nullable().optional(),
+  parentNodeId: z.string().min(1),
+  parentNodeKind: StrategyTaskParentKindSchema,
+  parentTaskId: z.string().nullable().optional(),
+  title: z.string().min(1).max(200),
+  recommendation: z.string().max(800).default(""),
+  notes: z.string().max(2000).default(""),
+  priority: z.enum(["High", "Medium", "Low"]).default("Medium"),
+  dueDate: LocalDateSchema,
+  source: StrategyTaskSourceSchema.default("strategy_map"),
+  sourceActionId: z.string().nullable().optional(),
+  sortOrder: z.number().int().default(0),
+});
+
+export const StrategyTaskUpdateSchema = z.object({
+  title: z.string().min(1).max(200).optional(),
+  dueDate: LocalDateSchema.optional(),
+  priority: z.enum(["High", "Medium", "Low"]).optional(),
+  status: StrategyTaskStatusSchema.optional(),
+  notes: z.string().max(2000).optional(),
+  recommendation: z.string().max(800).optional(),
 });
 
 export const OnboardingInsightRequestSchema = z.object({
