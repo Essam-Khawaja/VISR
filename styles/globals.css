@@ -14,10 +14,11 @@
   body {
     background-color: var(--bg-base);
     color: var(--text-primary);
-    font-family: var(--font-inter), system-ui, -apple-system, sans-serif;
+    font-family: var(--font-sans), system-ui, -apple-system, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
+    font-feature-settings: "cv11", "ss01", "ss02";
   }
 
   body {
@@ -25,6 +26,7 @@
     overflow-x: hidden;
   }
 
+  /* Fine numerals */
   .tabular,
   [data-tabular] {
     font-variant-numeric: tabular-nums;
@@ -39,7 +41,7 @@
   :focus-visible {
     outline: none;
     box-shadow: var(--shadow-focus);
-    border-radius: var(--radius-sm);
+    border-radius: var(--radius-md);
   }
 
   button,
@@ -47,6 +49,72 @@
   textarea {
     font: inherit;
     color: inherit;
+  }
+}
+
+/* ---------------------------------------------------------------- */
+/* Cursor-following liquid gradient                                  */
+/* The wrapper component sets --cursor-x / --cursor-y on the layer   */
+/* ---------------------------------------------------------------- */
+.liquid-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.liquid-layer::before,
+.liquid-layer::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transition:
+    background 720ms var(--ease-soft),
+    opacity 600ms var(--ease-soft);
+  will-change: background;
+}
+
+.liquid-layer::before {
+  background:
+    radial-gradient(
+      900px circle at var(--cursor-x) var(--cursor-y),
+      rgba(181, 114, 138, 0.18) 0%,
+      rgba(181, 114, 138, 0.08) 28%,
+      transparent 60%
+    ),
+    radial-gradient(
+      ellipse 65% 50% at 8% 0%,
+      rgba(170, 186, 174, 0.14),
+      transparent 60%
+    ),
+    radial-gradient(
+      ellipse 70% 50% at 100% 8%,
+      rgba(147, 59, 91, 0.10),
+      transparent 60%
+    ),
+    radial-gradient(
+      ellipse 70% 45% at 50% 110%,
+      rgba(227, 214, 191, 0.34),
+      transparent 60%
+    );
+  filter: blur(40px);
+}
+
+.liquid-layer::after {
+  background:
+    radial-gradient(
+      600px circle at var(--cursor-x) var(--cursor-y),
+      rgba(147, 59, 91, 0.05) 0%,
+      transparent 60%
+    );
+  mix-blend-mode: multiply;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .liquid-layer::before,
+  .liquid-layer::after {
+    transition: none;
   }
 }
 
@@ -64,7 +132,7 @@
     background-color: var(--bg-surface);
     color: var(--accent);
     border: 1px solid var(--accent);
-    border-radius: var(--radius-md);
+    border-radius: var(--radius-pill);
     font-size: 11px;
     text-transform: uppercase;
     letter-spacing: 0.12em;
@@ -73,6 +141,166 @@
     left: 1rem;
     top: 1rem;
   }
+
+  .gradient-text-amaranth {
+    background: linear-gradient(120deg, var(--amaranth) 0%, var(--thulian) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  /* ---------------------------------------------------------- */
+  /* Surface utilities — calmer, whiter, less boxy              */
+  /* ---------------------------------------------------------- */
+  .glass-card {
+    background: rgba(255, 255, 255, 0.72);
+    backdrop-filter: blur(18px) saturate(140%);
+    -webkit-backdrop-filter: blur(18px) saturate(140%);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+  }
+
+  .glass-card-subtle {
+    background: rgba(255, 255, 255, 0.5);
+    backdrop-filter: blur(10px) saturate(140%);
+    -webkit-backdrop-filter: blur(10px) saturate(140%);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+  }
+
+  .surface-card {
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+  }
+
+  .pill {
+    border-radius: var(--radius-pill);
+  }
+
+  /* Subtle hover lift used widely */
+  .hover-lift {
+    transition: transform var(--dur-card) var(--ease-out),
+      box-shadow var(--dur-card) var(--ease-out),
+      border-color var(--dur-card) var(--ease-out);
+  }
+  .hover-lift:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+    border-color: var(--border-strong);
+  }
+}
+
+/* ----------------------------------------------------------------- */
+/* Buttons — pill-first, never boxy                                  */
+/* ----------------------------------------------------------------- */
+.btn-primary {
+  background: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%);
+  color: white;
+  border: none;
+  border-radius: var(--radius-pill);
+  box-shadow:
+    0 1px 2px rgba(147, 59, 91, 0.16),
+    0 6px 18px rgba(147, 59, 91, 0.14);
+  transition: all 0.18s var(--ease-out);
+}
+.btn-primary:hover {
+  box-shadow:
+    0 2px 4px rgba(147, 59, 91, 0.20),
+    0 10px 28px rgba(147, 59, 91, 0.20);
+  transform: translateY(-1px);
+}
+.btn-primary:active {
+  transform: translateY(0);
+}
+
+.btn-ghost {
+  background: rgba(255, 255, 255, 0.6);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  transition: all 0.15s var(--ease-out);
+}
+.btn-ghost:hover {
+  background: rgba(255, 255, 255, 0.96);
+  border-color: var(--border-strong);
+}
+
+.input-soft {
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 0.6rem 0.9rem;
+  font-size: 0.9rem;
+  transition: all 0.15s var(--ease-out);
+  color: var(--text-primary);
+}
+.input-soft:focus {
+  outline: none;
+  background: white;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-glow);
+}
+
+/* ----------------------------------------------------------------- */
+/* Scrollbars                                                        */
+/* ----------------------------------------------------------------- */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(57, 38, 30, 0.12);
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(57, 38, 30, 0.20);
+  background-clip: padding-box;
+  border: 2px solid transparent;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(227, 214, 191, 0.3) 0%,
+    rgba(227, 214, 191, 0.6) 50%,
+    rgba(227, 214, 191, 0.3) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.8s ease-in-out infinite;
+}
+
+@keyframes marquee-scroll {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.marquee-track {
+  animation: marquee-scroll 10s linear infinite;
+}
+
+.marquee-track:hover {
+  animation-play-state: paused;
 }
 
 @media (prefers-reduced-motion: reduce) {

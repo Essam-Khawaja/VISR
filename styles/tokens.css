@@ -1,52 +1,93 @@
 :root {
-  /* Surfaces */
-  --bg-base: #F5F0E8;
-  --bg-surface: #FDFBF7;
-  --bg-elevated: #EDE8DF;
+  /* ------------------------------------------------------------ */
+  /* Warm palette (source of truth)                               */
+  /* RGB triplets so opacity modifiers work in Tailwind            */
+  /* ------------------------------------------------------------ */
+  --cream-rgb: 245 242 236;
+  --amaranth-rgb: 147 59 91;
+  --thulian-rgb: 181 114 138;
+  --brook-rgb: 170 186 174;
+  --chalk-rgb: 227 214 191;
+  --pomelo-rgb: 159 150 121;
+  --sage-rgb: 138 154 91;
 
-  /* Borders */
-  --border: #D4CCC0;
-  --border-strong: #B8AFA3;
+  --cream: rgb(var(--cream-rgb));
+  --amaranth: rgb(var(--amaranth-rgb));
+  --thulian: rgb(var(--thulian-rgb));
+  --brook: rgb(var(--brook-rgb));
+  --chalk: rgb(var(--chalk-rgb));
+  --pomelo: rgb(var(--pomelo-rgb));
+  --sage: rgb(var(--sage-rgb));
 
-  /* Text */
-  --text-primary: #2C2520;
-  --text-secondary: #6B5E52;
-  --text-tertiary: #9B8E82;
+  /* ------------------------------------------------------------ */
+  /* Surfaces — lifted to whiter / lighter for an airier feel      */
+  /* ------------------------------------------------------------ */
+  --bg-base: #FBF8F2;
+  --bg-surface: #FFFFFF;
+  --bg-elevated: #F4EFE5;
+  --bg-card: #FFFFFF;
 
-  /* Accent */
-  --accent: #8B6B5A;
-  --accent-soft: #F0E8E0;
-  --accent-glow: #8B6B5A24;
-  --accent-strong: #6B4F3E;
+  /* Borders — feather-light hairlines                             */
+  --border: rgba(57, 38, 30, 0.06);
+  --border-strong: rgba(57, 38, 30, 0.10);
 
-  /* Status */
-  --success: #7D9B7A;
-  --success-soft: #EAF0E8;
-  --warning: #C4A55A;
-  --warning-soft: #F5EDD8;
-  --danger: #A85A6B;
-  --danger-soft: #F2E4E8;
-  --danger-glow: #A85A6B24;
-  --muted: #A8A095;
-  --muted-soft: #EDEBE7;
+  /* Text — gentler hierarchy                                      */
+  --text-primary: #2A241F;
+  --text-secondary: #6A5F55;
+  --text-tertiary: #9B8E80;
 
-  /* Radii */
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 16px;
-  --radius-xl: 16px;
+  /* Accents                                                       */
+  --accent: rgb(var(--amaranth-rgb));
+  --accent-soft: #F6E7EC;
+  --accent-glow: rgba(147, 59, 91, 0.14);
+  --accent-strong: #74304A;
+
+  --accent-2: rgb(var(--thulian-rgb));
+  --accent-2-soft: #F8ECF1;
+
+  /* Status                                                        */
+  --success: rgb(var(--sage-rgb));
+  --success-soft: #ECEEDA;
+  --warning: #C49152;
+  --warning-soft: #F5E8D2;
+  --danger: rgb(var(--amaranth-rgb));
+  --danger-soft: #F6E7EC;
+  --danger-glow: rgba(147, 59, 91, 0.14);
+  --info: rgb(var(--brook-rgb));
+  --info-soft: #E8EEE9;
+
+  --muted: rgb(var(--pomelo-rgb));
+  --muted-soft: #EFEADB;
+
+  /* ------------------------------------------------------------ */
+  /* Radii — pill-first, no boxy corners                           */
+  /* ------------------------------------------------------------ */
+  --radius-sm: 10px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+  --radius-xl: 28px;
   --radius-pill: 9999px;
 
-  /* Shadows */
-  --shadow-sm: 0 8px 26px rgba(60, 48, 36, 0.06);
-  --shadow-md: 0 18px 50px rgba(60, 48, 36, 0.1);
-  --shadow-lg: 0 28px 80px rgba(60, 48, 36, 0.14);
-  --shadow-focus: 0 0 0 3px rgba(139, 107, 90, 0.22);
+  /* ------------------------------------------------------------ */
+  /* Shadows — barely there, just enough depth                     */
+  /* ------------------------------------------------------------ */
+  --shadow-sm: 0 1px 2px rgba(57, 38, 30, 0.04);
+  --shadow-md: 0 4px 18px rgba(57, 38, 30, 0.05);
+  --shadow-lg: 0 10px 40px rgba(57, 38, 30, 0.07);
+  --shadow-focus: 0 0 0 3px rgba(147, 59, 91, 0.18);
 
-  /* Motion */
+  /* Motion                                                        */
   --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
-  --dur-card: 200ms;
+  --ease-soft: cubic-bezier(0.32, 0.72, 0.24, 1);
+  --dur-card: 240ms;
   --dur-score: 1200ms;
   --dur-gauge: 800ms;
-  --dur-route: 400ms;
+  --dur-route: 420ms;
+
+  /* Layout                                                        */
+  --sidebar-w: 248px;
+
+  /* Cursor-following liquid gradient (updated by useLiquidCursor) */
+  --cursor-x: 50%;
+  --cursor-y: 30%;
 }
