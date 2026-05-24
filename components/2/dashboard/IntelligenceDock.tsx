@@ -2,13 +2,11 @@
 
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { Badge } from "@/components/2/ui/Badge";
-import type { ActionState } from "@/lib/2/planStore";
-import type { ActionItem, StrategyPlan } from "@/lib/2/types";
+import type { StrategyTask, StrategyTaskStatus } from "@/lib/2/types";
 
 type Props = {
-  plan: StrategyPlan;
-  actionStates: Record<string, ActionState>;
-  onToggleAction: (actionId: string, state: ActionState) => void;
+  tasks: StrategyTask[];
+  onMarkTask: (taskId: string, state: StrategyTaskStatus) => void;
   open: boolean;
   onToggle: () => void;
   isDemo: boolean;
@@ -21,26 +19,17 @@ const priorityTone = {
 } as const;
 
 /**
- * Bottom-edge dock that surfaces the full Next 7 days list with checkboxes.
- * Collapsed by default; toggles via the button.
+ * Bottom-edge dock that surfaces the next 7 days of real strategy tasks.
  */
 export function IntelligenceDock({
-  plan,
-  actionStates,
-  onToggleAction,
+  tasks,
+  onMarkTask,
   open,
   onToggle,
   isDemo,
 }: Props) {
   const reduce = useReducedMotion();
-  const doneCount = plan.nextSevenDays.filter((n) => {
-    // We don't have action-style state for next7 items; treat them as
-    // done if a matching pillar action with same title exists and is done.
-    const matched = plan.strategicPillars
-      .flatMap((p) => p.actions)
-      .find((a) => a.name.toLowerCase() === n.title.toLowerCase());
-    return matched ? actionStates[matched.id] === "done" : false;
-  }).length;
+  const doneCount = tasks.filter((task) => task.status === "done").length;
 
   return (
     <>
@@ -57,7 +46,7 @@ export function IntelligenceDock({
         Next 7 days
         <span className="text-tertiary">·</span>
         <span className="tabular text-tertiary">
-          {doneCount}/{plan.nextSevenDays.length}
+          {doneCount}/{tasks.length}
         </span>
       </button>
 
@@ -99,22 +88,22 @@ export function IntelligenceDock({
                 </button>
               </div>
 
-              <ul className="mt-3 flex flex-col gap-1.5">
-                {plan.nextSevenDays.map((n) => (
-                  <DockItem
-                    key={n.id}
-                    item={n}
-                    pillars={plan.strategicPillars}
-                    actionStates={actionStates}
-                    onToggleAction={onToggleAction}
-                  />
-                ))}
-              </ul>
+              {tasks.length === 0 ? (
+                <p className="mt-3 text-[12px] text-tertiary">
+                  No strategy tasks due in the next 7 days.
+                </p>
+              ) : (
+                <ul className="mt-3 flex flex-col gap-1.5">
+                  {tasks.map((task) => (
+                    <DockItem key={task.id} task={task} onMarkTask={onMarkTask} />
+                  ))}
+                </ul>
+              )}
 
               <p className="mt-3 text-[11px] text-tertiary">
                 {isDemo
                   ? "Demo plan — progress is in-session only."
-                  : "Saved locally on this device."}
+                  : "Synced from your strategy map."}
               </p>
             </div>
           </motion.div>
@@ -125,43 +114,26 @@ export function IntelligenceDock({
 }
 
 function DockItem({
-  item,
-  pillars,
-  actionStates,
-  onToggleAction,
+  task,
+  onMarkTask,
 }: {
-  item: ActionItem;
-  pillars: StrategyPlan["strategicPillars"];
-  actionStates: Record<string, ActionState>;
-  onToggleAction: (id: string, s: ActionState) => void;
+  task: StrategyTask;
+  onMarkTask: (taskId: string, state: StrategyTaskStatus) => void;
 }) {
-  // Find matching action by title (best-effort)
-  const matched = pillars
-    .flatMap((p) => p.actions)
-    .find((a) => a.name.toLowerCase() === item.title.toLowerCase());
-  const state: ActionState = matched
-    ? actionStates[matched.id] ?? "open"
-    : "open";
-  const checked = state === "done";
+  const checked = task.status === "done";
   return (
     <li className="flex items-start gap-2 rounded-xl border border-border bg-surface px-2.5 py-2">
       <button
         type="button"
         role="checkbox"
         aria-checked={checked}
-        aria-label={`Mark "${item.title}" as ${checked ? "open" : "done"}`}
-        disabled={!matched}
-        onClick={() => {
-          if (!matched) return;
-          onToggleAction(matched.id, checked ? "open" : "done");
-        }}
+        aria-label={`Mark "${task.title}" as ${checked ? "open" : "done"}`}
+        onClick={() => onMarkTask(task.id, checked ? "open" : "done")}
         className={
           "mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-md border transition-colors " +
           (checked
             ? "border-success bg-success text-white"
-            : matched
-              ? "border-border-strong bg-surface text-transparent hover:border-primary"
-              : "cursor-not-allowed border-border bg-elevated text-transparent")
+            : "border-border-strong bg-surface text-transparent hover:border-primary")
         }
       >
         <svg width="11" height="11" viewBox="0 0 11 11" fill="none" aria-hidden>
@@ -181,11 +153,11 @@ function DockItem({
             (checked ? "text-tertiary line-through" : "text-primary")
           }
         >
-          {item.title}
+          {task.title}
         </span>
         <div className="flex items-center gap-1.5">
-          <Badge tone={priorityTone[item.priority]}>{item.priority}</Badge>
-          <span className="text-[11px] text-tertiary">{item.category}</span>
+          <Badge tone={priorityTone[task.priority]}>{task.priority}</Badge>
+          <span className="text-[11px] text-tertiary">Due {task.dueDate}</span>
         </div>
       </div>
     </li>

@@ -3,19 +3,21 @@
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { Badge } from "@/components/2/ui/Badge";
 import type {
-  ActionItem,
   CutItem,
   NodeStatus,
   PillarStatus,
   RiskItem,
   StrategicPillar,
   StrategyPlan,
+  StrategyTask,
 } from "@/lib/2/types";
 import type { ActionState } from "@/lib/2/planStore";
+import { tasksDueNextDays, tasksForNode } from "@/lib/2/taskStore";
 import type { GraphSelection } from "./graphTypes";
 
 type Props = {
   plan: StrategyPlan;
+  tasks: StrategyTask[];
   selection: GraphSelection;
   actionStates: Record<string, ActionState>;
   onSelect: (selection: GraphSelection) => void;
@@ -65,11 +67,17 @@ function actionTone(
   return "muted";
 }
 
-function filterIntelligence(plan: StrategyPlan, pillarName: string) {
+function filterIntelligence(
+  plan: StrategyPlan,
+  tasks: StrategyTask[],
+  pillarId: string,
+  pillarName: string,
+) {
   const lower = pillarName.toLowerCase();
-  const next7 = plan.nextSevenDays.filter((n) =>
-    n.category.toLowerCase().includes(lower) ||
-    lower.includes(n.category.toLowerCase()),
+  const next7 = tasksDueNextDays(tasks).filter(
+    (task) =>
+      task.parentNodeId === pillarId ||
+      tasksForNode(tasks, pillarId).some((child) => child.id === task.id),
   );
   const cuts = plan.cutList.filter((c) =>
     c.reason.toLowerCase().includes(lower) ||
@@ -84,6 +92,7 @@ function filterIntelligence(plan: StrategyPlan, pillarName: string) {
 
 export function SelectionCard({
   plan,
+  tasks,
   selection,
   actionStates,
   onSelect,
@@ -114,6 +123,7 @@ export function SelectionCard({
           {resolved.kind === "pillar" ? (
             <PillarCard
               plan={plan}
+              tasks={tasks}
               pillar={resolved.pillar}
               actionStates={actionStates}
               onSelect={onSelect}
@@ -171,6 +181,7 @@ function CardChrome({
 
 function PillarCard({
   plan,
+  tasks,
   pillar,
   actionStates,
   onSelect,
@@ -179,6 +190,7 @@ function PillarCard({
   isDemo,
 }: {
   plan: StrategyPlan;
+  tasks: StrategyTask[];
   pillar: StrategicPillar;
   actionStates: Record<string, ActionState>;
   onSelect: (s: GraphSelection) => void;
@@ -186,7 +198,7 @@ function PillarCard({
   onToggleAction: (id: string, s: ActionState) => void;
   isDemo: boolean;
 }) {
-  const intel = filterIntelligence(plan, pillar.name);
+  const intel = filterIntelligence(plan, tasks, pillar.id, pillar.name);
   return (
     <CardChrome onClose={onClose} title={pillar.name}>
       <div className="flex items-center gap-2">
@@ -369,7 +381,7 @@ function IntelSection({
   );
 }
 
-function Next7Item({ item }: { item: ActionItem }) {
+function Next7Item({ item }: { item: StrategyTask }) {
   const tone =
     item.priority === "High"
       ? "danger"

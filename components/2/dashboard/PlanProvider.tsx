@@ -28,17 +28,27 @@ import {
 } from "@/lib/2/nodeStore";
 import {
   computeNodeRollup,
+  computeSemesterProgress,
   createStrategyTask,
   type CreateStrategyTaskInput,
   ensureMaterializedTasks,
+  excludeLegacyGeneratedTasks,
   fetchTasksFromSupabase,
+  loadTasks,
+  mergeTasks,
   migrateActionStatesToTasks,
   type NodeRollup,
+  tasksDueNextDays,
   todayLocalDate,
+  type SemesterProgress,
   type UpdateStrategyTaskInput,
   updateStrategyTask,
 } from "@/lib/2/taskStore";
 import { DEMO_PLAN_ID, fixturePlan } from "@/lib/2/fixture";
+import {
+  filterUniversitySubtree,
+  hasUniversityNodes,
+} from "@/components/2/graph/universityGraphLayout";
 import type {
   OpportunityCheck,
   StrategyNode,
@@ -53,7 +63,10 @@ type PlanContextValue = {
   stored: StoredPlan;
   nodes: StrategyNode[];
   tasks: StrategyTask[];
+  nextSevenDayTasks: StrategyTask[];
+  semesterProgress: SemesterProgress;
   rollups: Record<string, NodeRollup>;
+  hasUniversityGraph: boolean;
   isDemo: boolean;
   isReady: boolean;
   markAction: (actionId: string, state: ActionState) => void;
@@ -134,6 +147,32 @@ function planToNodes(plan: StrategyPlan): StrategyNode[] {
   return [root, ...pillarNodes];
 }
 
+function resolveLoadedNodes(
+  cachedNodes: StrategyNode[],
+  plan: StrategyPlan,
+): StrategyNode[] {
+  if (cachedNodes.length === 0) return planToNodes(plan);
+  if (hasUniversityNodes(cachedNodes)) {
+    const filtered = filterUniversitySubtree(cachedNodes);
+    return filtered.length > 0 ? filtered : cachedNodes;
+  }
+  return cachedNodes;
+}
+
+function normalizeTasks(
+  planId: string,
+  plan: StrategyPlan,
+  actionStates: Record<string, ActionState>,
+  isDemoPlan: boolean,
+): StrategyTask[] {
+  const local = loadTasks(planId);
+  const migrated = migrateActionStatesToTasks(planId, actionStates);
+  const merged = mergeTasks(local, migrated);
+  if (merged.length > 0) return excludeLegacyGeneratedTasks(merged);
+  if (isDemoPlan) return excludeLegacyGeneratedTasks(ensureMaterializedTasks(plan));
+  return [];
+}
+
 export function PlanProvider({ planId, initialPlan, children }: Props) {
   const isDemo = planId === DEMO_PLAN_ID || planId.startsWith("demo-");
   const [stored, setStored] = useState<StoredPlan | null>(null);
@@ -154,8 +193,13 @@ export function PlanProvider({ planId, initialPlan, children }: Props) {
         opportunityHistory: [],
         lastReviewedAt: new Date().toISOString(),
       });
-      setNodes(loadNodes(planId).length > 0 ? loadNodes(planId) : planToNodes(demoPlan));
-      setTasks(ensureMaterializedTasks(demoPlan));
+      const demoCached = loadNodes(planId);
+      setNodes(
+        demoCached.length > 0
+          ? resolveLoadedNodes(demoCached, demoPlan)
+          : planToNodes(demoPlan),
+      );
+      setTasks(normalizeTasks(planId, demoPlan, {}, true));
       setIsReady(true);
       return;
     }
@@ -164,15 +208,16 @@ export function PlanProvider({ planId, initialPlan, children }: Props) {
     const fromCache = loadStoredPlan(planId);
     if (fromCache) {
       setStored(fromCache);
-      setNodes(loadNodes(planId).length > 0 ? loadNodes(planId) : planToNodes(fromCache.plan));
-      ensureMaterializedTasks(fromCache.plan);
-      setTasks(migrateActionStatesToTasks(planId, fromCache.actionStates));
+      const cachedNodes = loadNodes(planId);
+      setNodes(resolveLoadedNodes(cachedNodes, fromCache.plan));
+      setTasks(normalizeTasks(planId, fromCache.plan, fromCache.actionStates, false));
     } else if (initialPlan) {
       savePlan(planId, initialPlan);
       const fresh = loadStoredPlan(planId);
       setStored(fresh);
-      setNodes(loadNodes(planId).length > 0 ? loadNodes(planId) : planToNodes(initialPlan));
-      setTasks(ensureMaterializedTasks(initialPlan));
+      const cachedNodes = loadNodes(planId);
+      setNodes(resolveLoadedNodes(cachedNodes, initialPlan));
+      setTasks(normalizeTasks(planId, initialPlan, {}, false));
     } else {
       setStored(null);
       setNodes([]);
@@ -185,18 +230,41 @@ export function PlanProvider({ planId, initialPlan, children }: Props) {
       if (cancelled) return;
       if (fromSupabase) {
         setStored(fromSupabase);
-        setNodes(loadNodes(planId).length > 0 ? loadNodes(planId) : planToNodes(fromSupabase.plan));
-        ensureMaterializedTasks(fromSupabase.plan);
-        setTasks(migrateActionStatesToTasks(planId, fromSupabase.actionStates));
+        const cachedNodes = loadNodes(planId);
+        setNodes(resolveLoadedNodes(cachedNodes, fromSupabase.plan));
+        setTasks((prev) =>
+          excludeLegacyGeneratedTasks(
+            mergeTasks(
+              prev,
+              normalizeTasks(
+                planId,
+                fromSupabase.plan,
+                fromSupabase.actionStates,
+                false,
+              ),
+            ),
+          ),
+        );
       }
     })();
 
     void fetchNodesFromSupabase(planId).then((fromNodes) => {
-      if (!cancelled && fromNodes.length > 0) setNodes(fromNodes);
+      if (!cancelled && fromNodes.length > 0) {
+        setNodes((prev) => {
+          const merged = fromNodes;
+          if (hasUniversityNodes(merged)) {
+            const filtered = filterUniversitySubtree(merged);
+            return filtered.length > 0 ? filtered : merged;
+          }
+          return merged;
+        });
+      }
     });
 
     void fetchTasksFromSupabase({ planId }).then((fromTasks) => {
-      if (!cancelled && fromTasks.length > 0) setTasks(fromTasks);
+      if (!cancelled && fromTasks.length > 0) {
+        setTasks((prev) => excludeLegacyGeneratedTasks(mergeTasks(prev, fromTasks)));
+      }
     });
 
     // 3) One-time push of any leftover local-only plans up to Supabase.
@@ -209,12 +277,18 @@ export function PlanProvider({ planId, initialPlan, children }: Props) {
 
   const refreshTasks = useCallback(async () => {
     const fromTasks = await fetchTasksFromSupabase({ planId });
-    setTasks(fromTasks);
+    setTasks(excludeLegacyGeneratedTasks(fromTasks));
   }, [planId]);
 
   const refreshNodes = useCallback(async () => {
     const fromNodes = await fetchNodesFromSupabase(planId);
-    setNodes(fromNodes);
+    if (fromNodes.length === 0) return;
+    if (hasUniversityNodes(fromNodes)) {
+      const filtered = filterUniversitySubtree(fromNodes);
+      setNodes(filtered.length > 0 ? filtered : fromNodes);
+    } else {
+      setNodes(fromNodes);
+    }
   }, [planId]);
 
   const createNode = useCallback(async (input: CreateStrategyNodeInput) => {
@@ -349,25 +423,46 @@ export function PlanProvider({ planId, initialPlan, children }: Props) {
     if (fresh) setStored(fresh);
   }, [planId, isDemo]);
 
+  const displayTasks = useMemo(
+    () => excludeLegacyGeneratedTasks(tasks),
+    [tasks],
+  );
+
+  const nextSevenDayTasks = useMemo(
+    () => tasksDueNextDays(displayTasks),
+    [displayTasks],
+  );
+
+  const semesterProgress = useMemo(
+    () => computeSemesterProgress(nodes, displayTasks),
+    [nodes, displayTasks],
+  );
+
+  const hasUniversityGraph = useMemo(
+    () => hasUniversityNodes(nodes),
+    [nodes],
+  );
+
   const rollups = useMemo(() => {
     const ids = new Set<string>(["goal"]);
+    nodes.forEach((node) => ids.add(node.id));
     if (stored) {
       stored.plan.strategicPillars.forEach((pillar) => {
         ids.add(pillar.id);
         pillar.actions.forEach((action) => ids.add(action.id));
       });
     }
-    tasks.forEach((task) => {
+    displayTasks.forEach((task) => {
       ids.add(task.id);
       ids.add(task.parentNodeId);
       if (task.parentTaskId) ids.add(task.parentTaskId);
     });
     const next: Record<string, NodeRollup> = {};
     ids.forEach((id) => {
-      next[id] = computeNodeRollup(id, tasks);
+      next[id] = computeNodeRollup(id, displayTasks);
     });
     return next;
-  }, [stored, tasks]);
+  }, [stored, displayTasks, nodes]);
 
   const value: PlanContextValue | null = useMemo(() => {
     if (!stored) return null;
@@ -376,8 +471,11 @@ export function PlanProvider({ planId, initialPlan, children }: Props) {
       plan: stored.plan,
       stored,
       nodes,
-      tasks,
+      tasks: displayTasks,
+      nextSevenDayTasks,
+      semesterProgress,
       rollups,
+      hasUniversityGraph,
       isDemo,
       isReady,
       markAction,
@@ -398,8 +496,11 @@ export function PlanProvider({ planId, initialPlan, children }: Props) {
     planId,
     stored,
     nodes,
-    tasks,
+    displayTasks,
+    nextSevenDayTasks,
+    semesterProgress,
     rollups,
+    hasUniversityGraph,
     isDemo,
     isReady,
     markAction,

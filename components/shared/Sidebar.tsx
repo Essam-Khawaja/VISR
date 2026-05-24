@@ -8,12 +8,12 @@ import {
   Calendar,
   Settings as SettingsIcon,
   Compass,
-  Lightbulb,
   Home,
   Users,
 } from "lucide-react";
 import { cn } from "@/lib/shared/cn";
 import { demoPlanId } from "@/lib/shared/env";
+import { getActivePlanId } from "@/lib/2/planStore";
 import { CreditsModal } from "./CreditsModal";
 
 type NavItem = {
@@ -33,6 +33,7 @@ type NavGroup = {
 export function Sidebar() {
   const pathname = usePathname() ?? "/";
   const [creditsOpen, setCreditsOpen] = useState(false);
+  const [strategyPlanId] = useState(() => getActivePlanId() ?? demoPlanId);
 
   const groups: NavGroup[] = [
     {
@@ -52,14 +53,9 @@ export function Sidebar() {
           icon: <Calendar className="size-[15px]" strokeWidth={1.7} />,
         },
         {
-          href: `/2/dashboard/${demoPlanId}`,
+          href: `/2/dashboard/${strategyPlanId}`,
           label: "Strategy Map",
           icon: <Compass className="size-[15px]" strokeWidth={1.7} />,
-        },
-        {
-          href: `/2/opportunity/${demoPlanId}`,
-          label: "Opportunities",
-          icon: <Lightbulb className="size-[15px]" strokeWidth={1.7} />,
         },
         {
           href: "/1/settings",

@@ -20,9 +20,13 @@ import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { demoPlanId } from "@/lib/shared/env";
 import { fixturePlan } from "@/lib/2/fixture";
+import { getActivePlanId } from "@/lib/2/planStore";
 import {
   ensureMaterializedTasks,
+  excludeLegacyGeneratedTasks,
   fetchTasksFromSupabase,
+  loadTasks,
+  mergeTasks,
 } from "@/lib/2/taskStore";
 import type { StrategyTask } from "@/lib/2/types";
 
@@ -46,6 +50,7 @@ function strategyTaskClass(task: StrategyTask): string {
 }
 
 export default function WeekPage() {
+  const [planId] = useState(() => getActivePlanId() ?? demoPlanId);
   const [weekStart, setWeekStart] = useState<Date>(startOfWeek(new Date()));
   const [eventsByDay, setEventsByDay] = useState<
     Record<string, TimelineEvent[]>
@@ -60,14 +65,16 @@ export default function WeekPage() {
     setLoading(true);
     try {
       const end = addDays(start, 6);
-      ensureMaterializedTasks({ ...fixturePlan, id: demoPlanId });
+      if (loadTasks(planId).length === 0 && planId === demoPlanId) {
+        ensureMaterializedTasks({ ...fixturePlan, id: demoPlanId });
+      }
       const [eventsRes, personalRes, strategyTasks] = await Promise.all([
         fetch(
           `/api/1/events?date=${isoDateFromDate(start)}&date_end=${isoDateFromDate(end)}`
         ),
         fetch("/api/1/personal-time"),
         fetchTasksFromSupabase({
-          planId: demoPlanId,
+          planId,
           dateFrom: isoDateFromDate(start),
           dateTo: isoDateFromDate(end),
         }),
@@ -86,7 +93,10 @@ export default function WeekPage() {
         setPersonalBlocks(await personalRes.json());
       }
       const groupedTasks: Record<string, StrategyTask[]> = {};
-      for (const task of strategyTasks) {
+      const filtered = excludeLegacyGeneratedTasks(
+        mergeTasks(loadTasks(planId), strategyTasks),
+      );
+      for (const task of filtered) {
         if (!groupedTasks[task.dueDate]) groupedTasks[task.dueDate] = [];
         groupedTasks[task.dueDate].push(task);
       }
@@ -94,7 +104,7 @@ export default function WeekPage() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [planId]);
 
   useEffect(() => {
     load(weekStart);
