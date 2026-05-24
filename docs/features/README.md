@@ -1,4 +1,4 @@
-# Feature Modules: Pathwise MVP
+# Feature Modules: VISR MVP
 
 These feature docs are the implementation layer under `docs/architecture/`. They use one naming convention:
 

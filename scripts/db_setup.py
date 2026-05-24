@@ -1,4 +1,4 @@
-"""First-time database setup for Pathwise / StraighterNoodles.
+"""First-time database setup for VISR.
 
 Runs ``db/schema.sql`` then ``db/seed.sql`` against the Supabase Postgres
 instance configured in ``.env.local``. Idempotent: re-running is safe -

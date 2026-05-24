@@ -1,4 +1,4 @@
-# DATA MODEL: Pathwise
+# DATA MODEL: VISR
 
 ## TypeScript Types
 

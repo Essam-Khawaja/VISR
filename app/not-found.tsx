@@ -1,4 +1,4 @@
-import { LinkButton } from "@/components/2/ui/Button";
+import { LinkButton } from "@/components/strategyweb/ui/Button";
 import { demoPlanId } from "@/lib/shared/env";
 
 export default function NotFound() {
@@ -9,7 +9,7 @@ export default function NotFound() {
     >
       <div className="w-full max-w-[520px] rounded-[28px] border border-border bg-surface/80 p-8 backdrop-blur-sm shadow-soft sm:p-10">
         <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-tertiary">
-          Pathwise · 404
+          VISR · 404
         </p>
         <h1 className="mt-2 font-display text-4xl font-medium leading-tight tracking-tight text-primary sm:text-5xl">
           Off route.
@@ -19,14 +19,14 @@ export default function NotFound() {
           strategy, or jump back into today.
         </p>
         <div className="mt-6 flex flex-wrap items-center gap-3">
-          <LinkButton href="/2/onboarding">Start a new strategy</LinkButton>
+          <LinkButton href="/strategyweb/onboarding">Start a new strategy</LinkButton>
           <LinkButton
-            href={`/2/dashboard/${demoPlanId}`}
+            href={`/strategyweb/dashboard/${demoPlanId}`}
             variant="secondary"
           >
             View demo
           </LinkButton>
-          <LinkButton href="/1" variant="ghost">
+          <LinkButton href="/flowgram" variant="ghost">
             Open today
           </LinkButton>
         </div>

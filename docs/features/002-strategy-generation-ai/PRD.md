@@ -4,11 +4,11 @@
 
 This feature turns a student profile into a validated `StrategyPlan`.
 
-Pathwise must feel like a sharp strategy advisor, not a motivational coach or generic productivity assistant.
+VISR must feel like a sharp strategy advisor, not a motivational coach or generic productivity assistant.
 
 ## User Story
 
-As a student, I want Pathwise to read my messy situation and tell me my destination, current stage, main bottleneck, what to cut, and what to do over the next 7 days.
+As a student, I want VISR to read my messy situation and tell me my destination, current stage, main bottleneck, what to cut, and what to do over the next 7 days.
 
 ## Scope
 

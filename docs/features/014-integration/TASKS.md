@@ -10,9 +10,9 @@
 
 ## 2. App Shell Unification
 
-- [ ] Replace the root two-perspective landing page with one Pathwise entry.
+- [ ] Replace the root two-perspective landing page with one VISR entry.
 - [ ] Add unified navigation: Today, Week, Strategy Map, Opportunities, Settings.
-- [ ] Keep `/1` and `/2` route compatibility with redirects during transition.
+- [ ] Keep `/flowgram` and `/strategyweb` route compatibility with redirects during transition.
 - [ ] Remove language that describes the product as two separate perspectives.
 
 ## 3. Task Store
@@ -25,9 +25,9 @@
 
 ## 4. API Routes
 
-- [ ] Add `GET /api/2/tasks`.
-- [ ] Add `POST /api/2/tasks`.
-- [ ] Add `PATCH /api/2/tasks/[taskId]`.
+- [ ] Add `GET /api/strategyweb/tasks`.
+- [ ] Add `POST /api/strategyweb/tasks`.
+- [ ] Add `PATCH /api/strategyweb/tasks/[taskId]`.
 - [ ] Validate all task request bodies with Zod.
 - [ ] Return structured errors.
 - [ ] Keep all service-role writes server-side if needed.
@@ -73,7 +73,7 @@
 
 - [x] Dashboard Next 7 days reads real `StrategyTask[]` due in next 7 days.
 - [x] Semester progress replaces alignment score on dashboard.
-- [x] Open today focus navigates to `/1` (not overlay).
+- [x] Open today focus navigates to `/flowgram` (not overlay).
 - [x] Remove Opportunities from sidebar (embedded on dashboard).
 - [x] Stop materializing AI `nextSevenDays` for real plans.
 - [x] Intelligence dock uses real strategy tasks.

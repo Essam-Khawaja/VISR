@@ -5,7 +5,7 @@ Planned
 
 ## Purpose
 
-Pathwise currently feels like two adjacent products:
+VISR currently feels like two adjacent products:
 
 1. A daily/week execution app under Perspective 1.
 2. A strategy-map planning app under Perspective 2.
@@ -20,9 +20,9 @@ As a student, I want to add a task to any node in my Strategy Map, give it a dat
 
 The app currently has duplicate mental models:
 
-- Strategy Map nodes and recursive task children live in the Pathwise strategy plan/state.
+- Strategy Map nodes and recursive task children live in the VISR strategy plan/state.
 - Daily and week views live in the separate daily-flow app and read events, routines, and manual checklist items.
-- The home page presents two perspectives instead of one unified Pathwise workspace.
+- The home page presents two perspectives instead of one unified VISR workspace.
 - Completing a graph task does not reliably update the daily/week experience.
 - Daily/week tasks do not carry strategic context such as parent node, pillar, bottleneck, or route priority.
 
@@ -30,7 +30,7 @@ This makes the product feel shallow and disconnected even when individual screen
 
 ## Product Goal
 
-Unify Pathwise into one integrated command center:
+Unify VISR into one integrated command center:
 
 - Strategy Map remains the strategic source of meaning.
 - Daily and week views become execution views over the same task data.
@@ -43,7 +43,7 @@ Unify Pathwise into one integrated command center:
 ### 1. One App Shell
 
 - Remove the product-level split between Perspective 1 and Perspective 2.
-- Replace the dual-card home experience with one Pathwise entry point.
+- Replace the dual-card home experience with one VISR entry point.
 - Keep daily, week, strategy map, opportunity checker, and settings as views inside one app shell.
 - Navigation should feel like one workspace:
   - Today

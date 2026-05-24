@@ -28,7 +28,7 @@
 
 **Decision:** The first onboarding question is "What do you want to be at the end of university?"
 
-**Reason:** Pathwise should start from strategic direction, then derive years, semesters, current semester, and tasks. Starting with current tasks would collapse it back into a to-do app.
+**Reason:** VISR should start from strategic direction, then derive years, semesters, current semester, and tasks. Starting with current tasks would collapse it back into a to-do app.
 
 ## D6: Onboarding Uses Progressive Graph Scopes
 
@@ -86,7 +86,7 @@
 
 ## D15: Demo Replay Reset And University Node Task Dialog
 
-**Decision:** Dashboard exposes a "Replay onboarding" demo control that clears local and Supabase plan graph data (`strategy_plans`, `strategy_nodes`, `strategy_tasks`) plus the onboarding session draft, then routes to `/2/onboarding`. Explore mode opens `NodeTaskDialog` only on nucleus clicks; `NodeTaskDialog` resolves `StrategyNode` ids (not only legacy `goal`/pillar ids).
+**Decision:** Dashboard exposes a "Replay onboarding" demo control that clears local and Supabase plan graph data (`strategy_plans`, `strategy_nodes`, `strategy_tasks`) plus the onboarding session draft, then routes to `/strategyweb/onboarding`. Explore mode opens `NodeTaskDialog` only on nucleus clicks; `NodeTaskDialog` resolves `StrategyNode` ids (not only legacy `goal`/pillar ids).
 
 **Reason:** Stale duplicate nodes from earlier onboarding bugs require a full reset for demo testing without dedupe logic. University explore nuclei use non-legacy ids (`onboarding-semester-fall`, etc.), so the dialog must resolve saved graph nodes for the add-task flow to work.
 

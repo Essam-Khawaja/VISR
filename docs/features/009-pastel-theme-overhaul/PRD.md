@@ -9,11 +9,11 @@ Replace the current cool blue/slate UI palette with a warm, earthy pastel color 
 
 ## User Problem
 
-The current blue/white command-center aesthetic feels generic and cold. Hackathon judges and student users should immediately perceive Pathwise as premium, calm, and intentional. The warm pastel palette creates a distinctive visual identity that differentiates from every other blue SaaS product.
+The current blue/white command-center aesthetic feels generic and cold. Hackathon judges and student users should immediately perceive VISR as premium, calm, and intentional. The warm pastel palette creates a distinctive visual identity that differentiates from every other blue SaaS product.
 
 ## User Story
 
-As a student opening Pathwise, I want the interface to feel warm, organic, and calming -- like a thoughtfully designed planner, not a corporate dashboard -- so I feel comfortable being honest about my goals and constraints.
+As a student opening VISR, I want the interface to feel warm, organic, and calming -- like a thoughtfully designed planner, not a corporate dashboard -- so I feel comfortable being honest about my goals and constraints.
 
 As a hackathon judge, I want the product to have a distinctive, cohesive visual identity that signals design craft.
 

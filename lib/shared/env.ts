@@ -1,6 +1,6 @@
 /**
- * Pathwise demo plan id. Kept here (in shared) to avoid pulling the heavier
- * Pathwise fixture into client bundles that only need the identifier.
+ * VISR demo plan id. Kept here (in shared) to avoid pulling the heavier
+ * VISR fixture into client bundles that only need the identifier.
  */
 export const DEMO_PLAN_ID = "demo-cs-student-001";
 

@@ -1,5 +1,5 @@
 -- =============================================================
--- Pathwise (merged): StraighterNoodles + Strategy
+-- VISR — Visual Intelligence for Student Roadmapping
 -- Consolidated Supabase schema (May 2026)
 -- -------------------------------------------------------------
 -- Idempotent: safe to run on a fresh DB or an existing one.
@@ -7,12 +7,12 @@
 -- files are kept. If you need to evolve the schema, edit here
 -- and re-run db_setup.py.
 --
--- Section A: StraighterNoodles (perspective 1, daily flow)
--- Section B: Pathwise Strategy (perspective 2, big picture)
+-- Section A: Flowgram (perspective 1, daily flow)
+-- Section B: Strategy Web (perspective 2, big picture)
 -- =============================================================
 
 -- =============================================================
--- Section A - StraighterNoodles
+-- Section A - Flowgram
 -- =============================================================
 
 -- -------------------------------------------------------------
@@ -218,7 +218,7 @@ begin
 end$$;
 
 -- =============================================================
--- Section B - Pathwise Strategy
+-- Section B - Strategy Web
 -- -------------------------------------------------------------
 -- Stores the onboarding profile, generated strategy plan, and
 -- opportunity checks. The plan and per-plan UI state both live

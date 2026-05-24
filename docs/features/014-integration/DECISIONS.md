@@ -14,7 +14,7 @@
 
 ## D3: Existing Calendar Tables Stay
 
-**Decision:** Keep `/1` calendar/daily tables and render strategy tasks alongside them.
+**Decision:** Keep `/flowgram` calendar/daily tables and render strategy tasks alongside them.
 
 **Reason:** The daily app already has useful event, routine, weather, and checklist behavior. Integration should connect it to strategy, not rewrite it.
 
@@ -50,7 +50,7 @@
 
 ## D9: Route Compatibility During Transition
 
-**Decision:** Keep `/1` and `/2` routes temporarily as compatibility redirects or wrappers.
+**Decision:** Keep `/flowgram` and `/strategyweb` routes temporarily as compatibility redirects or wrappers.
 
 **Reason:** Existing code and demo links should not break while the product shell becomes unified.
 

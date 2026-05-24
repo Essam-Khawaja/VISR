@@ -2,7 +2,7 @@
 
 ## D1: Custom Visualization
 
-Do not use React Flow. The graph should feel like Pathwise, not a diagram builder.
+Do not use React Flow. The graph should feel like VISR, not a diagram builder.
 
 ## D2: Three.js Is Optional
 

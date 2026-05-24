@@ -1,9 +1,0 @@
-import { DashboardLayout } from "@/components/2/dashboard/DashboardLayout";
-
-export const dynamic = "force-dynamic";
-
-type Params = { params: { planId: string } };
-
-export default function DashboardPage({ params }: Params) {
-  return <DashboardLayout planId={params.planId} />;
-}

@@ -1,5 +1,5 @@
 -- =============================================================
--- Pathwise / StraighterNoodles - Showcase Seed
+-- VISR — Showcase Seed
 -- -------------------------------------------------------------
 -- Safe to run on an EMPTY database or a populated one.
 -- Wipes app data tables (TRUNCATE ... CASCADE) and repopulates
@@ -43,6 +43,15 @@ truncate table
   custom_categories,
   personal_time_blocks
 restart identity cascade;
+
+-- 1b. Wipe strategy tables (strategyweb showcase plan / nodes / tasks).
+-- Idempotent + safe even on a brand-new DB. CASCADE removes dependent rows
+-- in strategy_nodes / strategy_tasks / opportunity_checks.
+delete from strategy_tasks;
+delete from strategy_nodes;
+delete from opportunity_checks;
+delete from strategy_plans;
+delete from student_profiles;
 
 -- =============================================================
 -- 2. Saved locations
@@ -219,7 +228,7 @@ insert into events
   ('Grocery run',                 null,                              'grocery',    '2026-05-23 19:45-06', '2026-05-23 20:45-06', null,                (select id from saved_locations where name='T&T Supermarket'),         false, 'Need produce, eggs, rice, tofu', 'unresolved', false),
 
   -- Home event - should NOT pull items into Before-You-Leave
-  ('Hackathon prep coding',       'Pathwise polish',                 'project',    '2026-05-23 21:00-06', '2026-05-23 22:00-06', 'Home desk',         null,                                                                false, null, null, false),
+  ('Hackathon prep coding',       'VISR polish',                 'project',    '2026-05-23 21:00-06', '2026-05-23 22:00-06', 'Home desk',         null,                                                                false, null, null, false),
 
   -- Calgary late-transit warning (ends 23:55)
   ('Late debug session',          'Engineering building 24h',        'project',    '2026-05-23 22:30-06', '2026-05-23 23:55-06', 'ENF 145',           (select id from saved_locations where name='University of Calgary'),  true,  null, null, false);
@@ -244,11 +253,12 @@ insert into events
 insert into events
   (title, description, category, start_time, end_time, location, location_id, auto_transit, notes, note_status, completed) values
 
-  -- Already happened
+  -- Already happened (pre-dawn)
+  ('Pre-dawn gym',                '5x5 squats + pull workout',       'gym',        '2026-05-24 05:30-06', '2026-05-24 06:30-06', null,                (select id from saved_locations where name='Goodlife Fitness Downtown'), true, null, null, true),
   ('Morning yoga',                'Slow flow',                       'personal',   '2026-05-24 07:00-06', '2026-05-24 07:30-06', 'Living room',       null,                                                                false, null, null, true),
   ('Breakfast',                   null,                              'personal',   '2026-05-24 07:45-06', '2026-05-24 08:15-06', 'Home',              null,                                                                false, null, null, true),
 
-  -- Long stretch with no real lunch gap (triggers pack-lunch warning)
+  -- Back-to-back lectures with NO lunch gap → pack-lunch warning fires
   ('Data Structures Lecture',     'AVL Trees + exam review',         'class',      '2026-05-24 09:00-06', '2026-05-24 10:15-06', 'MS 217',            (select id from saved_locations where name='University of Calgary'),  true,  null, null, false),
   ('Linear Algebra Lecture',      'Eigenvalues + midterm Q&A',       'class',      '2026-05-24 10:30-06', '2026-05-24 11:45-06', 'MS 211',            (select id from saved_locations where name='University of Calgary'),  false, null, null, false),
   -- No lunch break - straight into lab (triggers long-stretch warning)
@@ -262,7 +272,11 @@ insert into events
   ('Grocery run',                 'Restock for the week - pick up pack lunch supplies', 'grocery', '2026-05-24 17:15-06', '2026-05-24 18:15-06', null, (select id from saved_locations where name='T&T Supermarket'),         false, 'Need produce, eggs, rice, tofu. No break today so grab something for tomorrow too', 'unresolved', false),
 
   -- Late-night study session - triggers Calgary late-transit warning
-  ('Hackathon prep coding',       'Pathwise demo polish - crunch night', 'project', '2026-05-24 21:00-06', '2026-05-24 23:00-06', 'ENF 145',          (select id from saved_locations where name='University of Calgary'),  true,  'Slides: docs.google.com/d/hackathon-slides', 'important', false);
+  ('Coffee with mentor',          'Mock interview + portfolio review','meeting',  '2026-05-24 18:30-06', '2026-05-24 19:30-06', null,                (select id from saved_locations where name='Local Coffee Shop'),     true,  'Bring printed resume + GitHub link', 'follow_up', false),
+  ('Quick dinner',                'Microwave leftovers',             'personal',   '2026-05-24 19:45-06', '2026-05-24 20:30-06', 'Home',              null,                                                                false, null, null, true),
+  ('Hackathon prep coding',       'VISR demo polish - crunch night', 'project', '2026-05-24 21:00-06', '2026-05-24 22:30-06', 'ENF 145',          (select id from saved_locations where name='University of Calgary'),  true,  'Slides: docs.google.com/d/hackathon-slides', 'important', false),
+  -- Late-night transit warning: ride home ends at 23:50 (last LRT)
+  ('Late-night ride home',        'last LRT before service ends',    'transit',    '2026-05-24 22:30-06', '2026-05-24 23:00-06', 'Home',              null,                                                                false, null, null, false);
 
 -- Transit blocks May 24
 insert into events
@@ -317,7 +331,7 @@ insert into events
   (title, description, category, start_time, end_time, location, location_id, auto_transit, notes, note_status, completed) values
   ('Calculus midterm prep',       'Review past papers',              'assignment', '2026-05-28 09:30-06', '2026-05-28 11:00-06', 'TFDL',              (select id from saved_locations where name='University of Calgary'),  true,  'Past midterms: math.ucalgary.ca/archive', 'unresolved', false),
   ('Therapist appointment',       null,                              'personal',   '2026-05-28 11:30-06', '2026-05-28 12:30-06', 'Downtown',          null,                                                                false, null, null, false),
-  ('Hackathon team sync',         'Pathwise demo prep',              'club',       '2026-05-28 13:00-06', '2026-05-28 14:30-06', 'Discord',           null,                                                                false, 'Join: discord.gg/pathwise', null, false),
+  ('Hackathon team sync',         'VISR demo prep',              'club',       '2026-05-28 13:00-06', '2026-05-28 14:30-06', 'Discord',           null,                                                                false, 'Join: discord.gg/visr', null, false),
   ('Lab make-up',                 'Missed lab from last week',       'class',      '2026-05-28 15:00-06', '2026-05-28 17:00-06', 'ICT 122',           (select id from saved_locations where name='University of Calgary'),  true,  null, null, false),
   ('Grocery run',                 null,                              'grocery',    '2026-05-28 17:30-06', '2026-05-28 18:30-06', null,                (select id from saved_locations where name='T&T Supermarket'),         false, null, null, false),
   ('Career Fair follow-up',       'Connecting with recruiters',      'meeting',    '2026-05-28 18:45-06', '2026-05-28 19:45-06', 'Zoom',              null,                                                                false, 'Zoom link: zoom.us/j/1112223334', 'follow_up', false),
@@ -356,7 +370,7 @@ insert into events
 
   -- Tue Jun 2
   ('Software Engineering Lecture','Testing strategies',              'class',      '2026-06-02 10:00-06', '2026-06-02 12:00-06', 'ICT 121',           (select id from saved_locations where name='University of Calgary'),  true,  null, null, false),
-  ('Project sync',                'Discord call',                    'meeting',    '2026-06-02 14:00-06', '2026-06-02 15:00-06', 'Discord',           null,                                                                false, 'Join: discord.gg/pathwise', null, false),
+  ('Project sync',                'Discord call',                    'meeting',    '2026-06-02 14:00-06', '2026-06-02 15:00-06', 'Discord',           null,                                                                false, 'Join: discord.gg/visr', null, false),
   ('Volunteer shift',             'Soup kitchen',                    'volunteering','2026-06-02 17:30-06', '2026-06-02 19:30-06', 'Drop-In Centre',   null,                                                                false, null, null, false),
 
   -- Wed Jun 3
@@ -502,6 +516,11 @@ insert into manual_checklist_items (item_name, for_date, checked) values
   ('Mail rent cheque',     '2026-05-22', true),
   ('House keys',           '2026-05-23', false),
   ('Pack lunch - no break between 9am and 3pm', '2026-05-24', false),
+  ('Pack hackathon swag',                       '2026-05-24', false),
+  ('Print mock-interview resume',               '2026-05-24', false),
+  ('Bring water bottle (long stretch on campus)', '2026-05-24', false),
+  ('Charge laptop before lab',                    '2026-05-24', false),
+  ('Refill protein powder',                       '2026-05-24', true),
   ('Birthday card',        '2026-05-25', false),
   ('Lab report draft',     '2026-05-26', false),
   ('Resume hard copy',     '2026-05-27', false),
@@ -511,6 +530,174 @@ insert into manual_checklist_items (item_name, for_date, checked) values
   ('Birthday gift',        '2026-06-06', false),
   ('Conference badge',     '2026-06-09', false),
   ('Submit timesheet',     '2026-06-12', false);
+
+-- =============================================================
+-- 11. Strategyweb showcase plan
+--   - One seeded "Ahmad" student profile + plan with a real UUID
+--   - Tree: outcome → year → semester → courses + commitments + pillars
+--   - Tasks: due over the showcase week so they appear in flowgram and
+--     the strategy map. The UI's localStorage demo plan is unaffected;
+--     this is the data source for any plan loaded from Supabase.
+-- =============================================================
+
+insert into student_profiles
+  (id, degree, year, university, target_goal, courses, commitments,
+   work_hours_per_week, constraints, brain_dump)
+values (
+  '11111111-1111-4111-8111-111111111111',
+  'BSc Computer Science',
+  '2nd year',
+  'University of Calgary',
+  'Land a software engineering internship by spring',
+  '["Data Structures","Linear Algebra","Software Engineering"]'::jsonb,
+  '["Hackathon club exec","Library volunteering"]'::jsonb,
+  6,
+  '["Two midterms in May","Limited weekend hours"]'::jsonb,
+  'I keep adding commitments but my portfolio project still is not shipped, and I have a midterm right before the hackathon.'
+);
+
+insert into strategy_plans (id, student_id, plan, state) values (
+  'aaaa1111-bbbb-4222-cccc-333344445555',
+  '11111111-1111-4111-8111-111111111111',
+  jsonb_build_object(
+    'id',                'aaaa1111-bbbb-4222-cccc-333344445555',
+    'studentId',         '11111111-1111-4111-8111-111111111111',
+    'destination',       'Land a software engineering internship by spring',
+    'currentStage',      '2nd year',
+    'mainBottleneck',    'Portfolio shipped before recruiting season',
+    'routeStatus',       'At Risk',
+    'alignmentScore',    62,
+    'strategicPillars',  jsonb_build_array(
+      jsonb_build_object(
+        'id','pillar-portfolio','name','Portfolio Signal','status','Weak',
+        'reason','Without a shipped, judgeable project, recruiters skim past you.',
+        'actions', jsonb_build_array(
+          jsonb_build_object('id','action-portfolio-1','name','Ship VISR demo','status','At Risk','recommendation','Final demo by Friday hackathon kickoff.')
+        )
+      ),
+      jsonb_build_object(
+        'id','pillar-interview','name','Interview Readiness','status','Okay',
+        'reason','Mock interviews started but inconsistent.',
+        'actions', jsonb_build_array(
+          jsonb_build_object('id','action-interview-1','name','Mock interview with mentor','status','On Track','recommendation','Tonight 6:30pm coffee chat.')
+        )
+      ),
+      jsonb_build_object(
+        'id','pillar-academic','name','Academic Foundation','status','Okay',
+        'reason','GPA is steady but midterms loom.',
+        'actions', jsonb_build_array(
+          jsonb_build_object('id','action-academic-1','name','Calculus midterm prep','status','Behind','recommendation','Past papers Thursday.')
+        )
+      ),
+      jsonb_build_object(
+        'id','pillar-capacity','name','Capacity','status','Weak',
+        'reason','Three nights this week have no buffer between events.',
+        'actions', jsonb_build_array(
+          jsonb_build_object('id','action-capacity-1','name','Protect Sunday wind-down','status','At Risk','recommendation','Move grocery run earlier.')
+        )
+      )
+    ),
+    'semesterPriorities', jsonb_build_array(
+      'Ship VISR before recruiting season',
+      'Pass Calculus midterm with B+ or higher',
+      'Two clean mock interviews logged'
+    ),
+    'cutList', jsonb_build_array(
+      jsonb_build_object('id','cut-1','activity','Drop second volunteer shift this week','recommendation','Defer','reason','Already two shifts; protect rest before midterm.')
+    ),
+    'nextSevenDays', jsonb_build_array(
+      jsonb_build_object('id','n7d-1','title','Ship VISR demo polish','category','project','priority','High'),
+      jsonb_build_object('id','n7d-2','title','Calculus midterm prep','category','assignment','priority','High'),
+      jsonb_build_object('id','n7d-3','title','Mock interview with mentor','category','meeting','priority','Medium')
+    ),
+    'risks', jsonb_build_array(
+      jsonb_build_object('id','risk-1','title','Demo cuts into sleep','severity','High','explanation','Crunching past 11pm before the midterm Friday.')
+    ),
+    'createdAt', '2026-05-23T20:00:00Z'
+  ),
+  '{}'::jsonb
+);
+
+-- Outcome → Year → Semester → leaves
+insert into strategy_nodes
+  (id, plan_id, parent_node_id, kind, title, subtitle, status, scope,
+   year_index, term, sort_order, metadata)
+values
+  ('a0000000-0000-4000-8000-000000000001','aaaa1111-bbbb-4222-cccc-333344445555', null,
+   'university_outcome','Land a software engineering internship by spring',
+   'Final-year goal','open','university', null, null, 0, '{}'::jsonb),
+  ('a0000000-0000-4000-8000-000000000010','aaaa1111-bbbb-4222-cccc-333344445555',
+   'a0000000-0000-4000-8000-000000000001','academic_year','Year 2','Current year',
+   'doing','university', 2, null, 0, '{}'::jsonb),
+  ('a0000000-0000-4000-8000-000000000020','aaaa1111-bbbb-4222-cccc-333344445555',
+   'a0000000-0000-4000-8000-000000000010','semester','Spring 2026','Current semester',
+   'doing','year', 2, 'Spring', 0, '{}'::jsonb),
+  ('a0000000-0000-4000-8000-000000000030','aaaa1111-bbbb-4222-cccc-333344445555',
+   'a0000000-0000-4000-8000-000000000020','course','Data Structures',
+   'AVL trees + red-black trees this week','open','semester', 2, 'Spring', 0, '{}'::jsonb),
+  ('a0000000-0000-4000-8000-000000000031','aaaa1111-bbbb-4222-cccc-333344445555',
+   'a0000000-0000-4000-8000-000000000020','course','Linear Algebra',
+   'Eigenvalues midterm Friday','open','semester', 2, 'Spring', 1, '{}'::jsonb),
+  ('a0000000-0000-4000-8000-000000000032','aaaa1111-bbbb-4222-cccc-333344445555',
+   'a0000000-0000-4000-8000-000000000020','course','Software Engineering',
+   'Design patterns + testing','open','semester', 2, 'Spring', 2, '{}'::jsonb),
+  ('a0000000-0000-4000-8000-000000000040','aaaa1111-bbbb-4222-cccc-333344445555',
+   'a0000000-0000-4000-8000-000000000020','club','Hackathon club exec',
+   '4 hrs/week','open','semester', 2, 'Spring', 3,
+   jsonb_build_object('hoursPerWeek',4)),
+  ('a0000000-0000-4000-8000-000000000041','aaaa1111-bbbb-4222-cccc-333344445555',
+   'a0000000-0000-4000-8000-000000000020','commitment','Library volunteering',
+   '2 hrs/week','open','semester', 2, 'Spring', 4,
+   jsonb_build_object('hoursPerWeek',2)),
+  ('a0000000-0000-4000-8000-000000000050','aaaa1111-bbbb-4222-cccc-333344445555',
+   'a0000000-0000-4000-8000-000000000020','strategic_pillar','Portfolio Signal',
+   'Strategic focus','at_risk','semester', 2, 'Spring', 100, '{}'::jsonb),
+  ('a0000000-0000-4000-8000-000000000051','aaaa1111-bbbb-4222-cccc-333344445555',
+   'a0000000-0000-4000-8000-000000000020','strategic_pillar','Interview Readiness',
+   'Strategic focus','open','semester', 2, 'Spring', 101, '{}'::jsonb),
+  ('a0000000-0000-4000-8000-000000000052','aaaa1111-bbbb-4222-cccc-333344445555',
+   'a0000000-0000-4000-8000-000000000020','strategic_pillar','Academic Foundation',
+   'Strategic focus','open','semester', 2, 'Spring', 102, '{}'::jsonb),
+  ('a0000000-0000-4000-8000-000000000053','aaaa1111-bbbb-4222-cccc-333344445555',
+   'a0000000-0000-4000-8000-000000000020','strategic_pillar','Capacity',
+   'Strategic focus','at_risk','semester', 2, 'Spring', 103, '{}'::jsonb);
+
+-- Strategy tasks scattered across the showcase week. parent_node_id refs
+-- the strategic pillars above (text column, so the synthetic ids work).
+insert into strategy_tasks
+  (id, plan_id, student_id, parent_node_id, parent_node_kind,
+   title, recommendation, priority, status, due_date, source, sort_order)
+values
+  ('b1111111-0001-4111-8111-000000000001','aaaa1111-bbbb-4222-cccc-333344445555',
+   '11111111-1111-4111-8111-111111111111',
+   'a0000000-0000-4000-8000-000000000050','pillar',
+   'Ship VISR demo polish','Tighten the strategy map onboarding flow before Friday.',
+   'High','open','2026-05-24','strategy_map',0),
+  ('b1111111-0001-4111-8111-000000000002','aaaa1111-bbbb-4222-cccc-333344445555',
+   '11111111-1111-4111-8111-111111111111',
+   'a0000000-0000-4000-8000-000000000052','pillar',
+   'Calculus midterm prep','Past midterm + formula sheet pass.',
+   'High','doing','2026-05-25','strategy_map',1),
+  ('b1111111-0001-4111-8111-000000000003','aaaa1111-bbbb-4222-cccc-333344445555',
+   '11111111-1111-4111-8111-111111111111',
+   'a0000000-0000-4000-8000-000000000051','pillar',
+   'Mock interview with mentor','Coffee shop, 6:30pm tonight.',
+   'Medium','open','2026-05-24','strategy_map',2),
+  ('b1111111-0001-4111-8111-000000000004','aaaa1111-bbbb-4222-cccc-333344445555',
+   '11111111-1111-4111-8111-111111111111',
+   'a0000000-0000-4000-8000-000000000053','pillar',
+   'Move grocery run earlier','Free up Sunday wind-down block.',
+   'Medium','open','2026-05-26','strategy_map',3),
+  ('b1111111-0001-4111-8111-000000000005','aaaa1111-bbbb-4222-cccc-333344445555',
+   '11111111-1111-4111-8111-111111111111',
+   'a0000000-0000-4000-8000-000000000050','pillar',
+   'Record VISR walkthrough screencast','Backup if live demo glitches.',
+   'High','open','2026-05-27','strategy_map',4),
+  ('b1111111-0001-4111-8111-000000000006','aaaa1111-bbbb-4222-cccc-333344445555',
+   '11111111-1111-4111-8111-111111111111',
+   'a0000000-0000-4000-8000-000000000051','pillar',
+   'Send resume to Priya','She is hiring summer interns.',
+   'High','done','2026-05-23','strategy_map',5);
 
 commit;
 

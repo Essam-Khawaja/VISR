@@ -1,16 +1,16 @@
-# PRD: Pathwise
+# PRD: VISR
 
 ## Product Positioning
 
-**Project name:** Pathwise
+**Project name:** VISR
 
 **Tagline:** You say the what. We tell the how.
 
-Pathwise is a strategy dashboard for overwhelmed university students. It takes a messy student situation, identifies the strategic bottleneck, builds a visual Strategy Map, recommends what to cut or defer, generates a 7-day action route, and evaluates new opportunities against the current strategy.
+VISR is a strategy dashboard for overwhelmed university students. It takes a messy student situation, identifies the strategic bottleneck, builds a visual Strategy Map, recommends what to cut or defer, generates a 7-day action route, and evaluates new opportunities against the current strategy.
 
 Most productivity apps ask, "What tasks do you have?"
 
-Pathwise asks, "What are you trying to achieve, what is blocking you, what should you cut, and what should you do in the next 7 days?"
+VISR asks, "What are you trying to achieve, what is blocking you, what should you cut, and what should you do in the next 7 days?"
 
 ---
 
@@ -26,7 +26,7 @@ This student does not need another to-do list. They need a strategy.
 
 ---
 
-## What Pathwise Is Not
+## What VISR Is Not
 
 - Not a to-do app
 - Not a chatbot
@@ -35,7 +35,7 @@ This student does not need another to-do list. They need a strategy.
 - Not an academic advisor replacement
 - Not motivational content
 
-Pathwise is a premium student command center. It helps students stop doing the wrong things.
+VISR is a premium student command center. It helps students stop doing the wrong things.
 
 ---
 
@@ -51,7 +51,7 @@ Pathwise is a premium student command center. It helps students stop doing the w
 
 The demo must make judges understand this in under 60 seconds:
 
-> I was scattered. Pathwise found my bottleneck, told me what to cut, and gave me the next 7 days.
+> I was scattered. VISR found my bottleneck, told me what to cut, and gave me the next 7 days.
 
 ---
 
@@ -62,14 +62,14 @@ The demo must make judges understand this in under 60 seconds:
 Hero:
 
 - Headline: "Stop organizing chaos. Find the route."
-- Subheading: "Pathwise turns a messy student life into a clear bottleneck, cut list, and 7-day strategy."
+- Subheading: "VISR turns a messy student life into a clear bottleneck, cut list, and 7-day strategy."
 - Primary CTA: "Build My Route"
 - Secondary CTA: "View Demo"
 
 Sections:
 
 - The problem: Students do not need another task list. They need to know what actually matters.
-- What Pathwise gives you: Main bottleneck, Strategy Map, Cut list, Next 7 days, Opportunity Check.
+- What VISR gives you: Main bottleneck, Strategy Map, Cut list, Next 7 days, Opportunity Check.
 - Demo preview: Destination, Bottleneck, Alignment 64%.
 
 Acceptance criteria:
@@ -93,7 +93,7 @@ Steps:
    - `courses`
 3. "What is currently on your plate?"
    - `commitments`
-4. "What constraints should Pathwise respect?"
+4. "What constraints should VISR respect?"
    - `workHoursPerWeek`
    - `constraints`
 5. "Brain dump everything that feels messy."

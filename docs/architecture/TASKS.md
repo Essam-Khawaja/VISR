@@ -1,4 +1,4 @@
-# TASKS: Pathwise
+# TASKS: VISR
 
 ## 24-Hour MVP Build Plan
 
@@ -9,7 +9,7 @@ Functional completeness beats broken ambition. The goal is a polished core loop,
 ## Phase 1: Foundation
 
 - [ ] Install required dependencies: `next`, `react`, `react-dom`, `typescript`, `tailwindcss`, `framer-motion`, `three`, `@types/three`, direct HTTP to Groq chat completions, `@supabase/supabase-js`, `zod`, `uuid`, `@types/uuid`
-- [ ] Create `lib/types.ts` with canonical Pathwise types
+- [ ] Create `lib/types.ts` with canonical VISR types
 - [ ] Create `lib/validation.ts` with Zod schemas
 - [ ] Create `lib/statusColors.ts`
 - [ ] Create `lib/demoData.ts` with CS student plan and robotics opportunity check
@@ -182,11 +182,11 @@ Hard rule:
 
 ## Demo Script to Support
 
-> Pathwise is for students who are doing a lot but cannot tell what matters.
+> VISR is for students who are doing a lot but cannot tell what matters.
 >
 > Here is a CS student trying to land an internship. They have five courses, a job, a club role, two unfinished projects, and an empty GitHub.
 >
-> Pathwise identifies the bottleneck: no shipped project.
+> VISR identifies the bottleneck: no shipped project.
 >
 > It builds a Strategy Map showing the student's destination, pillars, actions, and risks.
 >
@@ -194,6 +194,6 @@ Hard rule:
 >
 > Then it gives the next 7 days.
 >
-> Finally, if the student asks, "Should I join robotics club?", Pathwise does not just say yes or no. It gives a fit score, conditions, tradeoffs, and what must be cut if they accept.
+> Finally, if the student asks, "Should I join robotics club?", VISR does not just say yes or no. It gives a fit score, conditions, tradeoffs, and what must be cut if they accept.
 >
-> Pathwise does not help students do more. It helps them stop doing the wrong things.
+> VISR does not help students do more. It helps them stop doing the wrong things.

@@ -5,7 +5,7 @@ Complete
 
 ## Summary
 
-Replace the current “fill a form, then wait, then see your plan” onboarding with a **live strategy-map builder**. After each answer, the student sees the map below update: a center goal node appears first, then course nodes orbit it, then commitments (clubs, jobs, projects) form an outer ring. Short AI copy beside each step explains what Pathwise is inferring (“This looks like a skill-signal bottleneck”) while the graph animates in.
+Replace the current “fill a form, then wait, then see your plan” onboarding with a **live strategy-map builder**. After each answer, the student sees the map below update: a center goal node appears first, then course nodes orbit it, then commitments (clubs, jobs, projects) form an outer ring. Short AI copy beside each step explains what VISR is inferring (“This looks like a skill-signal bottleneck”) while the graph animates in.
 
 Onboarding’s job is no longer only to collect a `StudentProfile` — it is to **assemble the student’s strategic map in front of them** so they trust the output before they reach the dashboard.
 
@@ -17,7 +17,7 @@ Students need to *see* their goal, classes, and commitments become a visual rout
 
 ## User Story
 
-As an overwhelmed student, I want each onboarding answer to immediately show up on my strategy map, so I understand how Pathwise is modeling my life and I feel confident continuing.
+As an overwhelmed student, I want each onboarding answer to immediately show up on my strategy map, so I understand how VISR is modeling my life and I feel confident continuing.
 
 As a hackathon judge, I want onboarding to look like the product (graph-first), not a generic multi-step form.
 
@@ -36,7 +36,7 @@ As a hackathon judge, I want onboarding to look like the product (graph-first), 
 
 ```text
 ┌─────────────────────────────────────────────────────────────┐
-│  Pathwise · Step 2 of 5          [progress bar]             │
+│  VISR · Step 2 of 5          [progress bar]             │
 ├─────────────────────────────────────────────────────────────┤
 │  PROMPT CARD (top ~40% viewport, scrollable if needed)       │
 │  • Question + short helper copy                             │
@@ -57,7 +57,7 @@ As a hackathon judge, I want onboarding to look like the product (graph-first), 
 |---|---|---|---|
 | **1 — Destination** | `targetGoal`, `degree`, `year`, `university` | **Center node** appears: goal label = `targetGoal`. No pillars yet. Subtle pulse on center. | “Your destination is set. Everything we add next connects back here.” |
 | **2 — Classes** | `currentCourses[]`, `workHoursPerWeek` | **Inner ring**: one node per course, curved edges to center. Nodes use academic styling (neutral/slate). Work hours shown as a small badge on the map chrome, not a node. | “These are your fixed academic load — they constrain how much else you can take on.” |
-| **3 — Commitments** | `commitments[]` | **Middle ring**: one node per commitment (club, job, project, etc.), edges to center. Distinct color from courses. | “These compete for the same hours as your goal. Pathwise will score them against your route.” |
+| **3 — Commitments** | `commitments[]` | **Middle ring**: one node per commitment (club, job, project, etc.), edges to center. Distinct color from courses. | “These compete for the same hours as your goal. VISR will score them against your route.” |
 | **4 — Constraints** | `constraints[]`, optional | No new nodes required for MVP; optional **dashed ring** or small “constraint” chips on the map legend. | “We’ll respect these when recommending cuts and your next 7 days.” |
 | **5 — Brain dump** | `brainDump` | **Preview intelligence**: AI may add 1–3 faint “concern” satellite nodes OR highlight the future bottleneck pillar in red on center halo (no full pillar expansion yet). Map does not need final pillars until generate. | “Reading your mess…”, then a one-line bottleneck preview: e.g. “Likely bottleneck: no shipped project.” |
 | **6 — Build route** | Submit | Full-screen or overlay progress while `POST /api/generate` runs. Map **morphs**: course/commitment nodes fold into strategic pillars; actions appear on outer ring; alignment/bottleneck from final plan. Redirect to `/dashboard/[planId]`. | Cycling messages tied to map: “Naming bottleneck…”, “Placing pillars…”, etc. |

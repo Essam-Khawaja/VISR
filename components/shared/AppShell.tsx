@@ -6,7 +6,7 @@ type Props = {
 
 export function AppShell({ children }: Props) {
   return (
-    <div className="relative z-[1] flex min-h-screen">
+    <div className="relative z-[1] flex min-h-screen flex-col md:flex-row">
       <Sidebar />
       <div className="min-w-0 flex-1 overflow-x-hidden">{children}</div>
     </div>

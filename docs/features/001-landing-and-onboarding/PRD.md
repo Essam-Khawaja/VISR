@@ -8,7 +8,7 @@ This feature gets the student from curiosity to a complete `StudentProfile`. The
 
 ## User Story
 
-As an overwhelmed ambitious student, I want to describe my goal, workload, constraints, and messy thoughts so Pathwise can identify what actually matters.
+As an overwhelmed ambitious student, I want to describe my goal, workload, constraints, and messy thoughts so VISR can identify what actually matters.
 
 ## Scope
 
@@ -23,14 +23,14 @@ As an overwhelmed ambitious student, I want to describe my goal, workload, const
 Hero:
 
 - Headline: "Stop organizing chaos. Find the route."
-- Subheading: "Pathwise turns a messy student life into a clear bottleneck, cut list, and 7-day strategy."
+- Subheading: "VISR turns a messy student life into a clear bottleneck, cut list, and 7-day strategy."
 - Primary CTA: "Build My Route" to `/onboarding`
 - Secondary CTA: "View Demo" to `/dashboard/demo-cs-student-001` or `/demo`
 
 Sections:
 
 - The problem: Students do not need another task list. They need to know what actually matters.
-- What Pathwise gives you: Main bottleneck, Strategy Map, Cut list, Next 7 days, Opportunity Check.
+- What VISR gives you: Main bottleneck, Strategy Map, Cut list, Next 7 days, Opportunity Check.
 - Demo preview: Destination, Bottleneck, Alignment 64%.
 
 ## Onboarding Requirements

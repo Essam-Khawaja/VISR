@@ -1,4 +1,4 @@
-# TECH SPEC: Pathwise
+# TECH SPEC: VISR
 
 ## Stack
 

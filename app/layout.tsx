@@ -73,9 +73,9 @@ const display = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "Pathwise - Student Strategy Dashboard",
+  title: "VISR — Visual Intelligence for Student Roadmapping",
   description:
-    "Pathwise connects the student strategy map to the day and week execution views, so goals, cuts, and dated tasks stay in sync.",
+    "VISR (Visual Intelligence for Student Roadmapping) connects your strategy map to day and week execution, so goals, cuts, and dated tasks stay in sync.",
 };
 
 export const viewport: Viewport = {

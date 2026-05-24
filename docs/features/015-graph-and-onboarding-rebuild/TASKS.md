@@ -57,10 +57,10 @@
 - [x] Add active plan helpers in `planStore` or a small `activePlanStore`.
 - [x] Set active plan after onboarding completion.
 - [x] Change `/` to route:
-  - no active plan -> `/2/onboarding`
-  - active plan -> `/2/dashboard/[planId]`
-- [x] Keep `/2/demo` and demo dashboard working.
-- [x] Keep direct `/1` and `/1/week` compatibility paths.
+  - no active plan -> `/strategyweb/onboarding`
+  - active plan -> `/strategyweb/dashboard/[planId]`
+- [x] Keep `/strategyweb/demo` and demo dashboard working.
+- [x] Keep direct `/flowgram` and `/flowgram/week` compatibility paths.
 
 ## 6. Premium Onboarding Shell
 

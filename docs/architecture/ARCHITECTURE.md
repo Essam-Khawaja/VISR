@@ -1,8 +1,8 @@
-# ARCHITECTURE: Pathwise
+# ARCHITECTURE: VISR
 
 ## System Overview
 
-Pathwise is a Next.js 14 App Router application for overwhelmed university students. The MVP is a strategy dashboard, not a task manager, chatbot, calendar, or course planner.
+VISR is a Next.js 14 App Router application for overwhelmed university students. The MVP is a strategy dashboard, not a task manager, chatbot, calendar, or course planner.
 
 The core loop is:
 

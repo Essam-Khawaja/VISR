@@ -1,4 +1,4 @@
-# DECISIONS: Pathwise
+# DECISIONS: VISR
 
 Architectural and product decisions for the 24-hour MVP.
 
@@ -8,7 +8,7 @@ Architectural and product decisions for the 24-hour MVP.
 
 **Decision:** Prioritize onboarding, demo plan load, dashboard, cut list, next 7 days, and opportunity check before secondary features.
 
-**Reason:** The judging story depends on the full loop: "I was scattered. Pathwise found my bottleneck, told me what to cut, and gave me the next 7 days."
+**Reason:** The judging story depends on the full loop: "I was scattered. VISR found my bottleneck, told me what to cut, and gave me the next 7 days."
 
 **Tradeoff:** Some depth, polish, or persistence details may be thinner.
 

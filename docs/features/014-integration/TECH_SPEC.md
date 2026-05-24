@@ -7,8 +7,8 @@ Planned
 
 The repo currently has two visible app areas:
 
-- `/1`: daily-flow views and APIs, including Today, Week, routines, calendar events, manual checklist items, and supporting Supabase tables.
-- `/2`: Pathwise strategy views and APIs, including onboarding, dashboard, Strategy Map, Opportunity Checker, graph task dialog, recursive action nodes, and local/Supabase plan state.
+- `/flowgram`: daily-flow views and APIs, including Today, Week, routines, calendar events, manual checklist items, and supporting Supabase tables.
+- `/strategyweb`: VISR strategy views and APIs, including onboarding, dashboard, Strategy Map, Opportunity Checker, graph task dialog, recursive action nodes, and local/Supabase plan state.
 
 The strategy side already has early recursive task support:
 
@@ -201,7 +201,7 @@ export type ActionNode = {
 
 ### Initial Strategy Generation
 
-When `/api/2/generate` creates a plan:
+When `/api/strategyweb/generate` creates a plan:
 
 1. Save `student_profiles`.
 2. Save `strategy_plans.plan`.
@@ -241,8 +241,8 @@ If the selected task was originally an `ActionNode` from plan JSON and not yet i
 Daily view fetches:
 
 ```text
-GET /api/1/events?date=YYYY-MM-DD
-GET /api/2/tasks?planId=...&date=YYYY-MM-DD
+GET /api/flowgram/events?date=YYYY-MM-DD
+GET /api/strategyweb/tasks?planId=...&date=YYYY-MM-DD
 ```
 
 or, after route consolidation:
@@ -281,7 +281,7 @@ This updates:
 
 ## API Contract
 
-### `GET /api/2/tasks`
+### `GET /api/strategyweb/tasks`
 
 Query:
 
@@ -304,7 +304,7 @@ Response:
 }
 ```
 
-### `POST /api/2/tasks`
+### `POST /api/strategyweb/tasks`
 
 Request:
 
@@ -331,7 +331,7 @@ Response:
 }
 ```
 
-### `PATCH /api/2/tasks/[taskId]`
+### `PATCH /api/strategyweb/tasks/[taskId]`
 
 Request:
 
@@ -497,12 +497,12 @@ Add strategy tasks to each day cell:
 
 ### Remove Dual App Layout
 
-Replace the root two-card perspective page with one Pathwise dashboard entry.
+Replace the root two-card perspective page with one VISR dashboard entry.
 
 Recommended routes after integration:
 
 ```text
-/                      -> unified Pathwise home or redirect to /2/dashboard/demo-cs-student-001 for demo
+/                      -> unified VISR home or redirect to /2/dashboard/demo-cs-student-001 for demo
 /today                 -> daily view
 /week                  -> week view
 /strategy              -> strategy dashboard/map
@@ -513,7 +513,7 @@ Recommended routes after integration:
 
 MVP route compatibility:
 
-- Keep `/1` and `/2` routes temporarily as redirects.
+- Keep `/flowgram` and `/strategyweb` routes temporarily as redirects.
 - Do not break demo links.
 
 ## Migration Plan
@@ -528,7 +528,7 @@ On first load after integration:
 4. Read `state.actionStates`.
 5. Create missing local `StrategyTask` cache records.
 6. If Supabase configured, upsert those records into `strategy_tasks`.
-7. Mark migration flag `pathwise.tasks.migrated.v1`.
+7. Mark migration flag `visr.tasks.migrated.v1`.
 
 ### Supabase Migration
 

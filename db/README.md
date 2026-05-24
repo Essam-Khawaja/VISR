@@ -1,19 +1,19 @@
 # Database
 
-This folder is the source of truth for the merged Pathwise Supabase schema
-and the StraighterNoodles demo dataset.
+This folder is the source of truth for the merged VISR Supabase schema
+and the demo dataset.
 
 ```
 db/
   schema.sql   - all tables, indexes, RLS (idempotent)
-  seed.sql     - wipe + repopulate the StraighterNoodles showcase dataset
+  seed.sql     - wipe + repopulate the showcase dataset
 ```
 
 The schema covers two perspectives that share the same Supabase project:
 
-- **Section A: StraighterNoodles** (perspective 1, `/1/*`): events, items,
+- **Section A: Flowgram** (perspective 1, `/flowgram/*`): events, items,
   routines, weather/location settings, personal time blocks, etc.
-- **Section B: Pathwise Strategy** (perspective 2, `/2/*`): student profiles,
+- **Section B: Strategy Web** (perspective 2, `/strategyweb/*`): student profiles,
   generated strategy plans (with a `state jsonb` column for per-user UI
   state), and opportunity check history.
 
@@ -39,15 +39,15 @@ Install deps once: `pip install -r scripts/requirements.txt`
 
 After pulling the merged tree, run `python scripts/db_setup.py` once to
 create the new strategy tables (`student_profiles`, `strategy_plans`,
-`opportunity_checks`). It's idempotent so existing StraighterNoodles data
+`opportunity_checks`). It's idempotent so existing flowgram data
 is preserved.
 
 If you can't run the Python helper, you can also paste the contents of
 `db/schema.sql` directly into the Supabase SQL editor and click Run.
 
-## How the Pathwise Strategy state syncs
+## How the VISR Strategy state syncs
 
-The Strategy perspective (`/2/*`) uses Supabase as the source of truth with
+The Strategy perspective (`/strategyweb/*`) uses Supabase as the source of truth with
 `localStorage` as a write-through cache:
 
 - **Reads**: the dashboard paints from `localStorage` immediately, then
@@ -57,7 +57,7 @@ The Strategy perspective (`/2/*`) uses Supabase as the source of truth with
   Supabase in the background.
 - **Migration**: on first mount, `migrateLocalToSupabase()` pushes any
   pre-existing local plans up to `strategy_plans`. Idempotent, gated by
-  the `pathwise.migrated.v1` flag.
+  the `visr.migrated.v1` flag.
 
 The demo plan (`demo-cs-student-001`) intentionally bypasses Supabase and
 loads from the static fixture so the demo path stays fast and offline-safe.

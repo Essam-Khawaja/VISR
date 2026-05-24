@@ -2,7 +2,7 @@
 
 ## Purpose
 
-This feature lays down the structure that every other Pathwise MVP feature depends on: dependencies, environment variables, TypeScript types, Zod validation, demo data, Supabase schema, status colors, and API contracts.
+This feature lays down the structure that every other VISR MVP feature depends on: dependencies, environment variables, TypeScript types, Zod validation, demo data, Supabase schema, status colors, and API contracts.
 
 This is the first solo-dev task. It should make the rest of the build feel boring in the best way: components receive typed data, API routes validate data, and the demo route has a stable plan to render.
 

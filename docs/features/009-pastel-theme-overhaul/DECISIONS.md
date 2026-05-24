@@ -8,7 +8,7 @@
 Replace the entire color system with warm, earthy pastel tones: cream backgrounds, warm brown text, muted sage/mauve/gold status colors.
 
 **Reason:**
-The reference design uses an organic, warm color palette that feels premium and distinctive. The current cool blue/slate palette looks generic. The warm tones better match the "personal strategist" brand of Pathwise.
+The reference design uses an organic, warm color palette that feels premium and distinctive. The current cool blue/slate palette looks generic. The warm tones better match the "personal strategist" brand of VISR.
 
 **Alternatives Considered:**
 - Keep blue but mute it -- rejected; still looks like every other SaaS product.

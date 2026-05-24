@@ -5,7 +5,7 @@ Draft
 
 ## Summary
 
-This feature turns Pathwise from a demo dashboard with a strategy graph into a full first-run strategy-building experience.
+This feature turns VISR from a demo dashboard with a strategy graph into a full first-run strategy-building experience.
 
 There are two immediate graph fixes:
 
@@ -14,7 +14,7 @@ There are two immediate graph fixes:
 
 There is also a larger onboarding rebuild:
 
-Pathwise should start by onboarding the student into a university-life strategy graph. The onboarding should feel premium, interactive, and alive: a compact question card in the top-left, with the map being constructed in real time as the student answers. It should build from high-level university outcome to years, semesters, current semester, courses, clubs, work, and strategic tasks.
+VISR should start by onboarding the student into a university-life strategy graph. The onboarding should feel premium, interactive, and alive: a compact question card in the top-left, with the map being constructed in real time as the student answers. It should build from high-level university outcome to years, semesters, current semester, courses, clubs, work, and strategic tasks.
 
 ## Problem
 
@@ -61,7 +61,7 @@ Example:
 
 ### First App Open
 
-When the user opens Pathwise:
+When the user opens VISR:
 
 - If no active plan exists, send them into onboarding.
 - If an active plan exists, open the dashboard for that plan.
@@ -293,5 +293,5 @@ The student should be able to:
 
 ## Demo Narrative
 
-> "Pathwise starts by asking who you want to be at the end of university. As you answer, it builds the university path: years, semesters, current semester, courses, work, clubs, and tasks. When I add a task to the semester, it becomes a real node on the map and also appears in Today and Week. The dashboard is not a separate app. It is the execution surface for the same strategy graph."
+> "VISR starts by asking who you want to be at the end of university. As you answer, it builds the university path: years, semesters, current semester, courses, work, clubs, and tasks. When I add a task to the semester, it becomes a real node on the map and also appears in Today and Week. The dashboard is not a separate app. It is the execution surface for the same strategy graph."
 

@@ -1,6 +1,6 @@
 -- Supabase setup note
 -- -------------------
--- `db/schema.sql` is the canonical Pathwise schema.
+-- `db/schema.sql` is the canonical VISR schema.
 --
 -- To set up Supabase after pulling integration work:
 -- 1. Open the Supabase SQL Editor.

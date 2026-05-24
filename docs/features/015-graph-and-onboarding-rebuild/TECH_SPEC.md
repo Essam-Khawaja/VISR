@@ -206,7 +206,7 @@ pathwise-onboarding-draft-v3
 Active plan key:
 
 ```ts
-pathwise.activePlanId
+visr.activePlanId
 ```
 
 ## Supabase Schema
@@ -266,7 +266,7 @@ Fallback rule without Supabase:
 - Store `strategy_nodes` in localStorage key:
 
 ```ts
-pathwise.nodes.${planId}
+visr.nodes.${planId}
 ```
 
 ## Graph Rendering
@@ -458,9 +458,9 @@ Then:
 
 ```ts
 if no active plan:
-  redirect("/2/onboarding")
+  redirect("/strategyweb/onboarding")
 else:
-  redirect(`/2/dashboard/${activePlanId}`)
+  redirect(`/strategyweb/dashboard/${activePlanId}`)
 ```
 
 Keep a marketing/demo link only if needed via:
@@ -674,7 +674,7 @@ Graph behavior:
 
 ## API / Persistence
 
-### `POST /api/2/onboarding/complete`
+### `POST /api/strategyweb/onboarding/complete`
 
 New route recommended for this feature.
 
@@ -719,7 +719,7 @@ clearActivePlanId(): void
 Local key:
 
 ```ts
-pathwise.activePlanId
+visr.activePlanId
 ```
 
 Today and Week should eventually use this active plan instead of hardcoded demo ID. However, keep seeded demo tasks visible for demo routes.
@@ -760,6 +760,6 @@ Not allowed in this feature:
 - Graph scope expansion can get large. Keep each view focused on one level.
 - Text measurement can be brittle. Use conservative circle sizes and wrap text.
 - Adding `strategy_nodes` adds persistence complexity. Use localStorage fallback first, then Supabase.
-- First-run redirect can block demo access. Keep `/2/demo` and `/2/dashboard/demo-cs-student-001` unchanged.
+- First-run redirect can block demo access. Keep `/strategyweb/demo` and `/strategyweb/dashboard/demo-cs-student-001` unchanged.
 - AI generation route names may imply task generation. UI copy must not offer AI task creation during onboarding.
 

@@ -1,12 +1,12 @@
-# Pathwise - final-round pitch deck plan
+# VISR - final-round pitch deck plan
 
 **Purpose:** Slide structure and speaker notes for hackathon judging, updated to reflect the current merged product: strategy, opportunity filtering, and Straightnoodle execution.  
 **Audience:** Human judges + repo reviewers.  
 **Product references:** [PRD](../architecture/PRD.md) / [Tech Spec](../architecture/TECH_SPEC.md) / [Architecture](../architecture/ARCHITECTURE.md)  
 **Recommended runtime:** 4-5 minutes spoken + 60-90 seconds live demo.  
 **Deck cap:** 14 slides. One job per slide.  
-**Current tagline direction:** "You say what, Pathwise shows you how."  
-**North-star sentence:** "I was scattered. Pathwise found my bottleneck, told me what to cut, and gave me the next moves."
+**Current tagline direction:** "You say what, VISR shows you how."  
+**North-star sentence:** "I was scattered. VISR found my bottleneck, told me what to cut, and gave me the next moves."
 
 ---
 
@@ -14,12 +14,12 @@
 
 ### Implemented in the repo
 
-- Home route: `/` presents Pathwise as two planning layers: Pathwise Strategy and Straightnoodle.
+- Home route: `/` presents VISR as two planning layers: VISR Strategy and Straightnoodle.
 - Straightnoodle routes:
-  - `/1` Flowgram daily planner
-  - `/1/week` Week View
-  - `/1/notes` Notes Hub
-  - `/1/settings` settings for city/timezone, saved locations, defaults, routines, and personal time
+  - `/flowgram` Flowgram daily planner
+  - `/flowgram/week` Week View
+  - `/flowgram/notes` Notes Hub
+  - `/flowgram/settings` settings for city/timezone, saved locations, defaults, routines, and personal time
 - Straightnoodle daily planning:
   - Weather banner and weather advice
   - Day warnings via `DayOverview`
@@ -32,11 +32,11 @@
   - Voice briefing
   - Week chart and Week View
 - Strategy routes:
-  - `/2/onboarding` Assessments and progressive strategy-map preview
-  - `/2/dashboard/demo-cs-student-001` seeded demo dashboard
-  - `/2/dashboard/[planId]` plan dashboard
-  - `/2/dashboard/[planId]/pillar/[pillarId]` pillar Kanban/task workspace
-  - `/2/opportunity/[planId]` Opportunity Validation
+  - `/strategyweb/onboarding` Assessments and progressive strategy-map preview
+  - `/strategyweb/dashboard/demo-cs-student-001` seeded demo dashboard
+  - `/strategyweb/dashboard/[planId]` plan dashboard
+  - `/strategyweb/dashboard/[planId]/pillar/[pillarId]` pillar Kanban/task workspace
+  - `/strategyweb/opportunity/[planId]` Opportunity Validation
 - Strategy dashboard:
   - GoalTree / Strategy Web visualization
   - Destination, stage, route status, main bottleneck, alignment score
@@ -45,16 +45,16 @@
   - Embedded Opportunity Checker
   - Today Focus overlay showing the top three strategy actions
 - AI and data:
-  - `POST /api/2/generate` calls Groq when configured and falls back to deterministic generation
-  - `POST /api/2/opportunity` evaluates opportunities against the current `StrategyPlan`
-  - `POST /api/2/onboarding/insight` gives per-step onboarding insight
-  - `POST /api/2/node/tasks` generates tasks for strategy nodes with fallback tasks
+  - `POST /api/strategyweb/generate` calls Groq when configured and falls back to deterministic generation
+  - `POST /api/strategyweb/opportunity` evaluates opportunities against the current `StrategyPlan`
+  - `POST /api/strategyweb/onboarding/insight` gives per-step onboarding insight
+  - `POST /api/strategyweb/node/tasks` generates tasks for strategy nodes with fallback tasks
   - Zod validation for `StudentProfile`, `StrategyPlan`, `OpportunityCheck`, onboarding insights, and task generation
   - Supabase JSONB persistence plus localStorage plan cache
 
 ### Partially implemented
 
-- Strategy-to-execution loop: Pathwise has strategic "Next 7 days" and Today Focus, and Straightnoodle has daily/weekly planning. They are both implemented, but the repo does not yet automatically schedule `StrategyPlan.nextSevenDays` into the Straightnoodle timeline.
+- Strategy-to-execution loop: VISR has strategic "Next 7 days" and Today Focus, and Straightnoodle has daily/weekly planning. They are both implemented, but the repo does not yet automatically schedule `StrategyPlan.nextSevenDays` into the Straightnoodle timeline.
 - Persistence: Supabase and local cache are implemented, but there is no real user auth yet.
 - Calendar integration: ICS import is implemented. Two-way calendar sync is not.
 - Strategy analysis view: the dashboard already shows bottleneck, alignment, priorities, cuts, risks, and next actions. A compact "Strategy Brief" drawer is not present in `main`.
@@ -109,15 +109,15 @@
 **Purpose:** Establish the emotional hook in one line.  
 **Key message:** Students are not failing because they lack motivation. They are trying to move in too many directions without a system for deciding what matters next.  
 **On-slide copy:**  
-Pathwise  
-You say what, Pathwise shows you how.  
+VISR  
+You say what, VISR shows you how.  
 For students who need direction and follow-through.
 
 **Suggested visual/screenshot:** Full-bleed screenshot split between Strategy Web and Straightnoodle Flowgram. Use warm cream, deep plum accents, serif headline, minimal labels.  
 **Screenshot targets:**
 - `/`
-- `/2/dashboard/demo-cs-student-001`
-- `/1`
+- `/strategyweb/dashboard/demo-cs-student-001`
+- `/flowgram`
 
 **Speaker notes / talking points:**
 - Start with the canonical student: internship goal, five courses, job, club, unfinished projects, empty GitHub.
@@ -148,7 +148,7 @@ The hard part is knowing what to cut and what to do next.
 ### Slide 3 - The gap
 
 **Slide type:** MVP / problem-solution fit  
-**Purpose:** Position Pathwise against existing tools.  
+**Purpose:** Position VISR against existing tools.  
 **Key message:** Current tools either organize tasks or give advice, but they do not connect strategy to execution.  
 **On-slide copy/table:**
 
@@ -164,17 +164,17 @@ The hard part is knowing what to cut and what to do next.
 **Speaker notes / talking points:**
 - Task tools start after the decision has already been made.
 - Chatbots can suggest ideas, but they usually do not preserve a strategy model.
-- Pathwise starts one step earlier: what are you trying to achieve, what is blocking it, what should you stop doing, and how does that become this week?
+- VISR starts one step earlier: what are you trying to achieve, what is blocking it, what should you stop doing, and how does that become this week?
 
 ---
 
-### Slide 4 - What is Pathwise?
+### Slide 4 - What is VISR?
 
 **Slide type:** MVP / product definition  
 **Purpose:** Give the clean product definition.  
-**Key message:** Pathwise is a student strategy co-pilot that connects direction, decisions, and daily execution.  
+**Key message:** VISR is a student strategy co-pilot that connects direction, decisions, and daily execution.  
 **On-slide copy:**  
-Pathwise helps students:
+VISR helps students:
 
 1. Define the destination
 2. Map the strategy
@@ -187,15 +187,15 @@ Pathwise helps students:
 `Assessments -> Strategy Web -> Dashboard analysis -> Opportunity Validation -> Today Focus -> Straightnoodle Flowgram / Week View`
 
 **Screenshot targets:**
-- `/2/onboarding`
-- `/2/dashboard/demo-cs-student-001`
-- `/2/opportunity/demo-cs-student-001`
-- `/1`
-- `/1/week`
+- `/strategyweb/onboarding`
+- `/strategyweb/dashboard/demo-cs-student-001`
+- `/strategyweb/opportunity/demo-cs-student-001`
+- `/flowgram`
+- `/flowgram/week`
 
 **Speaker notes / talking points:**
 - Avoid feature dumping. This slide is the whole product story.
-- Pathwise is the strategic layer. Straightnoodle is the execution layer.
+- VISR is the strategic layer. Straightnoodle is the execution layer.
 - Be honest: the MVP begins connecting those layers, but the automatic schedule bridge is a next step.
 
 ---
@@ -212,7 +212,7 @@ Actions reveal the bottleneck.
 
 **Suggested visual/screenshot:** Full-bleed Strategy Web / GoalTree screenshot. Use the demo dashboard map preview or full explore mode.  
 **Screenshot targets:**
-- `/2/dashboard/demo-cs-student-001`
+- `/strategyweb/dashboard/demo-cs-student-001`
 - Click "Click to explore map" in `DashboardWorkspace`
 - Component: `components/2/graph/GoalTree.tsx`
 
@@ -242,7 +242,7 @@ Next UI refinement:
 
 **Suggested visual/screenshot:** Dashboard top band + Next 7 days + Cut list in one cropped composite.  
 **Screenshot targets:**
-- `/2/dashboard/demo-cs-student-001`
+- `/strategyweb/dashboard/demo-cs-student-001`
 - Components: `DashboardWorkspace`, `TodayOverlay`, `StrategyPanels`
 
 **Speaker notes / talking points:**
@@ -256,7 +256,7 @@ Next UI refinement:
 
 **Slide type:** MVP / demo  
 **Purpose:** Add the execution layer clearly.  
-**Key message:** Pathwise does not stop at the strategy map. Straightnoodle turns the week into something the student can actually follow.  
+**Key message:** VISR does not stop at the strategy map. Straightnoodle turns the week into something the student can actually follow.  
 **On-slide copy:**  
 Straightnoodle is the day-to-day execution layer:
 
@@ -271,11 +271,11 @@ Straightnoodle is the day-to-day execution layer:
 - "Prepare for interviews" -> "Complete 6 LeetCode easy problems this week."
 - "Network more" -> "Message 2 upper-year CS students."
 
-**Suggested visual/screenshot:** Side-by-side: Flowgram `/1` and Week View `/1/week`.  
+**Suggested visual/screenshot:** Side-by-side: Flowgram `/flowgram` and Week View `/flowgram/week`.  
 **Screenshot targets:**
-- `/1`
-- `/1/week`
-- `/1/notes`
+- `/flowgram`
+- `/flowgram/week`
+- `/flowgram/notes`
 - Components: `Timeline`, `BeforeYouLeave`, `FreeTimeFinder`, `RoutinesPanel`, `WeekChart`, `VoiceBriefingButton`
 
 **Speaker notes / talking points:**
@@ -289,9 +289,9 @@ Straightnoodle is the day-to-day execution layer:
 
 **Slide type:** MVP / demo  
 **Purpose:** Show the tradeoff engine.  
-**Key message:** Pathwise evaluates new opportunities against the current strategy, not in isolation.  
+**Key message:** VISR evaluates new opportunities against the current strategy, not in isolation.  
 **On-slide copy:**  
-When a student asks, "Should I join the robotics club?" Pathwise answers:
+When a student asks, "Should I join the robotics club?" VISR answers:
 
 - Is it aligned?
 - What does it cost?
@@ -300,8 +300,8 @@ When a student asks, "Should I join the robotics club?" Pathwise answers:
 
 **Suggested visual/screenshot:** Opportunity input + result cards: fit score, verdict, tradeoffs, conditions, cuts required.  
 **Screenshot targets:**
-- `/2/opportunity/demo-cs-student-001`
-- Embedded checker inside `/2/dashboard/demo-cs-student-001`
+- `/strategyweb/opportunity/demo-cs-student-001`
+- Embedded checker inside `/strategyweb/dashboard/demo-cs-student-001`
 - Components: `OpportunityClient`, `EmbeddedOpportunityChecker`, `OpportunityResult`, `FitScoreGauge`
 
 **Speaker notes / talking points:**
@@ -318,14 +318,14 @@ When a student asks, "Should I join the robotics club?" Pathwise answers:
 **Key message:** The MVP is demoable end to end, with a reliable seeded route and live AI paths when keys are configured.  
 **Demo route:**
 
-1. `/` - show the two-layer product: Pathwise Strategy + Straightnoodle.
-2. `/2/onboarding` - show Assessments and the live map preview.
-3. `/2/dashboard/demo-cs-student-001` - show Strategy Web / GoalTree and dashboard analysis.
+1. `/` - show the two-layer product: VISR Strategy + Straightnoodle.
+2. `/strategyweb/onboarding` - show Assessments and the live map preview.
+3. `/strategyweb/dashboard/demo-cs-student-001` - show Strategy Web / GoalTree and dashboard analysis.
 4. Open Today Focus - show top three strategy actions.
 5. Scroll to Next 7 days and Cut list - show the bottleneck and tradeoffs.
-6. `/1` - show Straightnoodle Flowgram daily execution.
-7. `/1/week` - show the weekly planning view.
-8. `/2/opportunity/demo-cs-student-001` - test "Should I join the robotics club?"
+6. `/flowgram` - show Straightnoodle Flowgram daily execution.
+7. `/flowgram/week` - show the weekly planning view.
+8. `/strategyweb/opportunity/demo-cs-student-001` - test "Should I join the robotics club?"
 9. Show conditional recommendation, cuts required, and the route back to the plan.
 
 **Suggested visual/screenshot:** Numbered demo path with small route pills.  
@@ -341,7 +341,7 @@ When a student asks, "Should I join the robotics club?" Pathwise answers:
 
 **Slide type:** research  
 **Purpose:** Add credibility without turning the pitch into a literature review.  
-**Key message:** Pathwise uses known behavior-design mechanisms: specific goals, visual strategy, fewer commitments, and implementation intentions.  
+**Key message:** VISR uses known behavior-design mechanisms: specific goals, visual strategy, fewer commitments, and implementation intentions.  
 **On-slide copy:**
 
 - Specific goals improve performance.
@@ -354,7 +354,7 @@ When a student asks, "Should I join the robotics club?" Pathwise answers:
 **Screenshot targets:** None required.  
 **Speaker notes / talking points:**
 - Say "research-informed," not "proven."
-- Pathwise uses the mechanisms: destination, Strategy Web, cut list, Next 7 days, Straightnoodle daily/weekly execution.
+- VISR uses the mechanisms: destination, Strategy Web, cut list, Next 7 days, Straightnoodle daily/weekly execution.
 - Keep this to 20 seconds.
 
 ---
@@ -371,20 +371,20 @@ Next.js 14 App Router / TypeScript / Tailwind CSS / Framer Motion / Three.js / G
 **Architecture diagram:**
 
 ```text
-Assessments -> POST /api/2/generate
+Assessments -> POST /api/strategyweb/generate
   -> Groq JSON (when configured)
   -> Zod validation
   -> deterministic fallback if needed
   -> Supabase JSONB + local cache
   -> Strategy dashboard / GoalTree
 
-Opportunity text -> POST /api/2/opportunity
+Opportunity text -> POST /api/strategyweb/opportunity
   -> StrategyPlan context
   -> Groq JSON or fallback
   -> OpportunityCheck result
 
 Straightnoodle
-  -> /api/1/events, items, event-items, routines, weather,
+  -> /api/flowgram/events, items, event-items, routines, weather,
      free-time, settings, saved-locations, manual-checklist, ICS import
 ```
 
@@ -392,12 +392,12 @@ Straightnoodle
 **Screenshot targets:**
 - `lib/2/types.ts`
 - `lib/2/validate.ts`
-- `app/api/2/generate/route.ts`
-- `app/api/2/opportunity/route.ts`
-- `app/api/2/node/tasks/route.ts`
-- `app/api/1/events/route.ts`
-- `app/api/1/free-time/route.ts`
-- `app/api/1/ics-import/route.ts`
+- `app/api/strategyweb/generate/route.ts`
+- `app/api/strategyweb/opportunity/route.ts`
+- `app/api/strategyweb/node/tasks/route.ts`
+- `app/api/flowgram/events/route.ts`
+- `app/api/flowgram/free-time/route.ts`
+- `app/api/flowgram/ics-import/route.ts`
 
 **Speaker notes / talking points:**
 - Groq is only called from server routes.
@@ -407,14 +407,14 @@ Straightnoodle
 
 ---
 
-### Slide 12 - Why Pathwise is different
+### Slide 12 - Why VISR is different
 
 **Slide type:** MVP / comparison  
 **Purpose:** Make the category difference obvious.  
-**Key message:** Pathwise combines strategy clarity, tradeoff analysis, and daily execution in one system.  
+**Key message:** VISR combines strategy clarity, tradeoff analysis, and daily execution in one system.  
 **Comparison table:**
 
-| Capability | Task managers | Calendars | AI chatbots | Notion planners | Pathwise |
+| Capability | Task managers | Calendars | AI chatbots | Notion planners | VISR |
 |------------|---------------|-----------|-------------|-----------------|----------|
 | Strategy clarity | Low | Low | Medium | Medium | High |
 | Visual strategy map | No | No | No | Manual | Built |
@@ -424,7 +424,7 @@ Straightnoodle
 | Daily/weekly execution through Straightnoodle | Partial | High | No | Manual | Built |
 | Concrete next actions | Manual | Manual | Suggested | Manual | Built |
 
-**Suggested visual/screenshot:** Compact table with Pathwise column highlighted in plum/cream, not bright SaaS blue.  
+**Suggested visual/screenshot:** Compact table with VISR column highlighted in plum/cream, not bright SaaS blue.  
 **Screenshot targets:** None required.  
 **Speaker notes / talking points:**
 - The win is not "we also have a planner."
@@ -472,9 +472,9 @@ Straightnoodle
 
 **Slide type:** closing  
 **Purpose:** Leave judges with the full promise.  
-**Key message:** Pathwise helps students stop juggling everything and start moving with intention.  
+**Key message:** VISR helps students stop juggling everything and start moving with intention.  
 **On-slide copy:**  
-Pathwise helps scattered students:
+VISR helps scattered students:
 
 - choose the destination
 - see the route
@@ -487,9 +487,9 @@ Stop juggling everything. Move with intention.
 
 **Suggested visual/screenshot:** Strategy Web fading into Flowgram/Week View. Use the same cream/plum constellation style from earlier slides.  
 **Screenshot targets:**
-- `/2/dashboard/demo-cs-student-001`
-- `/1`
-- `/1/week`
+- `/strategyweb/dashboard/demo-cs-student-001`
+- `/flowgram`
+- `/flowgram/week`
 
 **Speaker notes / talking points:**
 - Return to the student from Slide 2.
@@ -500,18 +500,18 @@ Stop juggling everything. Move with intention.
 
 ## Live demo script (60-90 seconds)
 
-1. Open `/` and say: "Pathwise has two layers: strategy and Straightnoodle execution."
-2. Open `/2/dashboard/demo-cs-student-001`.
+1. Open `/` and say: "VISR has two layers: strategy and Straightnoodle execution."
+2. Open `/strategyweb/dashboard/demo-cs-student-001`.
 3. Point to the destination: Software Engineering Internship.
 4. Point to the bottleneck: no shipped project, GitHub is empty.
 5. Open Today Focus and show the top three actions.
 6. Scroll to Next 7 days and Cut list.
-7. Open `/1` and show how Straightnoodle handles the day: timeline, packing list, weather, routines, free time.
-8. Open `/1/week` and show the weekly view.
-9. Open `/2/opportunity/demo-cs-student-001`.
+7. Open `/flowgram` and show how Straightnoodle handles the day: timeline, packing list, weather, routines, free time.
+8. Open `/flowgram/week` and show the weekly view.
+9. Open `/strategyweb/opportunity/demo-cs-student-001`.
 10. Evaluate "Should I join the robotics club?"
 11. Show the answer: 78%, Say Yes With Conditions, plus cuts required.
-12. End with: "Pathwise does not just add another task. It decides whether that task belongs in the plan."
+12. End with: "VISR does not just add another task. It decides whether that task belongs in the plan."
 
 **If AI is unavailable:** Use the seeded demo plan and deterministic opportunity fallback. The route still works.
 
@@ -520,15 +520,15 @@ Stop juggling everything. Move with intention.
 ## Screenshot checklist
 
 - Home: `/`
-- Strategy dashboard: `/2/dashboard/demo-cs-student-001`
+- Strategy dashboard: `/strategyweb/dashboard/demo-cs-student-001`
 - Explore map / GoalTree: click the map preview on the strategy dashboard
 - Today Focus overlay: click "Open today focus"
-- Opportunity Validation: `/2/opportunity/demo-cs-student-001`
-- Assessments: `/2/onboarding`
-- Straightnoodle Flowgram: `/1`
-- Week View: `/1/week`
-- Notes Hub: `/1/notes`
-- Pillar Kanban: `/2/dashboard/demo-cs-student-001/pillar/pillar-skill`
+- Opportunity Validation: `/strategyweb/opportunity/demo-cs-student-001`
+- Assessments: `/strategyweb/onboarding`
+- Straightnoodle Flowgram: `/flowgram`
+- Week View: `/flowgram/week`
+- Notes Hub: `/flowgram/notes`
+- Pillar Kanban: `/strategyweb/dashboard/demo-cs-student-001/pillar/pillar-skill`
 
 ---
 
@@ -539,14 +539,14 @@ Stop juggling everything. Move with intention.
 - Do not say there is full calendar sync. ICS import exists; two-way sync is future work.
 - Do not say there is authentication or multi-user persistence. Supabase/local persistence exists, but auth is future work.
 - Do not claim the product is clinically proven. Say research-informed.
-- Do not call Pathwise a chatbot, calendar app, degree audit, or advisor replacement.
+- Do not call VISR a chatbot, calendar app, degree audit, or advisor replacement.
 
 ---
 
 ## Appendix A: StrategyPlan JSON b-roll
 
 **Use on:** Slide 11, as a quick cut during the technical architecture slide.  
-**What to capture:** `lib/2/fixture.ts` and `lib/2/validate.ts`, or a Network tab response from `POST /api/2/generate`.
+**What to capture:** `lib/2/fixture.ts` and `lib/2/validate.ts`, or a Network tab response from `POST /api/strategyweb/generate`.
 
 **What to say:**
 - "The plan is typed and validated before the dashboard reads it."
