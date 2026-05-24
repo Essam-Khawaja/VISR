@@ -111,7 +111,7 @@ export function DashboardWorkspace({ onToggleToday }: Props) {
           onClick={openExplore}
           className="group relative w-full overflow-hidden rounded-2xl border border-border bg-base shadow-card transition-shadow hover:shadow-lift"
         >
-          <div className="h-[520px]">
+          <div className="h-[800px]">
             <GoalTreeSlot
               onToggleToday={onToggleToday}
               displayMode="preview"
