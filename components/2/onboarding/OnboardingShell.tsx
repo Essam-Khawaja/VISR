@@ -167,8 +167,8 @@ export function OnboardingShell() {
   }, [handleSubmit]);
 
   return (
-    <div className="flex h-[100dvh] flex-col overflow-hidden bg-base">
-      <div className="shrink-0 overflow-y-auto px-4 py-4 sm:px-6 sm:py-6" style={{ maxHeight: "50vh" }}>
+    <div className="flex h-[100dvh] flex-col overflow-hidden bg-base lg:flex-row">
+      <div className="order-2 max-h-[50vh] shrink-0 overflow-y-auto px-4 py-4 sm:px-6 sm:py-6 lg:order-1 lg:h-full lg:max-h-none lg:w-[44%] lg:max-w-[560px] lg:border-r lg:border-border lg:py-8">
         <OnboardingForm
           profile={profile}
           onProfileChange={onProfileChange}
@@ -182,7 +182,7 @@ export function OnboardingShell() {
         />
       </div>
 
-      <div className="relative min-h-[320px] flex-1 border-t border-border">
+      <div className="relative order-1 min-h-[320px] flex-1 border-t border-border lg:order-2 lg:h-full lg:border-t-0">
         <OnboardingMapPanel
           mapState={mapState}
           insight={insight}
