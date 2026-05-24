@@ -424,10 +424,13 @@ export function useGraphScene({
         document.body.style.cursor = "grab";
         if (!dragMoved && !isReadOnly) {
           const nm = raycastNodeAt(e);
-          if (!nm || nm.data.kind === "goal") {
+          if (!nm) {
             selectionRef.current = null;
             setSelectionState(null);
-          } else if (nm.data.kind === "pillar") {
+          } else if (nm.data.kind === "goal" && !layoutOverride) {
+            selectionRef.current = null;
+            setSelectionState(null);
+          } else if (nm.data.kind === "goal" || nm.data.kind === "pillar") {
             const next: GraphSelection = {
               kind: "pillar",
               nodeId: nm.data.id,
