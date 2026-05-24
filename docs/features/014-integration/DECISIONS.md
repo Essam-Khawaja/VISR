@@ -54,3 +54,20 @@
 
 **Reason:** Existing code and demo links should not break while the product shell becomes unified.
 
+## D10: Schema Setup Is Canonical Through `db/schema.sql`
+
+**Decision:** Supabase setup for this feature should run the full `db/schema.sql` file after pulling the branch.
+
+**Reason:** The canonical `strategy_tasks` table, indexes, and MVP policies now live beside the rest of the database schema. Keeping one SQL entry point reduces setup drift during the hackathon.
+
+## D11: MVP Sync Uses The Demo Strategy Plan As The Shared Daily Context
+
+**Decision:** Today and Week read strategy tasks from the demo strategy plan ID for this integration slice.
+
+**Reason:** This keeps the screenshot/demo path reliable without adding an account-level active-plan selector. A later persistence pass can let generated onboarding plans become the active daily/week strategy context.
+
+## D12: Week Task Chips Link Through The Day Cell
+
+**Decision:** Week view shows strategy task chips inside each day card, and the day card opens the selected date.
+
+**Reason:** This avoids nested interactive controls inside the existing day link while still exposing future-dated strategy work in the correct calendar position. A dedicated task detail modal can replace this once the unified shell has more time.
