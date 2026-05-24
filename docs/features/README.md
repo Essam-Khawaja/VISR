@@ -27,6 +27,9 @@ Each feature must explain both product behavior and technical implementation arc
 | 6 | [006-opportunity-checker](006-opportunity-checker/) | Opportunity Checker | Evaluate new opportunities against the current plan |
 | 7 | [007-supabase-persistence-and-api](007-supabase-persistence-and-api/) | Supabase Persistence and API | Database implementation and persistence helpers |
 | 8 | [008-progressive-onboarding-strategy-map](008-progressive-onboarding-strategy-map/) | Progressive Onboarding Strategy Map | Live map-building onboarding; fixes list inputs; per-step AI insights |
+| 9 | [009-pastel-theme-overhaul](009-pastel-theme-overhaul/) | Pastel Theme Overhaul | Sitewide warm pastel palette replacing cool blue/slate tokens |
+| 10 | [010-graph-visual-redesign](010-graph-visual-redesign/) | Graph Visual Redesign | Per-pillar pastel nodes, pulse animation, dashed edges with progress, zoom fix |
+| 11 | [011-node-task-dialog](011-node-task-dialog/) | Node Task Dialog and AI Generator | Tabbed dialog with task list, manual add, AI task generation, recursive expansion |
 
 ---
 
