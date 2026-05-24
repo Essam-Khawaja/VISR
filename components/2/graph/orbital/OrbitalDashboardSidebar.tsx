@@ -11,6 +11,7 @@ type Props = {
   planId: string;
   onCategoryClick: (category: OrbitalNodeData) => void;
   onTodayClick?: () => void;
+  onBriefClick?: () => void;
 };
 
 const uiFont =
@@ -24,6 +25,7 @@ export function OrbitalDashboardSidebar({
   planId,
   onCategoryClick,
   onTodayClick,
+  onBriefClick,
 }: Props) {
   return (
     <div className="flex h-full w-[220px] shrink-0 flex-col border-r border-[#D5CFBD]/30 bg-white/40 p-6 backdrop-blur-sm">
@@ -84,6 +86,16 @@ export function OrbitalDashboardSidebar({
             style={{ fontFamily: uiFont }}
           >
             Today focus
+          </button>
+        ) : null}
+        {onBriefClick ? (
+          <button
+            type="button"
+            onClick={onBriefClick}
+            className="rounded-full border border-[#D5CFBD]/50 bg-white/50 px-4 py-2 text-[12px] font-medium text-[#2C4F52] transition-all hover:bg-white/80"
+            style={{ fontFamily: uiFont }}
+          >
+            Strategy Brief
           </button>
         ) : null}
         <Link

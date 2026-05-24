@@ -18,6 +18,7 @@ type PathEntry = { node: OrbitalNodeData; angle?: number };
 
 type Props = {
   onTodayClick?: () => void;
+  onBriefClick?: () => void;
 };
 
 function selectionForNode(nodeId: string): GraphSelection {
@@ -27,7 +28,7 @@ function selectionForNode(nodeId: string): GraphSelection {
   return { kind: "action", nodeId };
 }
 
-export function OrbitalDashboard({ onTodayClick }: Props) {
+export function OrbitalDashboard({ onTodayClick, onBriefClick }: Props) {
   const { plan, planId, stored, markAction, addTasks, isDemo } = usePlan();
   const root = useMemo(() => planToOrbitalRoot(plan), [plan]);
 
@@ -138,6 +139,7 @@ export function OrbitalDashboard({ onTodayClick }: Props) {
         planId={planId}
         onCategoryClick={handleCategoryClick}
         onTodayClick={onTodayClick}
+        onBriefClick={onBriefClick}
       />
 
       <div className="relative min-h-0 min-w-0 flex-1">

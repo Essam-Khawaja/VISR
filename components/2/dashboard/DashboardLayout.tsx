@@ -7,6 +7,7 @@ import { Button } from "@/components/2/ui/Button";
 import { FIGMA_DASHBOARD_BG } from "@/lib/2/orbitalMap";
 import { PlanProvider, usePlanOptional } from "./PlanProvider";
 import { TodayOverlay } from "./TodayOverlay";
+import { StrategyBriefPanel } from "./StrategyBriefPanel";
 
 type Props = {
   planId: string;
@@ -23,7 +24,9 @@ export function DashboardLayout({ planId }: Props) {
 function DashboardShell() {
   const ctx = usePlanOptional();
   const [todayOpen, setTodayOpen] = useState(false);
+  const [briefOpen, setBriefOpen] = useState(false);
   const toggleToday = useCallback(() => setTodayOpen((v) => !v), []);
+  const toggleBrief = useCallback(() => setBriefOpen((v) => !v), []);
 
   if (!ctx) {
     return <DashboardEmpty />;
@@ -35,8 +38,12 @@ function DashboardShell() {
       className="flex h-screen w-full flex-col overflow-hidden"
       style={{ backgroundColor: FIGMA_DASHBOARD_BG }}
     >
-      <OrbitalDashboard onTodayClick={toggleToday} />
+      <OrbitalDashboard onTodayClick={toggleToday} onBriefClick={toggleBrief} />
       <TodayOverlay open={todayOpen} onClose={() => setTodayOpen(false)} />
+      <StrategyBriefPanel
+        open={briefOpen}
+        onClose={() => setBriefOpen(false)}
+      />
     </div>
   );
 }
