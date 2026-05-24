@@ -5,6 +5,7 @@ import Link from "next/link";
 import { DashboardSidebar } from "@/components/layout/DashboardSidebar";
 import { Button } from "@/components/ui/Button";
 import { PlanProvider, usePlanOptional } from "./PlanProvider";
+import { ProjectSidebar } from "./ProjectSidebar";
 import { DashboardWorkspace } from "./DashboardWorkspace";
 import { TodayOverlay } from "./TodayOverlay";
 
@@ -23,18 +24,24 @@ export function DashboardLayout({ planId }: Props) {
 function DashboardShell({ planId }: { planId: string }) {
   const ctx = usePlanOptional();
   const [todayOpen, setTodayOpen] = useState(false);
+  const [projectsCollapsed, setProjectsCollapsed] = useState(false);
   const toggleToday = useCallback(() => setTodayOpen((v) => !v), []);
+  const toggleProjects = useCallback(
+    () => setProjectsCollapsed((v) => !v),
+    [],
+  );
 
   if (!ctx) {
     return <DashboardEmpty />;
   }
 
   return (
-    <main
-      id="main"
-      className="flex h-screen overflow-hidden bg-base"
-    >
+    <main id="main" className="flex h-screen overflow-hidden bg-base">
       <DashboardSidebar planId={planId} onTodayClick={toggleToday} />
+      <ProjectSidebar
+        collapsed={projectsCollapsed}
+        onToggleCollapse={toggleProjects}
+      />
       <div className="min-w-0 flex-1 overflow-y-auto">
         <DashboardWorkspace onToggleToday={toggleToday} />
       </div>

@@ -30,24 +30,21 @@ export function DashboardSidebar({ planId, onTodayClick }: Props) {
 
   return (
     <aside
-      className="flex h-full w-[72px] shrink-0 flex-col border-r border-border bg-surface md:w-[240px]"
+      className="flex h-full w-[72px] shrink-0 flex-col border-r border-border bg-surface"
       aria-label="Dashboard navigation"
     >
-      <div className="flex h-16 items-center justify-center px-4 md:justify-start md:px-6">
+      <div className="flex h-16 items-center justify-center px-4">
         <Link
           href="/"
           className="flex items-center gap-2.5 text-primary transition-colors hover:text-accent"
         >
           <PathwiseMark />
-          <span className="hidden font-display text-[15px] font-semibold tracking-tight md:inline">
-            Pathwise
-          </span>
         </Link>
       </div>
 
-      <div className="mx-3 my-1 h-px bg-border md:mx-5" />
+      <div className="mx-3 my-1 h-px bg-border" />
 
-      <nav className="flex flex-1 flex-col gap-1 p-3 md:p-4">
+      <nav className="flex flex-1 flex-col gap-1 p-3">
         {items.map((item) => {
           const active =
             item.href === "/"
@@ -73,9 +70,7 @@ export function DashboardSidebar({ planId, onTodayClick }: Props) {
               >
                 {item.icon}
               </span>
-              <span className="hidden text-[13px] font-medium md:inline">
-                {item.label}
-              </span>
+              <span className="sr-only">{item.label}</span>
             </Link>
           );
         })}
@@ -89,21 +84,15 @@ export function DashboardSidebar({ planId, onTodayClick }: Props) {
             <span className="flex h-5 w-5 shrink-0 items-center justify-center text-tertiary" aria-hidden>
               <IconToday />
             </span>
-            <span className="hidden flex-1 text-left text-[13px] font-medium md:inline">
-              Today
-            </span>
-            <kbd className="hidden h-5 rounded-md border border-border bg-elevated px-1.5 text-[10px] font-medium text-tertiary md:inline-flex md:items-center">
-              T
-            </kbd>
+            <span className="sr-only">Today</span>
           </button>
         ) : null}
       </nav>
 
-      <div className="hidden border-t border-border p-5 md:block">
-        <p className="text-[11px] font-medium text-tertiary">Tip</p>
-        <p className="mt-1 text-[12px] leading-relaxed text-secondary">
-          Click a pillar to expand. Press <kbd className="rounded border border-border bg-elevated px-1 text-[10px]">T</kbd> for today.
-        </p>
+      <div className="border-t border-border p-3">
+        <div className="flex h-5 items-center justify-center text-[10px] font-medium text-tertiary">
+          <kbd className="rounded border border-border bg-elevated px-1">T</kbd>
+        </div>
       </div>
     </aside>
   );
