@@ -20,6 +20,7 @@ export type GoalTreeProps = {
     parentNodeId: string,
     tasks: { name: string; recommendation: string }[],
   ) => void;
+  onNodeClick?: (pillarId: string) => void;
   displayMode?: "onboarding" | "preview" | "full";
   layoutOverride?: { nodes: LayoutNode[]; edges: LayoutEdge[] };
 };
@@ -32,6 +33,7 @@ export default function GoalTree({
   isDemo,
   onToggleToday,
   onAddTasks,
+  onNodeClick,
   displayMode = "full",
   layoutOverride,
 }: GoalTreeProps) {
@@ -53,6 +55,12 @@ export default function GoalTree({
     });
 
   const toggleDock = useCallback(() => setDockOpen((v) => !v), []);
+
+  useEffect(() => {
+    if (selection?.kind === "pillar" && onNodeClick) {
+      onNodeClick(selection.nodeId);
+    }
+  }, [selection, onNodeClick]);
 
   const handleAddTasks = useCallback(
     (

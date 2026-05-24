@@ -1,11 +1,13 @@
 "use client";
 
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { NumberDial } from "@/components/ui/NumberDial";
-import { DashboardGraphCard } from "./DashboardGraphCard";
 import { EmbeddedOpportunityChecker } from "./EmbeddedOpportunityChecker";
+import { GoalTreeSlot } from "./GoalTreeSlot";
 import { usePlan } from "./PlanProvider";
 import type { ActionState } from "@/lib/planStore";
 import type {
@@ -19,6 +21,8 @@ import type {
 type Props = {
   onToggleToday: () => void;
 };
+
+type Tab = "map" | "insights";
 
 const routeTone: Record<RouteStatus, "success" | "warning" | "danger"> = {
   "On Track": "success",
@@ -50,8 +54,90 @@ const cutOrder: CutRecommendation[] = ["Cut", "Defer", "Keep", "Double Down"];
 
 export function DashboardWorkspace({ onToggleToday }: Props) {
   const ctx = usePlan();
-  const { plan, stored, markAction, isDemo } = ctx;
-  const stats = getRouteStats(plan, stored.actionStates);
+  const { plan, planId, stored, markAction, isDemo } = ctx;
+  const [tab, setTab] = useState<Tab>("map");
+  const router = useRouter();
+
+  const handleNodeClick = (pillarId: string) => {
+    router.push(`/dashboard/${planId}/pillar/${pillarId}`);
+  };
+
+  return (
+    <div className="flex h-full flex-col">
+      <div className="flex shrink-0 items-center gap-1 border-b border-border bg-surface px-4">
+        <TabButton active={tab === "map"} onClick={() => setTab("map")}>
+          Map
+        </TabButton>
+        <TabButton active={tab === "insights"} onClick={() => setTab("insights")}>
+          Insights
+        </TabButton>
+      </div>
+
+      {tab === "map" ? (
+        <div className="min-h-0 flex-1">
+          <GoalTreeSlot
+            onToggleToday={onToggleToday}
+            onNodeClick={handleNodeClick}
+            displayMode="full"
+          />
+        </div>
+      ) : (
+        <div className="flex-1 overflow-y-auto">
+          <InsightsContent
+            plan={plan}
+            isDemo={isDemo}
+            actionStates={stored.actionStates}
+            markAction={markAction}
+            onToggleToday={onToggleToday}
+          />
+        </div>
+      )}
+    </div>
+  );
+}
+
+function TabButton({
+  active,
+  onClick,
+  children,
+}: {
+  active: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={
+        "relative px-4 py-3 text-[13px] font-medium transition-colors " +
+        (active
+          ? "text-primary"
+          : "text-tertiary hover:text-secondary")
+      }
+    >
+      {children}
+      {active ? (
+        <span className="absolute bottom-0 left-2 right-2 h-[2px] rounded-full bg-accent" />
+      ) : null}
+    </button>
+  );
+}
+
+function InsightsContent({
+  plan,
+  isDemo,
+  actionStates,
+  markAction,
+  onToggleToday,
+}: {
+  plan: StrategyPlan;
+  isDemo: boolean;
+  actionStates: Record<string, ActionState>;
+  markAction: (actionId: string, state: ActionState) => void;
+  onToggleToday: () => void;
+}) {
+  const stats = getRouteStats(plan, actionStates);
 
   return (
     <div className="mx-auto flex w-full max-w-[1500px] flex-col gap-5 px-4 py-5 sm:px-6 lg:px-8 lg:py-7">
@@ -66,12 +152,12 @@ export function DashboardWorkspace({ onToggleToday }: Props) {
         <div className="xl:col-span-7">
           <NextSevenDaysPanel
             plan={plan}
-            actionStates={stored.actionStates}
+            actionStates={actionStates}
             markAction={markAction}
           />
         </div>
         <div className="xl:col-span-5">
-          <DashboardGraphCard plan={plan} onToggleToday={onToggleToday} />
+          <EmbeddedOpportunityChecker />
         </div>
       </section>
 
@@ -80,17 +166,12 @@ export function DashboardWorkspace({ onToggleToday }: Props) {
           <CutListPanel plan={plan} />
         </div>
         <div className="xl:col-span-5">
-          <EmbeddedOpportunityChecker />
+          <SemesterPrioritiesPanel plan={plan} />
         </div>
       </section>
 
-      <section className="grid grid-cols-1 gap-5 xl:grid-cols-12">
-        <div className="xl:col-span-5">
-          <SemesterPrioritiesPanel plan={plan} />
-        </div>
-        <div className="xl:col-span-7">
-          <RiskPanel plan={plan} />
-        </div>
+      <section>
+        <RiskPanel plan={plan} />
       </section>
     </div>
   );
