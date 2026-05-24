@@ -1,5 +1,7 @@
 # PRD: Landing and Onboarding
 
+> **Note:** Onboarding UX (multi-step form + map) is superseded by **[008-progressive-onboarding-strategy-map](../008-progressive-onboarding-strategy-map/)**, which specifies live strategy-map building per step. This doc still applies to the **landing page** and high-level onboarding entry.
+
 ## Purpose
 
 This feature gets the student from curiosity to a complete `StudentProfile`. The experience must feel like building a student command center, not filling out an administrative form.

@@ -26,6 +26,14 @@ Each feature must explain both product behavior and technical implementation arc
 | 5 | [005-strategy-map-visualization](005-strategy-map-visualization/) | Strategy Map Visualization | Hero graph, bottleneck highlight, graph fallback |
 | 6 | [006-opportunity-checker](006-opportunity-checker/) | Opportunity Checker | Evaluate new opportunities against the current plan |
 | 7 | [007-supabase-persistence-and-api](007-supabase-persistence-and-api/) | Supabase Persistence and API | Database implementation and persistence helpers |
+| 8 | [008-progressive-onboarding-strategy-map](008-progressive-onboarding-strategy-map/) | Progressive Onboarding Strategy Map | Live map-building onboarding; fixes list inputs; per-step AI insights |
+
+---
+
+## Onboarding source of truth
+
+For **onboarding UX** (split layout, progressive map, chip inputs), use **[008-progressive-onboarding-strategy-map](008-progressive-onboarding-strategy-map/)**.  
+[001-landing-and-onboarding](001-landing-and-onboarding/) remains the reference for the landing page only.
 
 ---
 
