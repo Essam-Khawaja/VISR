@@ -153,7 +153,7 @@ export function useGraphScene({
     scene.add(root);
 
     const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 100);
-    const startZ = showAllNodes ? CAMERA_END_Z + 4 : CAMERA_START_Z;
+    const startZ = showAllNodes ? CAMERA_END_Z : CAMERA_START_Z;
     camera.position.set(0, 0, startZ);
     camera.lookAt(0, 0, 0);
 
@@ -299,7 +299,7 @@ export function useGraphScene({
 
     let cameraTargetX = 0;
     let cameraTargetY = 0;
-    let cameraTargetZ = showAllNodes ? CAMERA_END_Z + 4 : CAMERA_END_Z;
+    let cameraTargetZ = showAllNodes ? CAMERA_END_Z : CAMERA_END_Z;
     let lookAtTargetX = 0;
     let lookAtTargetY = 0;
     let currentLookX = 0;
