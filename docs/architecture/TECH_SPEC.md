@@ -2,21 +2,25 @@
 
 ## Stack
 
-| Layer | Choice | Reason |
-|---|---|---|
-| Framework | Next.js 14 App Router | SSR for dashboard, API routes built in |
-| Language | TypeScript | Shared types across frontend and backend |
-| Styling | Tailwind CSS | Fast iteration, utility-first |
-| Animation | Framer Motion | Dashboard card animations, score counter |
-| 3D Graph | Three.js (custom) | Full control over visual quality — no library ceiling |
-| AI | Anthropic Claude claude-sonnet-4-5 | Reliable structured JSON output |
-| Validation | Zod | Parse and validate Claude JSON before saving |
-| Database | Supabase (PostgreSQL) | Simple, free tier, instant setup |
-| State | React useState / useEffect | No global state manager needed for MVP |
+| Layer | Choice |
+|---|---|
+| Framework | Next.js 14 App Router |
+| Language | TypeScript |
+| Styling | Tailwind CSS |
+| Animation | Framer Motion |
+| Graph visualization | Three.js if feasible; polished 2D radial graph fallback |
+| AI API | Anthropic Claude via `@anthropic-ai/sdk` |
+| Validation | Zod |
+| Database | Supabase Postgres via `@supabase/supabase-js` |
+| State | React `useState` / `useEffect` |
+
+No global state manager for the MVP.
 
 ---
 
 ## Dependencies
+
+Install and use:
 
 ```json
 {
@@ -26,16 +30,44 @@
     "react-dom": "18.x",
     "typescript": "5.x",
     "tailwindcss": "3.x",
-    "framer-motion": "11.x",
-    "three": "0.165.x",
-    "@types/three": "0.165.x",
+    "framer-motion": "latest",
+    "three": "latest",
+    "@types/three": "latest",
     "@anthropic-ai/sdk": "latest",
-    "@supabase/supabase-js": "2.x",
-    "zod": "3.x",
-    "uuid": "9.x",
-    "@types/uuid": "9.x"
+    "@supabase/supabase-js": "latest",
+    "zod": "latest",
+    "uuid": "latest",
+    "@types/uuid": "latest"
   }
 }
+```
+
+---
+
+## Environment Variables
+
+```bash
+ANTHROPIC_API_KEY=
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_ANON_KEY=
+SUPABASE_SERVICE_ROLE_KEY=
+```
+
+Never expose `ANTHROPIC_API_KEY` or `SUPABASE_SERVICE_ROLE_KEY` to the client.
+
+---
+
+## Canonical Files
+
+```text
+lib/types.ts
+lib/validation.ts
+lib/statusColors.ts
+lib/demoData.ts
+lib/supabase.ts
+lib/anthropic.ts
+lib/prompts/strategyPrompt.ts
+lib/prompts/opportunityPrompt.ts
 ```
 
 ---
@@ -44,149 +76,111 @@
 
 ### POST /api/generate
 
-Accepts a StudentProfile, calls Claude, validates and saves the result.
+Purpose: accept a student profile from onboarding, call Claude, validate the result, save it to Supabase, and return the `planId`.
 
-**Request body:**
-```typescript
+Request:
+
+```ts
 {
   profile: Omit<StudentProfile, "id" | "createdAt">
 }
 ```
 
-**Response:**
-```typescript
+Response:
+
+```ts
 {
   planId: string;
   studentId: string;
 }
 ```
 
-**Internal flow:**
-1. Assign UUID to profile, save to Supabase `student_profiles`
-2. Build prompt from profile using `buildStrategyPrompt(profile)`
-3. Call Claude claude-sonnet-4-5 with the prompt
-4. Parse response text as JSON
-5. Validate with `StrategyPlanSchema` (Zod)
-6. If invalid: retry once with a correction prompt, then return 500
-7. Save validated plan to Supabase `strategy_plans`
-8. Return `{ planId, studentId }`
+Internal flow:
 
-**Error handling:**
-- Zod validation failure → retry once → 500 with error details
-- Claude API error → 500 with message
-- Supabase error → 500 with message
-
----
+1. Generate UUID for student profile.
+2. Save profile to `student_profiles`.
+3. Build strategy prompt using `buildStrategyPrompt(profile)`.
+4. Call Claude with strict JSON-output prompt.
+5. Parse Claude response as JSON.
+6. Validate with `StrategyPlanSchema`.
+7. If validation fails, retry once with a correction prompt that includes the validation error.
+8. Save validated plan to `strategy_plans.plan` as JSONB.
+9. Return `planId` and `studentId`.
+10. If anything fails, return a structured error response.
 
 ### POST /api/opportunity
 
-Accepts an opportunity string and planId, calls Claude with plan context.
+Purpose: evaluate a new opportunity against the current strategy.
 
-**Request body:**
-```typescript
+Request:
+
+```ts
 {
   planId: string;
   opportunityText: string;
 }
 ```
 
-**Response:**
-```typescript
+Response:
+
+```ts
 {
-  check: OpportunityCheck
+  check: OpportunityCheck;
 }
 ```
 
-**Internal flow:**
-1. Fetch StrategyPlan from Supabase by planId
-2. Build opportunity prompt with plan context + opportunity text
-3. Call Claude claude-sonnet-4-5
-4. Parse and validate with `OpportunityCheckSchema` (Zod)
-5. Save to Supabase `opportunity_checks`
-6. Return full OpportunityCheck object
+Internal flow:
+
+1. Fetch strategy plan from Supabase by `planId`, unless it is the demo plan.
+2. Build opportunity prompt using the current `StrategyPlan` and `opportunityText`.
+3. Call Claude.
+4. Parse JSON response.
+5. Validate with `OpportunityCheckSchema`.
+6. Save to `opportunity_checks.check` as JSONB.
+7. Return `OpportunityCheck`.
+8. If API key or Supabase is missing for the demo route, return the seeded robotics-club check for the matching demo input.
+
+### GET /api/plan/[planId]
+
+Purpose: fetch a saved strategy plan by ID.
+
+Response:
+
+```ts
+{
+  plan: StrategyPlan;
+  profile?: StudentProfile;
+}
+```
+
+For `demo-cs-student-001`, return seeded demo data.
 
 ---
 
 ## Zod Schemas
 
-```typescript
-// lib/validation.ts
+`lib/validation.ts` must match `lib/types.ts`.
 
-import { z } from "zod";
+Validation requirements:
 
-const ActionNodeSchema = z.object({
-  id: z.string(),
-  name: z.string(),
-  status: z.enum(["On Track", "Behind", "At Risk", "Deferred", "Cut"]),
-  recommendation: z.string()
-});
-
-const StrategicPillarSchema = z.object({
-  id: z.string(),
-  name: z.string(),
-  status: z.enum(["Strong", "Okay", "Weak", "Missing"]),
-  reason: z.string(),
-  actions: z.array(ActionNodeSchema)
-});
-
-const CutItemSchema = z.object({
-  id: z.string(),
-  activity: z.string(),
-  recommendation: z.enum(["Cut", "Defer", "Keep", "Double Down"]),
-  reason: z.string()
-});
-
-const ActionItemSchema = z.object({
-  id: z.string(),
-  title: z.string(),
-  category: z.string(),
-  priority: z.enum(["High", "Medium", "Low"])
-});
-
-const RiskItemSchema = z.object({
-  id: z.string(),
-  title: z.string(),
-  severity: z.enum(["High", "Medium", "Low"]),
-  explanation: z.string()
-});
-
-export const StrategyPlanSchema = z.object({
-  destination: z.string(),
-  currentStage: z.string(),
-  mainBottleneck: z.string(),
-  routeStatus: z.enum(["On Track", "At Risk", "Scattered", "Needs Focus"]),
-  alignmentScore: z.number().min(0).max(100),
-  strategicPillars: z.array(StrategicPillarSchema).min(4),
-  semesterPriorities: z.array(z.string()).min(3),
-  cutList: z.array(CutItemSchema).min(2),
-  nextSevenDays: z.array(ActionItemSchema).min(3).max(7),
-  risks: z.array(RiskItemSchema).min(1)
-});
-
-export const OpportunityCheckSchema = z.object({
-  fitScore: z.number().min(0).max(100),
-  recommendation: z.enum(["Say Yes", "Say No", "Defer", "Say Yes With Conditions"]),
-  reasoning: z.string(),
-  whyItFits: z.array(z.string()),
-  tradeoffs: z.array(z.string()),
-  conditions: z.array(z.string()),
-  cutsRequired: z.array(z.string())
-});
-```
+- `StrategyPlan.alignmentScore` must be 0 to 100.
+- `StrategyPlan.strategicPillars` must have at least 4 pillars.
+- `StrategyPlan.semesterPriorities` must have at least 3 items.
+- `StrategyPlan.cutList` must have at least 2 items.
+- `StrategyPlan.nextSevenDays` must have 3 to 7 items.
+- `StrategyPlan.risks` must have at least 1 item.
+- `OpportunityCheck.fitScore` must be 0 to 100.
+- `OpportunityCheck.recommendation` must be one of:
+  - `Say Yes`
+  - `Say No`
+  - `Defer`
+  - `Say Yes With Conditions`
 
 ---
 
-## Component Props Reference
+## Component Props
 
-```typescript
-// Key component interfaces
-
-interface GoalTreeProps {
-  pillars: StrategicPillar[];
-  destination: string;
-  mainBottleneck: string;
-}
-
+```ts
 interface StrategyHeaderProps {
   destination: string;
   currentStage: string;
@@ -196,7 +190,13 @@ interface StrategyHeaderProps {
 }
 
 interface AlignmentScoreProps {
-  score: number; // animates from 0 to this value on mount
+  score: number;
+}
+
+interface StrategyMapProps {
+  pillars: StrategicPillar[];
+  destination: string;
+  mainBottleneck: string;
 }
 
 interface CutListProps {
@@ -211,9 +211,12 @@ interface RiskCardsProps {
   risks: RiskItem[];
 }
 
-interface FitScoreGaugeProps {
-  score: number;
-  recommendation: Recommendation;
+interface SemesterPrioritiesProps {
+  priorities: string[];
+}
+
+interface OpportunityCheckerProps {
+  planId: string;
 }
 
 interface OpportunityResultProps {
@@ -223,76 +226,99 @@ interface OpportunityResultProps {
 
 ---
 
+## Strategy Map Implementation
+
+Preferred: Three.js.
+
+Implementation notes:
+
+- Client-side component only.
+- Initialize scene, camera, renderer in `useEffect`.
+- Center node at origin.
+- Place pillar nodes in a circle around center.
+- Place action nodes around each pillar.
+- Use simple sphere geometry or sprite circles.
+- Use line geometry for edges.
+- Use raycaster for hover detection.
+- On hover, render HTML popover with name, status, recommendation.
+- Animate bottleneck or At Risk node with pulsing material opacity.
+- Slowly rotate parent group.
+- Clean up renderer on unmount.
+
+Fallback: 2D radial graph.
+
+- Relative container.
+- SVG for edges.
+- Absolutely positioned div nodes.
+- Center node in middle.
+- Pillars placed with polar coordinates.
+- Actions placed near their pillar.
+- Framer Motion node spawn animation.
+- Hover popovers.
+
+The 2D version is acceptable if it is polished and reliable.
+
+---
+
 ## Status Color Mapping
 
-Used consistently across the dashboard and the Three.js graph.
-
-```typescript
-// lib/statusColors.ts
-
+```ts
 export const pillarStatusColor = {
-  "Strong": "#00F5A0",   // --success
-  "Okay": "#FFB547",     // --warning
-  "Weak": "#FF4D6D",     // --danger
-  "Missing": "#FF4D6D"   // --danger
+  Strong: "#00F5A0",
+  Okay: "#FFB547",
+  Weak: "#FF4D6D",
+  Missing: "#FF4D6D"
 };
 
 export const nodeStatusColor = {
-  "On Track": "#00F5A0",  // --success
-  "Behind": "#FFB547",    // --warning
-  "At Risk": "#FF4D6D",   // --danger
-  "Deferred": "#3D4F6B",  // --muted
-  "Cut": "#3D4F6B"        // --muted
+  "On Track": "#00F5A0",
+  Behind: "#FFB547",
+  "At Risk": "#FF4D6D",
+  Deferred: "#3D4F6B",
+  Cut: "#3D4F6B"
 };
 
 export const cutRecommendationColor = {
-  "Cut": "#FF4D6D",
-  "Defer": "#FFB547",
-  "Keep": "#6B7FA3",
+  Cut: "#FF4D6D",
+  Defer: "#FFB547",
+  Keep: "#3D4F6B",
   "Double Down": "#00F5A0"
 };
 
 export const routeStatusColor = {
   "On Track": "#00F5A0",
   "At Risk": "#FF4D6D",
-  "Scattered": "#FFB547",
+  Scattered: "#FFB547",
   "Needs Focus": "#FFB547"
 };
 ```
 
 ---
 
-## Supabase Client
+## Loading and Error States
 
-```typescript
-// lib/supabase.ts
-
-import { createClient } from "@supabase/supabase-js";
-
-export const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
-```
-
----
-
-## Loading States
-
-Every async operation has a defined loading state. No blank screens.
+No blank screens.
 
 | Operation | Loading UI |
 |---|---|
-| Strategy generation | Full-screen animated progress with steps ("Analyzing your goal...", "Identifying bottleneck...", "Building your route...") |
-| Dashboard initial load | Cards fade in with skeleton placeholders |
-| Opportunity check | Circular gauge animates to 0 first, then fills to real score |
-| Graph initial render | Nodes spawn with a staggered scale-in animation |
+| Strategy generation | Full-screen animated progress with the five onboarding loading steps |
+| Dashboard load | Skeleton cards |
+| Opportunity check | Animated gauge/loading result shell |
+| Graph load | Nodes fade/scale in |
+
+Errors:
+
+- Claude generation failure: "Strategy generation failed. Try again or open the demo."
+- Opportunity failure: "Could not evaluate this opportunity. Your saved strategy is still available."
+- Graph failure: show the 2D fallback graph.
 
 ---
 
 ## Performance Notes
 
-- The demo scenario is pre-fetched. `/dashboard/demo-cs-student-001` never calls the AI.
-- Three.js canvas is initialized once and not re-mounted on prop changes — update via refs.
-- Supabase queries are server-side in page.tsx using the App Router — no client-side fetching for initial data.
-- The opportunity check is the only live AI call during the demo. It is fast (~1.5s) and has a loading state.
+- `/dashboard/demo-cs-student-001` must load instantly from static data.
+- Keep dashboard initial data fetching server-side where possible.
+- Keep opportunity checker client-side because it is interactive.
+- Avoid re-mounting the graph on hover or minor state changes.
+- Keep components small and typed.
+

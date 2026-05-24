@@ -2,157 +2,224 @@
 
 ## System Overview
 
-Pathwise is a Next.js 14 App Router application. The user submits a profile, the backend calls the Claude API, the response is validated and saved to Supabase, and the frontend renders the strategy dashboard from the saved data.
+Pathwise is a Next.js 14 App Router application for overwhelmed university students. The MVP is a strategy dashboard, not a task manager, chatbot, calendar, or course planner.
 
-There are no real-time features. There is no auth for the hackathon MVP. Strategy plans are identified by a UUID stored in localStorage and passed as a route param.
+The core loop is:
+
+1. Student completes onboarding.
+2. App generates or loads a strategy plan.
+3. Student lands on the dashboard.
+4. Dashboard shows destination, bottleneck, alignment score, Strategy Map, cut list, risks, and next 7 days.
+5. Student enters a new opportunity.
+6. App evaluates the opportunity against the current strategy.
+7. App explains the tradeoff and what must be cut if the student says yes.
+
+There is no authentication for the hackathon MVP. Strategy plans are accessed by `planId`. The demo route loads static seeded data and does not require a live AI or Supabase call.
 
 ---
 
 ## High-Level Data Flow
 
-```
-User fills onboarding form
-        │
-        ▼
+```text
+Landing page
+  CTA: Build My Route
+        |
+        v
+/onboarding
+  Multi-step StudentProfile form
+        |
+        v
 POST /api/generate
-  - Build prompt from StudentProfile
-  - Call Claude claude-sonnet-4-5
-  - Parse and validate JSON with Zod
-  - Save StudentProfile + StrategyPlan to Supabase
-  - Return { planId }
-        │
-        ▼
-Redirect to /dashboard/[planId]
-  - Fetch StrategyPlan from Supabase by planId
-  - Render dashboard components from plan data
-  - Three.js graph reads strategicPillars + actions
-        │
-        ▼
-User opens /opportunity/[planId]
+  - Generate student UUID
+  - Save StudentProfile to Supabase
+  - Build strict JSON strategy prompt
+  - Call Claude via @anthropic-ai/sdk
+  - Parse and validate StrategyPlan with Zod
+  - Retry once with correction prompt if validation fails
+  - Save plan JSONB to Supabase
+  - Return { planId, studentId }
+        |
+        v
+/dashboard/[planId]
+  - Fetch saved StrategyPlan by planId
+  - Render premium strategy dashboard
+  - Strategy Map visualizes destination, pillars, actions, and bottleneck
+        |
+        v
+Opportunity Checker embedded on dashboard
   - User enters opportunity text
-  - POST /api/opportunity with planId + text
-  - Fetch existing StrategyPlan from Supabase for context
-  - Call Claude with plan context + opportunity
-  - Return OpportunityCheck result
-  - Render opportunity result UI
+  - POST /api/opportunity with planId + opportunityText
+  - Fetch existing StrategyPlan for context
+  - Call Claude with opportunity prompt
+  - Validate OpportunityCheck with Zod
+  - Save check JSONB to Supabase
+  - Render fit score, recommendation, tradeoffs, conditions, and cuts required
+```
+
+Demo shortcut:
+
+```text
+/demo -> /dashboard/demo-cs-student-001
+/dashboard/demo-cs-student-001 -> static demo data from /lib/demoData.ts
 ```
 
 ---
 
-## Directory Structure
+## Routes
 
-```
-/app
-  /page.tsx                  — Landing page
-  /onboarding/page.tsx       — Multi-step onboarding form
-  /dashboard/[planId]/page.tsx — Strategy dashboard
-  /opportunity/[planId]/page.tsx — Opportunity check tool
-  /api
-    /generate/route.ts       — POST: generate strategy from profile
-    /opportunity/route.ts    — POST: evaluate opportunity against strategy
+```text
+app/
+  page.tsx
+    Landing page with CTA to onboarding and secondary CTA to demo.
 
-/components
-  /graph
-    GoalTree.tsx             — Three.js canvas component (Person 1 owns this)
-    useGraphScene.ts         — Three.js scene setup hook
-    graphNodes.ts            — Node geometry and material definitions
-    graphEdges.ts            — Animated gradient edge definitions
-    graphAnimations.ts       — Camera drift, node pulse, hover logic
-  /dashboard
-    StrategyHeader.tsx       — Destination / stage / status / score
-    BottleneckCard.tsx       — Main bottleneck callout
-    AlignmentScore.tsx       — Large animated score display
-    CutList.tsx              — Cut/defer/keep/double-down list
-    NextSevenDays.tsx        — Action items for the week
-    RiskCards.tsx            — Risk warning cards
-    SemesterPriorities.tsx   — Priority list
-  /onboarding
-    OnboardingForm.tsx       — Multi-step form shell
-    StepDestination.tsx
-    StepAcademic.tsx
-    StepCommitments.tsx
-    StepBrainDump.tsx
-  /opportunity
-    OpportunityInput.tsx     — Freeform text input
-    FitScoreGauge.tsx        — Circular gauge component
-    OpportunityResult.tsx    — Full result display
-  /ui
-    Card.tsx                 — Base card component
-    Badge.tsx                — Status badge (On Track / At Risk etc)
-    NodePopover.tsx          — Hover popover for graph nodes
+  onboarding/
+    page.tsx
+      Multi-step student onboarding form.
 
-/lib
-  /claude.ts                 — Claude API call wrapper
-  /prompts.ts                — Prompt templates
-  /validation.ts             — Zod schemas
-  /supabase.ts               — Supabase client
-  /types.ts                  — All TypeScript types
+  dashboard/
+    [planId]/
+      page.tsx
+        Main strategy dashboard loaded from Supabase, except demo id.
 
-/styles
-  /globals.css               — CSS variables, base styles
-  /tokens.css                — Design token definitions
+    demo-cs-student-001/
+      page.tsx
+        Demo dashboard route that loads seeded demo data instantly.
+
+  demo/
+    page.tsx
+      Optional redirect to /dashboard/demo-cs-student-001.
+
+  api/
+    generate/
+      route.ts
+        POST: Generate and persist StrategyPlan from StudentProfile.
+
+    opportunity/
+      route.ts
+        POST: Evaluate a new opportunity against an existing StrategyPlan.
+
+    plan/
+      [planId]/
+        route.ts
+          GET: Fetch saved plan and optional profile.
 ```
 
 ---
 
-## Team Ownership
+## Source Structure
 
-| Area | Owner | Key Files |
-|---|---|---|
-| Goal Tree visualization | Person 1 | `/components/graph/*` |
-| AI pipeline + API routes | Person 2 | `/app/api/*`, `/lib/claude.ts`, `/lib/prompts.ts`, `/lib/validation.ts` |
-| Dashboard UI + design system | Person 3 | `/components/dashboard/*`, `/components/ui/*`, `/styles/*` |
+```text
+components/
+  AlignmentScore.tsx
+  StrategyHeader.tsx
+  StrategyMap.tsx
+  CutList.tsx
+  NextSevenDays.tsx
+  RiskCards.tsx
+  SemesterPriorities.tsx
+  OpportunityChecker.tsx
+  OpportunityResult.tsx
+  LoadingRoute.tsx
+  StatusBadge.tsx
+  Card.tsx
 
-Person 3 also owns the onboarding form UI shell. Person 2 owns the form submission logic.
+lib/
+  types.ts
+  validation.ts
+  statusColors.ts
+  demoData.ts
+  supabase.ts
+  anthropic.ts
+  prompts/
+    strategyPrompt.ts
+    opportunityPrompt.ts
+
+styles/
+  globals.css
+```
+
+The component structure is intentionally flat for hackathon speed. Shared primitives stay in `components/` unless the implementation naturally grows a subfolder.
 
 ---
 
-## Branching Strategy
+## MVP Data Storage
 
-```
-main
-├── feat/graph              — Person 1
-├── feat/ai-pipeline        — Person 2
-└── feat/dashboard-ui       — Person 3
-```
+Supabase uses three tables:
 
-Merge order:
-1. `feat/ai-pipeline` merges first — establishes types and fixture JSON
-2. `feat/dashboard-ui` merges second — dashboard works against fixture
-3. `feat/graph` merges last — swaps in real Three.js component
+- `student_profiles`: normalized onboarding profile fields.
+- `strategy_plans`: `plan jsonb not null` plus `student_id`.
+- `opportunity_checks`: `check jsonb not null` plus `plan_id` and raw opportunity text.
 
-All three branches start from the same commit that includes:
-- `/lib/types.ts` with all shared types
-- `/lib/fixture.ts` with the pre-generated demo scenario JSON
-- Design tokens in `/styles/tokens.css`
-- Supabase client in `/lib/supabase.ts`
+JSONB is the MVP choice because the plan shape is rich, nested, and likely to change during the hackathon.
 
 ---
 
-## Critical Path
+## AI Boundary
 
-The fixture JSON must be committed before anyone starts their feature branch. This is the single dependency that unblocks all three people working in parallel.
+Server-only:
 
-**Hour 0 blocker: commit these three files to main before branching**
-1. `lib/types.ts`
-2. `lib/fixture.ts`
-3. `styles/tokens.css`
+- `ANTHROPIC_API_KEY`
+- `SUPABASE_SERVICE_ROLE_KEY`, if server-side writes require it
+
+Client-safe:
+
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+
+Claude calls only happen inside API routes or server utilities. The client never receives API keys.
+
+`/lib/anthropic.ts` owns:
+
+- Anthropic client construction.
+- Model string, defaulting to `claude-sonnet-4-5`.
+- `callClaudeJson(prompt: string)`.
+- Markdown fence stripping.
+- JSON parsing errors with useful messages.
+
+---
+
+## Demo Reliability Strategy
+
+The demo route is the primary judging path:
+
+- `/dashboard/demo-cs-student-001` loads from `/lib/demoData.ts`.
+- No AI call is required.
+- No Supabase call is required.
+- The opportunity checker can return the expected robotics-club demo result when the API key or database is missing.
+
+Live generation still exists for product completeness, but the hackathon demo should not depend on live generation.
+
+---
+
+## Technical Priorities
+
+Functional completeness beats broken ambition.
+
+Priority order:
+
+1. Types and Zod schemas
+2. Demo data
+3. Dashboard UI using demo data
+4. Strategy Header
+5. Cut List
+6. Next Seven Days
+7. Risk Cards
+8. Strategy Map
+9. Opportunity Checker with clean mocked fallback
+10. Anthropic API integration for opportunity checker
+11. Onboarding form
+12. `/api/generate` with Claude
+13. Supabase persistence
+14. Polish animations
+15. Screenshot-ready visual polish
+
+The Strategy Map should use Three.js if feasible. A polished 2D radial graph is the accepted fallback and is preferred over a fragile 3D implementation.
 
 ---
 
 ## No-Auth Strategy
 
-For the hackathon, there is no login. When a user completes onboarding, the generated `planId` (UUID) is saved to localStorage. The dashboard and opportunity check pages read `planId` from the URL. Supabase rows are public read/write with no RLS for the hackathon.
+For the hackathon, there is no login. A completed onboarding flow redirects to `/dashboard/[planId]`. The `planId` may also be stored in `localStorage` for convenience.
 
-The demo scenario has a hardcoded `planId` that always resolves to the pre-generated CS student strategy.
+The lack of auth is acceptable for MVP speed. Post-hackathon, Supabase Auth and row-level security should be added before handling real student data.
 
----
-
-## Environment Variables
-
-```
-ANTHROPIC_API_KEY=
-NEXT_PUBLIC_SUPABASE_URL=
-NEXT_PUBLIC_SUPABASE_ANON_KEY=
-DEMO_PLAN_ID=                    # UUID of the pre-generated demo scenario
-```

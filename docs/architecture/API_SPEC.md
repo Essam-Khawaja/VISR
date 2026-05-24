@@ -1,358 +1,304 @@
 # API SPEC: Pathwise
 
-## Claude Configuration
+## API Principles
 
-```typescript
-// lib/claude.ts
+- All AI calls happen server-side.
+- Claude responses must be JSON only.
+- Every Claude response is parsed and validated with Zod before use.
+- API errors are structured and safe to show in the UI.
+- The demo plan can be served without live AI or Supabase.
 
+---
+
+## Anthropic Wrapper
+
+File: `lib/anthropic.ts`
+
+Responsibilities:
+
+- Create Anthropic client using `process.env.ANTHROPIC_API_KEY`.
+- Export `callClaudeJson(prompt: string)`.
+- Use model `claude-sonnet-4-5` by default.
+- Keep the model string easy to change.
+- Use `max_tokens` high enough for the strategy plan.
+- Use `temperature` around `0.3`.
+- Demand JSON only in prompts.
+- Strip markdown code fences if Claude returns them.
+- Throw useful errors for missing API key, empty response, non-text response, and JSON parse failure.
+
+Reference shape:
+
+```ts
 import Anthropic from "@anthropic-ai/sdk";
 
-const client = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY
-});
+const MODEL = process.env.ANTHROPIC_MODEL || "claude-sonnet-4-5";
 
-export async function callClaude(prompt: string, systemPrompt: string): Promise<string> {
+export async function callClaudeJson(prompt: string): Promise<unknown> {
+  if (!process.env.ANTHROPIC_API_KEY) {
+    throw new Error("ANTHROPIC_API_KEY is not configured");
+  }
+
+  const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+
   const response = await client.messages.create({
-    model: "claude-sonnet-4-5",
-    max_tokens: 4096,
-    system: systemPrompt,
+    model: MODEL,
+    max_tokens: 6000,
+    temperature: 0.3,
     messages: [{ role: "user", content: prompt }]
   });
 
   const block = response.content[0];
-  if (block.type !== "text") throw new Error("Unexpected response type from Claude");
-  return block.text;
+  if (!block || block.type !== "text") {
+    throw new Error("Claude returned an unexpected response type");
+  }
+
+  const text = block.text
+    .trim()
+    .replace(/^```json\s*/i, "")
+    .replace(/^```\s*/i, "")
+    .replace(/```$/i, "")
+    .trim();
+
+  try {
+    return JSON.parse(text);
+  } catch {
+    throw new Error("Claude returned invalid JSON");
+  }
 }
 ```
 
 ---
 
-## Strategy Generation Prompt
+## POST /api/generate
 
-```typescript
-// lib/prompts.ts
+Purpose: accept a `StudentProfile` from onboarding, call Claude, validate the result, save it to Supabase, and return the `planId`.
 
-export function buildStrategyPrompt(profile: StudentProfile): {
-  system: string;
-  user: string;
-} {
-  const system = `You are Pathwise, a university strategy advisor. You analyze a student's academic context, career goal, and commitments, then generate a precise strategic plan.
+Request body:
 
-Your output must be a single valid JSON object matching the schema below. Do not include any text before or after the JSON. Do not use markdown code blocks. Output raw JSON only.
-
-Be specific and opinionated. Generic advice is useless. Every bottleneck, recommendation, and action must be tied directly to the student's stated goal. Name specific activities from their profile. Do not hedge.
-
-Schema:
+```ts
 {
-  "destination": "string — the student's career goal, restated precisely",
-  "currentStage": "string — the current phase of their journey (e.g. Skill Signal, Recruiting, Interview Prep)",
-  "mainBottleneck": "string — the single most important thing blocking progress, stated specifically",
-  "routeStatus": "On Track" | "At Risk" | "Scattered" | "Needs Focus",
-  "alignmentScore": number between 0 and 100,
-  "strategicPillars": [
-    {
-      "id": "string",
-      "name": "string",
-      "status": "Strong" | "Okay" | "Weak" | "Missing",
-      "reason": "string — specific explanation based on their profile",
-      "actions": [
-        {
-          "id": "string",
-          "name": "string",
-          "status": "On Track" | "Behind" | "At Risk" | "Deferred" | "Cut",
-          "recommendation": "string — specific next action"
-        }
-      ]
-    }
-  ],
-  "semesterPriorities": ["string", ...],
-  "cutList": [
-    {
-      "id": "string",
-      "activity": "string — from their actual profile",
-      "recommendation": "Cut" | "Defer" | "Keep" | "Double Down",
-      "reason": "string — specific to their goal"
-    }
-  ],
-  "nextSevenDays": [
-    {
-      "id": "string",
-      "title": "string — specific action, not generic advice",
-      "category": "string",
-      "priority": "High" | "Medium" | "Low"
-    }
-  ],
-  "risks": [
-    {
-      "id": "string",
-      "title": "string",
-      "severity": "High" | "Medium" | "Low",
-      "explanation": "string"
-    }
-  ]
+  profile: Omit<StudentProfile, "id" | "createdAt">
 }
+```
 
-Rules:
-- Minimum 4 strategic pillars, maximum 6
-- Minimum 3 next seven days actions, maximum 7
-- Minimum 2 cut list items
-- Minimum 1 risk
-- alignmentScore should reflect honest assessment (60-75 is typical for scattered students)
-- mainBottleneck must be a single specific thing, not a list
-- All IDs should be simple kebab-case strings like "pillar-skill" or "action-github"`;
+Success response:
 
-  const user = `Generate a strategic plan for this student:
+```ts
+{
+  planId: string;
+  studentId: string;
+}
+```
 
-University: ${profile.university}
-Degree: ${profile.degree}
-Year: ${profile.year}
-Target Goal: ${profile.targetGoal}
-Secondary Goals: ${profile.secondaryGoals.join(", ") || "None stated"}
-Current Courses: ${profile.currentCourses.join(", ") || "Not specified"}
-Commitments: ${profile.commitments.join(", ") || "None stated"}
-Work Hours Per Week: ${profile.workHoursPerWeek}
-Constraints: ${profile.constraints.join(", ") || "None stated"}
+Internal flow:
 
-Brain Dump:
-${profile.brainDump}`;
+1. Parse request body.
+2. Validate the incoming profile shape.
+3. Generate UUID for student profile.
+4. Save profile to Supabase table `student_profiles`.
+5. Build strategy prompt using `buildStrategyPrompt(profile)`.
+6. Call `callClaudeJson(prompt)`.
+7. Validate parsed response using `StrategyPlanSchema`.
+8. If validation fails, retry once with a correction prompt that includes the validation error and asks for corrected JSON only.
+9. Generate UUID for strategy plan.
+10. Save the validated plan to Supabase table `strategy_plans` in the `plan` JSONB column.
+11. Return `planId` and `studentId`.
+12. If anything fails, return a structured error response.
 
-  return { system, user };
+Error response:
+
+```ts
+{
+  error: {
+    code: "INVALID_REQUEST" | "PROFILE_SAVE_FAILED" | "CLAUDE_FAILED" | "VALIDATION_FAILED" | "PLAN_SAVE_FAILED";
+    message: string;
+  }
 }
 ```
 
 ---
 
-## Opportunity Check Prompt
+## POST /api/opportunity
 
-```typescript
+Purpose: accept an opportunity string and `planId`, fetch the existing `StrategyPlan`, call Claude, validate the opportunity analysis, save it, and return the structured result.
+
+Request body:
+
+```ts
+{
+  planId: string;
+  opportunityText: string;
+}
+```
+
+Success response:
+
+```ts
+{
+  check: OpportunityCheck;
+}
+```
+
+Internal flow:
+
+1. Parse request body.
+2. If `planId` is `demo-cs-student-001`, load demo plan from `lib/demoData.ts`.
+3. Otherwise fetch strategy plan from Supabase by `planId`.
+4. Build opportunity prompt using `buildOpportunityPrompt(plan, opportunityText)`.
+5. Call `callClaudeJson(prompt)`.
+6. Validate parsed response using `OpportunityCheckSchema`.
+7. Save validated result to `opportunity_checks.check` as JSONB.
+8. Return `{ check }`.
+
+Demo fallback:
+
+- If the API key or database is missing and the plan is `demo-cs-student-001`, return the seeded robotics-club `OpportunityCheck`.
+- The fallback keeps the hackathon demo reliable while preserving the real API path.
+
+Error response:
+
+```ts
+{
+  error: {
+    code: "INVALID_REQUEST" | "PLAN_NOT_FOUND" | "CLAUDE_FAILED" | "VALIDATION_FAILED" | "CHECK_SAVE_FAILED";
+    message: string;
+  }
+}
+```
+
+---
+
+## GET /api/plan/[planId]
+
+Purpose: fetch a saved strategy plan by ID.
+
+Success response:
+
+```ts
+{
+  plan: StrategyPlan;
+  profile?: StudentProfile;
+}
+```
+
+Internal flow:
+
+1. If `planId` is `demo-cs-student-001`, return `demoStrategyPlan` and `demoStudentProfile`.
+2. Fetch plan row from `strategy_plans`.
+3. Fetch linked profile row from `student_profiles` when available.
+4. Map snake_case database fields to camelCase TypeScript fields.
+5. Return `{ plan, profile }`.
+
+Error response:
+
+```ts
+{
+  error: {
+    code: "PLAN_NOT_FOUND" | "PLAN_FETCH_FAILED";
+    message: string;
+  }
+}
+```
+
+---
+
+## Strategy Prompt
+
+File: `lib/prompts/strategyPrompt.ts`
+
+Function:
+
+```ts
+export function buildStrategyPrompt(profile: StudentProfile): string
+```
+
+Prompt requirements:
+
+- "You are a sharp strategy advisor for ambitious university students."
+- "You are not a motivational coach."
+- "You are not a therapist."
+- "You are not a generic productivity assistant."
+- Job: identify destination, current stage, main bottleneck, priorities, cut list, risks, and next 7 days.
+- Output strict JSON matching `StrategyPlan`.
+
+Claude must:
+
+- Identify one specific main bottleneck.
+- Avoid generic advice.
+- Tie every recommendation to the student's stated goal.
+- Be opinionated.
+- Recommend what to cut, defer, keep, and double down on.
+- Include 3 to 7 concrete actions for the next 7 days.
+- Make actions specific and doable.
+- Include risks.
+- Include at least 4 strategic pillars.
+- Use exact enum values from the schema.
+
+Tone:
+
+- Sharp advisor, not wellness app.
+- Bad: "You may want to consider exploring some projects."
+- Good: "Your bottleneck is no shipped project. Everything else is secondary until one project is public."
+
+---
+
+## Opportunity Prompt
+
+File: `lib/prompts/opportunityPrompt.ts`
+
+Function:
+
+```ts
 export function buildOpportunityPrompt(
-  opportunity: string,
-  plan: StrategyPlan
-): { system: string; user: string } {
-  const system = `You are Pathwise, a university strategy advisor. A student is asking whether they should take on a new opportunity. You have their current strategic plan as context.
-
-Output a single valid JSON object. No text before or after. No markdown. Raw JSON only.
-
-Schema:
-{
-  "fitScore": number between 0 and 100,
-  "recommendation": "Say Yes" | "Say No" | "Defer" | "Say Yes With Conditions",
-  "reasoning": "string — one clear paragraph explaining the recommendation",
-  "whyItFits": ["string", ...],
-  "tradeoffs": ["string", ...],
-  "conditions": ["string", ...],
-  "cutsRequired": ["string", ...]
-}
-
-Rules:
-- fitScore above 70 suggests yes or yes with conditions
-- fitScore below 40 suggests no or defer
-- Be opinionated. Do not hedge.
-- conditions should only be present if recommendation is "Say Yes With Conditions"
-- cutsRequired should name specific activities from their current plan
-- If the opportunity directly addresses their mainBottleneck, score it higher`;
-
-  const user = `Student's current strategy:
-Destination: ${plan.destination}
-Current Stage: ${plan.currentStage}
-Main Bottleneck: ${plan.mainBottleneck}
-Route Status: ${plan.routeStatus}
-Alignment Score: ${plan.alignmentScore}%
-
-Strategic Pillars:
-${plan.strategicPillars.map(p => `- ${p.name}: ${p.status} — ${p.reason}`).join("\n")}
-
-Current Commitments (from cut list context):
-${plan.cutList.map(c => `- ${c.activity}: ${c.recommendation}`).join("\n")}
-
-New Opportunity:
-${opportunity}
-
-Should they say yes to this?`;
-
-  return { system, user };
-}
+  plan: StrategyPlan,
+  opportunityText: string
+): string
 ```
+
+Prompt requirements:
+
+- Evaluate the opportunity against the student's current strategy.
+- Do not evaluate the opportunity in isolation.
+- Consider destination, current stage, bottleneck, alignment score, active priorities, cut list, risks, and next 7 days.
+- Return strict JSON matching `OpportunityCheck`.
+
+The response must include:
+
+- `fitScore`
+- `recommendation`
+- `reasoning`
+- `whyItFits`
+- `tradeoffs`
+- `conditions`
+- `cutsRequired`
+
+Claude must:
+
+- Be willing to say no.
+- If it says yes, explain what the student should cut or cap.
+- If the opportunity is good but poorly timed, recommend `Defer`.
+- If the opportunity is good only under constraints, recommend `Say Yes With Conditions`.
 
 ---
 
-## Full API Route Implementation
+## Supabase Mapping
 
-### /app/api/generate/route.ts
+`student_profiles` stores structured profile fields using snake_case columns.
 
-```typescript
-import { NextRequest, NextResponse } from "next/server";
-import { v4 as uuidv4 } from "uuid";
-import { callClaude } from "@/lib/claude";
-import { buildStrategyPrompt } from "@/lib/prompts";
-import { StrategyPlanSchema } from "@/lib/validation";
-import { supabase } from "@/lib/supabase";
-import type { StudentProfile } from "@/lib/types";
+`strategy_plans` stores:
 
-export async function POST(req: NextRequest) {
-  try {
-    const body = await req.json();
-    const profileData = body.profile as Omit<StudentProfile, "id" | "createdAt">;
+- `id`
+- `student_id`
+- `plan jsonb`
+- `created_at`
 
-    // Save student profile
-    const studentId = uuidv4();
-    const { error: profileError } = await supabase
-      .from("student_profiles")
-      .insert({
-        id: studentId,
-        university: profileData.university,
-        degree: profileData.degree,
-        year: profileData.year,
-        target_goal: profileData.targetGoal,
-        secondary_goals: profileData.secondaryGoals,
-        current_courses: profileData.currentCourses,
-        commitments: profileData.commitments,
-        work_hours_per_week: profileData.workHoursPerWeek,
-        constraints: profileData.constraints,
-        brain_dump: profileData.brainDump
-      });
+`opportunity_checks` stores:
 
-    if (profileError) throw new Error(`Profile save failed: ${profileError.message}`);
+- `id`
+- `plan_id`
+- `opportunity_text`
+- `check jsonb`
+- `created_at`
 
-    // Generate strategy
-    const profile: StudentProfile = {
-      ...profileData,
-      id: studentId,
-      createdAt: new Date().toISOString()
-    };
+The application types remain camelCase.
 
-    const { system, user } = buildStrategyPrompt(profile);
-    const raw = await callClaude(user, system);
-
-    // Parse and validate
-    let parsed: unknown;
-    try {
-      parsed = JSON.parse(raw);
-    } catch {
-      throw new Error("Claude returned invalid JSON");
-    }
-
-    const validated = StrategyPlanSchema.parse(parsed);
-
-    // Save plan
-    const planId = uuidv4();
-    const { error: planError } = await supabase
-      .from("strategy_plans")
-      .insert({
-        id: planId,
-        student_id: studentId,
-        destination: validated.destination,
-        current_stage: validated.currentStage,
-        main_bottleneck: validated.mainBottleneck,
-        route_status: validated.routeStatus,
-        alignment_score: validated.alignmentScore,
-        strategic_pillars: validated.strategicPillars,
-        semester_priorities: validated.semesterPriorities,
-        cut_list: validated.cutList,
-        next_seven_days: validated.nextSevenDays,
-        risks: validated.risks
-      });
-
-    if (planError) throw new Error(`Plan save failed: ${planError.message}`);
-
-    return NextResponse.json({ planId, studentId });
-  } catch (error) {
-    console.error("Strategy generation error:", error);
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Unknown error" },
-      { status: 500 }
-    );
-  }
-}
-```
-
-### /app/api/opportunity/route.ts
-
-```typescript
-import { NextRequest, NextResponse } from "next/server";
-import { v4 as uuidv4 } from "uuid";
-import { callClaude } from "@/lib/claude";
-import { buildOpportunityPrompt } from "@/lib/prompts";
-import { OpportunityCheckSchema } from "@/lib/validation";
-import { supabase } from "@/lib/supabase";
-import type { StrategyPlan } from "@/lib/types";
-
-export async function POST(req: NextRequest) {
-  try {
-    const { planId, opportunityText } = await req.json();
-
-    // Fetch existing plan for context
-    const { data: planData, error: fetchError } = await supabase
-      .from("strategy_plans")
-      .select("*")
-      .eq("id", planId)
-      .single();
-
-    if (fetchError || !planData) {
-      return NextResponse.json({ error: "Plan not found" }, { status: 404 });
-    }
-
-    // Map snake_case DB columns to camelCase types
-    const plan: StrategyPlan = {
-      id: planData.id,
-      studentId: planData.student_id,
-      destination: planData.destination,
-      currentStage: planData.current_stage,
-      mainBottleneck: planData.main_bottleneck,
-      routeStatus: planData.route_status,
-      alignmentScore: planData.alignment_score,
-      strategicPillars: planData.strategic_pillars,
-      semesterPriorities: planData.semester_priorities,
-      cutList: planData.cut_list,
-      nextSevenDays: planData.next_seven_days,
-      risks: planData.risks,
-      createdAt: planData.created_at
-    };
-
-    const { system, user } = buildOpportunityPrompt(opportunityText, plan);
-    const raw = await callClaude(user, system);
-
-    let parsed: unknown;
-    try {
-      parsed = JSON.parse(raw);
-    } catch {
-      throw new Error("Claude returned invalid JSON");
-    }
-
-    const validated = OpportunityCheckSchema.parse(parsed);
-
-    // Save check
-    const checkId = uuidv4();
-    await supabase.from("opportunity_checks").insert({
-      id: checkId,
-      student_id: plan.studentId,
-      plan_id: planId,
-      opportunity_text: opportunityText,
-      fit_score: validated.fitScore,
-      recommendation: validated.recommendation,
-      reasoning: validated.reasoning,
-      why_it_fits: validated.whyItFits,
-      tradeoffs: validated.tradeoffs,
-      conditions: validated.conditions,
-      cuts_required: validated.cutsRequired
-    });
-
-    return NextResponse.json({
-      check: {
-        id: checkId,
-        studentId: plan.studentId,
-        planId,
-        opportunityText,
-        ...validated,
-        createdAt: new Date().toISOString()
-      }
-    });
-  } catch (error) {
-    console.error("Opportunity check error:", error);
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Unknown error" },
-      { status: 500 }
-    );
-  }
-}
-```

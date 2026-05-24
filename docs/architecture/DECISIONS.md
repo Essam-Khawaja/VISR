@@ -1,95 +1,124 @@
 # DECISIONS: Pathwise
 
-Key architectural and design decisions made before the hackathon build. These should not be revisited during the 24-hour window unless something is broken.
+Architectural and product decisions for the 24-hour MVP.
 
 ---
 
-## D1: Custom Three.js graph instead of React Flow
+## D1: Build the Full Core Loop First
 
-**Decision:** Build the Goal Tree as a custom Three.js scene, not with React Flow or any diagram library.
+**Decision:** Prioritize onboarding, demo plan load, dashboard, cut list, next 7 days, and opportunity check before secondary features.
 
-**Reason:** React Flow has a recognizable visual ceiling. Every React Flow graph looks like a flowchart builder. The Goal Tree is the hero component of the product and must visually impress judges within seconds. Custom Three.js gives full control over node geometry, gradient edges, camera animation, and lighting.
+**Reason:** The judging story depends on the full loop: "I was scattered. Pathwise found my bottleneck, told me what to cut, and gave me the next 7 days."
 
-**Tradeoff:** Higher implementation complexity and time cost for Person 1.
+**Tradeoff:** Some depth, polish, or persistence details may be thinner.
 
-**Mitigation:** Person 1 owns this component exclusively and works against the fixture JSON from hour 1. If the 3D version is not ready by hour 16, fall back to a custom SVG/Canvas 2D radial graph — still impressive, still custom, just flat.
-
----
-
-## D2: No authentication for the hackathon
-
-**Decision:** No login, no user accounts. Plan IDs are stored in localStorage and passed as URL params.
-
-**Reason:** Auth adds setup time, complexity, and nothing to the demo. Judges do not care about auth. They care about the product.
-
-**Tradeoff:** No data privacy, shared Supabase tables are public read/write.
-
-**Mitigation:** This is acceptable for a 24-hour hackathon demo. Post-hackathon would add Supabase Auth.
+**Mitigation:** The demo route and core dashboard must be screenshot-ready.
 
 ---
 
-## D3: Pre-generate and cache the demo scenario
+## D2: Strategy Dashboard, Not Chatbot
 
-**Decision:** The CS student demo scenario is generated before the hackathon presentation, saved to Supabase with a hardcoded UUID, and loaded directly. The live AI is never called during judging for the main demo.
+**Decision:** The product surface is a dashboard with a visual Strategy Map, not a chat interface.
 
-**Reason:** Eliminates latency risk, eliminates API failure risk, ensures the demo always works. The only live AI call during the demo is the Opportunity Check, which is fast and has a clear loading state.
+**Reason:** The product should feel like a premium student command center and not a generic AI wrapper.
 
-**Tradeoff:** The main dashboard demo is not "live" in the sense that it is not generating in real time.
+**Tradeoff:** More custom UI work.
 
-**Mitigation:** The Opportunity Check is live, which demonstrates real AI integration. The generation flow can also be shown separately before the demo proper.
-
----
-
-## D4: Claude claude-sonnet-4-5 for all AI calls
-
-**Decision:** Use claude-sonnet-4-5 for both strategy generation and opportunity check. Do not use Haiku.
-
-**Reason:** Haiku's structured JSON reliability is lower than Sonnet's. A malformed JSON response during a hackathon demo is catastrophic. The cost difference across a 24-hour demo is negligible (estimated $2-5 total).
-
-**Tradeoff:** Slightly higher cost per call.
-
-**Mitigation:** Pre-caching the demo scenario eliminates the most expensive call during judging.
+**Mitigation:** Use a static demo plan and typed components to keep build scope contained.
 
 ---
 
-## D5: Single accent color design system
+## D3: Demo Route Does Not Depend on Live AI
 
-**Decision:** The entire UI uses one accent color (`#4FACFE`). All other colors are neutrals, status colors (success/warning/danger), or text colors.
+**Decision:** `/dashboard/demo-cs-student-001` loads seeded data from `lib/demoData.ts`.
 
-**Reason:** Multiple accent colors make interfaces look amateur. Restraint in color is the fastest way to make something look premium. Every accent use should feel intentional because there is only one.
+**Reason:** The main judging demo must be instant and reliable.
 
-**Tradeoff:** Less visual variety.
+**Tradeoff:** The primary dashboard demo is not generated live.
 
-**Mitigation:** The Three.js graph provides rich color through status encoding on nodes. The dashboard itself stays restrained.
-
----
-
-## D6: Server-side data fetching for dashboard
-
-**Decision:** The dashboard page.tsx fetches StrategyPlan from Supabase server-side using the App Router. No client-side data fetching for the initial render.
-
-**Reason:** Eliminates loading state for the main dashboard. The page arrives with data. Framer Motion handles the visual entry animations, not a skeleton loading state.
-
-**Tradeoff:** Slightly more complex page setup.
-
-**Mitigation:** Standard App Router pattern, well-documented, Cursor handles it cleanly.
+**Mitigation:** The live AI path still exists through onboarding and opportunity checking. Opportunity checker can demonstrate AI live, with a clean fallback if keys are missing.
 
 ---
 
-## D7: Fixture JSON committed to repository
+## D4: Store Rich Plan Objects as JSONB
 
-**Decision:** The full demo scenario StrategyPlan is committed to `/lib/fixture.ts` as a TypeScript export. All three developers build against this from hour 1.
+**Decision:** Store the generated `StrategyPlan` in `strategy_plans.plan` JSONB and the opportunity result in `opportunity_checks.check` JSONB.
 
-**Reason:** Eliminates the dependency on Person 2's AI pipeline being done before Persons 1 and 3 can work with real data shapes. Everyone builds against the same fixture. Real data drops in at the end and everything just works.
+**Reason:** The nested strategy schema is likely to change during a hackathon. JSONB keeps persistence fast and flexible.
 
-**Tradeoff:** None significant.
+**Tradeoff:** Less queryable than normalized tables.
+
+**Mitigation:** Post-hackathon, frequently queried fields can be promoted to columns.
 
 ---
 
-## D8: Framer Motion only outside the Three.js canvas
+## D5: Claude Sonnet for Structured Strategy Output
 
-**Decision:** All Framer Motion animations are applied to React components outside the Three.js canvas. The canvas handles its own animation loop internally.
+**Decision:** Use Anthropic Claude via `@anthropic-ai/sdk`, default model `claude-sonnet-4-5`.
 
-**Reason:** Mixing Framer Motion with Three.js canvas re-renders causes performance issues. Three.js runs its own requestAnimationFrame loop and should not be controlled by React's render cycle.
+**Reason:** Structured JSON reliability matters more than marginal cost for the MVP.
 
-**Implementation:** The GoalTree component is wrapped in a regular div that Framer Motion can animate (fade in, scale up on mount). Inside the canvas, everything is pure Three.js.
+**Tradeoff:** Slightly higher cost than smaller models.
+
+**Mitigation:** The demo route avoids live strategy generation during judging.
+
+---
+
+## D6: Validate Every AI Response with Zod
+
+**Decision:** Claude output is never trusted until it passes `StrategyPlanSchema` or `OpportunityCheckSchema`.
+
+**Reason:** Invalid JSON or invalid enum values would break the dashboard.
+
+**Tradeoff:** More backend code.
+
+**Mitigation:** Retry strategy generation once with a correction prompt that includes the validation error.
+
+---
+
+## D7: Three.js Preferred, 2D Radial Graph Accepted
+
+**Decision:** Attempt a custom Three.js Strategy Map, but ship a polished 2D radial graph if Three.js risks reliability.
+
+**Reason:** Visual originality helps the demo, but functional completeness matters more.
+
+**Tradeoff:** The fallback is less technically ambitious.
+
+**Mitigation:** The 2D version still uses custom layout, SVG edges, motion, hover popovers, and bottleneck highlighting.
+
+---
+
+## D8: No Authentication for MVP
+
+**Decision:** No login or account system.
+
+**Reason:** Auth does not help the hackathon demo and adds setup risk.
+
+**Tradeoff:** Not production-safe for real student data.
+
+**Mitigation:** Add Supabase Auth and RLS post-hackathon.
+
+---
+
+## D9: Embedded Opportunity Checker
+
+**Decision:** Opportunity checking lives inside the dashboard instead of a separate page.
+
+**Reason:** The opportunity only makes sense against the visible current strategy. Keeping it on the dashboard makes the tradeoff easier to understand.
+
+**Tradeoff:** More dashboard density.
+
+**Mitigation:** Use a compact input and reveal the structured result after submit.
+
+---
+
+## D10: Local React State Only
+
+**Decision:** Use `useState` and `useEffect`; no global state manager.
+
+**Reason:** The app has simple route-level data and local interactive states.
+
+**Tradeoff:** Shared state patterns may need revisiting later.
+
+**Mitigation:** Keep state close to components and pass typed props.
+

@@ -1,78 +1,109 @@
-# Feature Modules — Adaptive Degree OS
+# Feature Modules: Pathwise MVP
 
-## Core modules
+These feature docs are the implementation layer under `docs/architecture/`. They use one naming convention:
 
-| Order | Folder | Name | Role |
-|-------|--------|------|------|
-| 1 | [001-user-foundation](001-user-foundation/) | User Foundation Layer | Onboarding + profile |
-| 2 | [002-degree-roadmap-engine](002-degree-roadmap-engine/) | Degree Roadmap Engine | **Backend:** 4-year roadmap generation |
-| 3 | [004-weekly-execution-system](004-weekly-execution-system/) | Weekly Execution System | **Core loop:** weekly tasks |
-| 4 | [003-graph-visualization](003-graph-visualization/) | Graph Visualization System | **Component:** roadmap → graph renderer |
-| 5 | [005-progress-reflection-system](005-progress-reflection-system/) | Progress + Reflection | Task completion + accountability |
-| 6 | [006-adaptation-intelligence-engine](006-adaptation-intelligence-engine/) | Adaptation Intelligence | Roadmap recalibration rules |
-
-## Integrated UI
-
-| Order | Folder | Name | Role |
-|-------|--------|------|------|
-| 7 | [007-main-dashboard](007-main-dashboard/) | **Main Dashboard** | **Home screen:** composes 002 + 003 + bottleneck + cut list |
-
-### What's inside 007-main-dashboard
-
-| Sub-doc | Contents |
-|---------|----------|
-| [degree-roadmap-engine.md](007-main-dashboard/degree-roadmap-engine.md) | How roadmap data appears on dashboard |
-| [graph-visualization.md](007-main-dashboard/graph-visualization.md) | Hero graph (60% layout) |
-| [bottleneck.md](007-main-dashboard/bottleneck.md) | Single constraint + card |
-| [cut-list.md](007-main-dashboard/cut-list.md) | Cut / defer / keep / double down |
-
-## Recommended build order
-
-1. `001-user-foundation`
-2. `002-degree-roadmap-engine` (API + generator first)
-3. `004-weekly-execution-system` (core loop)
-4. `003-graph-visualization` (graph component)
-5. **`007-main-dashboard`** (wire 002 + 003 + bottleneck + cut list)
-6. `005-progress-reflection-system`
-7. `006-adaptation-intelligence-engine`
-
-## System flow
-
-```
-User Profile (001)
-       ↓
-Roadmap Engine (002) ──────────────────┐
-       ↓                               │
-Main Dashboard (007) ← Graph (003)     │
-  · hero graph                         │
-  · bottleneck                         │
-  · cut list                           │
-       ↓                               │
-Weekly Tasks (004) ←───────────────────┘
-       ↓
-Progress + Reflection (005)
-       ↓
-Adaptation Engine (006)
-       ↓
-(updated roadmap) → refresh dashboard
+```text
+NNN-kebab-case/
+  PRD.md
+  TECH_SPEC.md
+  TASKS.md
+  DECISIONS.md
 ```
 
-## Each folder contains
+Each feature must explain both product behavior and technical implementation architecture.
 
-- `PRD.md` — what and why
-- `TECH_SPEC.md` — how to build
-- `TASKS.md` — implementation checklist
-- `DECISIONS.md` — locked product/tech choices
+---
 
-`007-main-dashboard` also has sub-component markdown files for integrated slices.
+## Core Modules
 
-## Workflow
+| Order | Folder | Name | Role |
+|---|---|---|---|
+| 1 | [001-landing-and-onboarding](001-landing-and-onboarding/) | Landing and Onboarding | Capture the student profile and start generation |
+| 2 | [002-strategy-generation-ai](002-strategy-generation-ai/) | Strategy Generation AI | Claude prompt, validation, and plan creation |
+| 3 | [003-demo-data-and-plan-fetching](003-demo-data-and-plan-fetching/) | Demo Data and Plan Fetching | Reliable demo route and plan retrieval |
+| 4 | [004-dashboard-command-center](004-dashboard-command-center/) | Dashboard Command Center | Main strategy dashboard composition |
+| 5 | [005-strategy-map-visualization](005-strategy-map-visualization/) | Strategy Map Visualization | Hero graph, bottleneck highlight, graph fallback |
+| 6 | [006-opportunity-checker](006-opportunity-checker/) | Opportunity Checker | Evaluate new opportunities against the current plan |
+| 7 | [007-supabase-persistence-and-api](007-supabase-persistence-and-api/) | Supabase Persistence and API | Database schema, API persistence, environment boundary |
+
+---
+
+## Recommended Build Order
+
+1. `001-landing-and-onboarding`
+2. `002-strategy-generation-ai`
+3. `003-demo-data-and-plan-fetching`
+4. `004-dashboard-command-center`
+5. `005-strategy-map-visualization`
+6. `006-opportunity-checker`
+7. `007-supabase-persistence-and-api`
+
+For hackathon execution, the practical priority is:
+
+1. Types, validation, and demo data
+2. Demo dashboard
+3. Strategy header, cut list, next 7 days, and risks
+4. Strategy Map
+5. Opportunity Checker with mocked fallback
+6. Claude integration
+7. Supabase persistence
+8. Landing, onboarding, and polish
+
+---
+
+## System Flow
+
+```text
+Landing
+  |
+  v
+Onboarding -> POST /api/generate
+  |              |
+  |              v
+  |         Claude + Zod
+  |              |
+  |              v
+  |         Supabase JSONB
+  v
+/dashboard/[planId]
+  |
+  |-- Strategy Header
+  |-- Alignment Score
+  |-- Strategy Map
+  |-- Cut List
+  |-- Next Seven Days
+  |-- Risks
+  |
+  v
+Opportunity Checker -> POST /api/opportunity
+  |
+  v
+Fit score, recommendation, tradeoffs, conditions, cuts required
+```
+
+Demo shortcut:
+
+```text
+/dashboard/demo-cs-student-001
+  -> lib/demoData.ts
+  -> same dashboard components
+```
+
+---
+
+## File Responsibilities
+
+- `PRD.md`: user value, scope, acceptance criteria.
+- `TECH_SPEC.md`: files, data flow, component/API architecture, implementation notes.
+- `TASKS.md`: build checklist.
+- `DECISIONS.md`: locked choices and tradeoffs.
 
 Before coding any feature:
 
-1. Read global `docs/architecture/` docs
-2. Read the feature PRD + TECH_SPEC
-3. Work through TASKS.md in order
-4. Log new decisions in DECISIONS.md
+1. Read `docs/architecture/`.
+2. Read this README.
+3. Read the feature `PRD.md`.
+4. Read the feature `TECH_SPEC.md`.
+5. Work through `TASKS.md`.
+6. Add new decisions to `DECISIONS.md`.
 
-Templates: `docs/templates/FEATURE_*.md`
