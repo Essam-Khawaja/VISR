@@ -1,21 +1,75 @@
 import type { Metadata, Viewport } from "next";
-import { Plus_Jakarta_Sans, Fraunces } from "next/font/google";
+import localFont from "next/font/local";
 import "@/styles/globals.css";
 import { LiquidCursor } from "@/components/shared/LiquidCursor";
 
-const sans = Plus_Jakarta_Sans({
-  subsets: ["latin"],
+const sans = localFont({
+  src: [
+    {
+      path: "../assets/fonts/plus-jakarta-sans-latin-300-normal.woff2",
+      weight: "300",
+      style: "normal",
+    },
+    {
+      path: "../assets/fonts/plus-jakarta-sans-latin-400-normal.woff2",
+      weight: "400",
+      style: "normal",
+    },
+    {
+      path: "../assets/fonts/plus-jakarta-sans-latin-500-normal.woff2",
+      weight: "500",
+      style: "normal",
+    },
+    {
+      path: "../assets/fonts/plus-jakarta-sans-latin-600-normal.woff2",
+      weight: "600",
+      style: "normal",
+    },
+    {
+      path: "../assets/fonts/plus-jakarta-sans-latin-700-normal.woff2",
+      weight: "700",
+      style: "normal",
+    },
+  ],
   variable: "--font-sans",
   display: "swap",
-  weight: ["300", "400", "500", "600", "700"],
 });
 
-const display = Fraunces({
-  subsets: ["latin"],
+const display = localFont({
+  src: [
+    {
+      path: "../assets/fonts/fraunces-latin-400-normal.woff2",
+      weight: "400",
+      style: "normal",
+    },
+    {
+      path: "../assets/fonts/fraunces-latin-500-normal.woff2",
+      weight: "500",
+      style: "normal",
+    },
+    {
+      path: "../assets/fonts/fraunces-latin-600-normal.woff2",
+      weight: "600",
+      style: "normal",
+    },
+    {
+      path: "../assets/fonts/fraunces-latin-400-italic.woff2",
+      weight: "400",
+      style: "italic",
+    },
+    {
+      path: "../assets/fonts/fraunces-latin-500-italic.woff2",
+      weight: "500",
+      style: "italic",
+    },
+    {
+      path: "../assets/fonts/fraunces-latin-600-italic.woff2",
+      weight: "600",
+      style: "italic",
+    },
+  ],
   variable: "--font-display",
   display: "swap",
-  weight: ["400", "500", "600"],
-  style: ["normal", "italic"],
 });
 
 export const metadata: Metadata = {
