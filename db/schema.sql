@@ -256,19 +256,50 @@ create table if not exists opportunity_checks (
   created_at timestamptz not null default now()
 );
 
+create table if not exists strategy_tasks (
+  id uuid primary key default gen_random_uuid(),
+  plan_id uuid not null references strategy_plans(id) on delete cascade,
+  student_id uuid references student_profiles(id) on delete set null,
+  parent_node_id text not null,
+  parent_node_kind text not null default 'pillar'
+    check (parent_node_kind in ('goal', 'pillar', 'task')),
+  parent_task_id uuid references strategy_tasks(id) on delete cascade,
+  title text not null,
+  recommendation text not null default '',
+  notes text not null default '',
+  priority text not null default 'Medium'
+    check (priority in ('High', 'Medium', 'Low')),
+  status text not null default 'open'
+    check (status in ('open', 'doing', 'done', 'skipped')),
+  due_date date not null,
+  completed_at timestamptz,
+  source text not null default 'strategy_map'
+    check (source in ('strategy_map', 'daily', 'week', 'ai', 'opportunity', 'generated_plan')),
+  source_action_id text,
+  sort_order integer not null default 0,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
 create index if not exists idx_strategy_plans_student on strategy_plans(student_id);
 create index if not exists idx_opportunity_checks_plan on opportunity_checks(plan_id);
+create index if not exists idx_strategy_tasks_plan on strategy_tasks(plan_id);
+create index if not exists idx_strategy_tasks_due_date on strategy_tasks(due_date);
+create index if not exists idx_strategy_tasks_parent_node on strategy_tasks(plan_id, parent_node_id);
+create index if not exists idx_strategy_tasks_parent_task on strategy_tasks(parent_task_id);
+create index if not exists idx_strategy_tasks_status on strategy_tasks(status);
 
 alter table student_profiles enable row level security;
 alter table strategy_plans enable row level security;
 alter table opportunity_checks enable row level security;
+alter table strategy_tasks enable row level security;
 
 do $$
 declare
   t text;
 begin
   for t in select unnest(array[
-    'student_profiles', 'strategy_plans', 'opportunity_checks'
+    'student_profiles', 'strategy_plans', 'opportunity_checks', 'strategy_tasks'
   ]) loop
     if not exists (
       select 1 from pg_policies

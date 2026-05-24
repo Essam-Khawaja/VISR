@@ -612,4 +612,3 @@ npm run dev
 - Ring color is darker than node fill.
 - Nodes do not overlap at standard demo viewport.
 - Expanded map and onboarding graph both keep labels inside nodes.
-
