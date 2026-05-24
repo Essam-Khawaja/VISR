@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/cn";
@@ -29,22 +29,7 @@ type NavItem = {
 export function DashboardSidebar({ planId, onTodayClick }: Props) {
   const pathname = usePathname();
   const ctx = usePlanOptional();
-  const [pillarsOpen, setPillarsOpen] = useState(false);
-  const flyoutRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!pillarsOpen) return;
-    const onClickOutside = (e: MouseEvent) => {
-      if (
-        flyoutRef.current &&
-        !flyoutRef.current.contains(e.target as Node)
-      ) {
-        setPillarsOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", onClickOutside);
-    return () => document.removeEventListener("mousedown", onClickOutside);
-  }, [pillarsOpen]);
+  const [pillarsOpen, setPillarsOpen] = useState(true);
 
   const items: NavItem[] = [
     { href: "/", label: "Home", icon: <IconHome /> },
@@ -60,45 +45,48 @@ export function DashboardSidebar({ planId, onTodayClick }: Props) {
     },
   ];
 
-  const pillarsActive = pathname.includes("/pillar/");
-
   return (
     <aside
-      className="relative flex h-full w-[72px] shrink-0 flex-col border-r border-border bg-surface"
+      className="flex h-full w-[220px] shrink-0 flex-col border-r border-border bg-surface"
       aria-label="Dashboard navigation"
     >
-      <div className="flex h-16 items-center justify-center px-4">
+      <div className="flex h-14 items-center gap-2.5 px-5">
         <Link
           href="/"
           className="flex items-center gap-2.5 text-primary transition-colors hover:text-accent"
         >
           <PathwiseMark />
+          <span className="font-display text-[15px] font-semibold tracking-tight">
+            Pathwise
+          </span>
         </Link>
       </div>
 
-      <div className="mx-3 my-1 h-px bg-border" />
+      <div className="mx-4 h-px bg-border" />
 
-      <nav className="flex flex-1 flex-col gap-1 p-3">
+      <nav className="flex flex-1 flex-col gap-0.5 overflow-y-auto px-3 py-3">
         {items.map((item) => {
           const active =
             item.href === "/"
               ? pathname === "/"
-              : pathname.startsWith(item.href.split("?")[0]);
+              : pathname === item.href ||
+                (item.label === "Strategy" &&
+                  pathname.startsWith(`/dashboard/${planId}`) &&
+                  !pathname.includes("/pillar/"));
           return (
             <Link
               key={item.href}
               href={item.href}
               className={cn(
-                "group flex items-center justify-center rounded-xl px-3 py-2.5 transition-colors duration-150",
+                "group flex items-center gap-3 rounded-lg px-3 py-2 text-[13px] font-medium transition-colors duration-150",
                 active
                   ? "bg-accent-soft text-accent-strong"
                   : "text-secondary hover:bg-elevated hover:text-primary",
               )}
-              title={item.label}
             >
               <span
                 className={cn(
-                  "flex h-5 w-5 shrink-0 items-center justify-center",
+                  "flex h-4 w-4 shrink-0 items-center justify-center",
                   active
                     ? "text-accent"
                     : "text-tertiary group-hover:text-secondary",
@@ -107,43 +95,46 @@ export function DashboardSidebar({ planId, onTodayClick }: Props) {
               >
                 {item.icon}
               </span>
-              <span className="sr-only">{item.label}</span>
+              {item.label}
             </Link>
           );
         })}
 
         {ctx ? (
-          <div ref={flyoutRef} className="relative">
+          <>
+            <div className="mx-1 my-2 h-px bg-border" />
             <button
               type="button"
               onClick={() => setPillarsOpen((v) => !v)}
-              className={cn(
-                "group flex w-full items-center justify-center rounded-xl px-3 py-2.5 transition-colors duration-150",
-                pillarsActive
-                  ? "bg-accent-soft text-accent-strong"
-                  : "text-secondary hover:bg-elevated hover:text-primary",
-              )}
-              title="Pillars"
+              className="flex items-center gap-3 rounded-lg px-3 py-2 text-[13px] font-medium text-secondary transition-colors hover:bg-elevated hover:text-primary"
             >
-              <span
+              <span className="flex h-4 w-4 shrink-0 items-center justify-center text-tertiary" aria-hidden>
+                <IconPillars />
+              </span>
+              <span className="flex-1 text-left">Pillars</span>
+              <svg
+                width="12"
+                height="12"
+                viewBox="0 0 12 12"
+                fill="none"
                 className={cn(
-                  "flex h-5 w-5 shrink-0 items-center justify-center",
-                  pillarsActive
-                    ? "text-accent"
-                    : "text-tertiary group-hover:text-secondary",
+                  "shrink-0 text-tertiary transition-transform duration-150",
+                  pillarsOpen ? "rotate-90" : "",
                 )}
                 aria-hidden
               >
-                <IconPillars />
-              </span>
-              <span className="sr-only">Pillars</span>
+                <path
+                  d="M4 2l4 4-4 4"
+                  stroke="currentColor"
+                  strokeWidth="1.3"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
             </button>
 
             {pillarsOpen ? (
-              <div className="absolute left-[calc(100%+8px)] top-0 z-50 w-56 rounded-xl border border-border bg-surface py-2 shadow-lift">
-                <p className="px-3 pb-1.5 text-[10px] font-semibold uppercase tracking-widest text-tertiary">
-                  Pillars
-                </p>
+              <div className="flex flex-col gap-0.5 pl-4">
                 {ctx.plan.strategicPillars.map((pillar, i) => {
                   const href = `/dashboard/${planId}/pillar/${pillar.id}`;
                   const active = pathname === href;
@@ -151,16 +142,15 @@ export function DashboardSidebar({ planId, onTodayClick }: Props) {
                     <Link
                       key={pillar.id}
                       href={href}
-                      onClick={() => setPillarsOpen(false)}
                       className={cn(
-                        "flex items-center gap-2.5 px-3 py-2 text-[13px] transition-colors",
+                        "flex items-center gap-2.5 rounded-lg px-3 py-1.5 text-[12px] transition-colors",
                         active
                           ? "bg-accent-soft font-medium text-primary"
                           : "text-secondary hover:bg-elevated hover:text-primary",
                       )}
                     >
                       <span
-                        className="h-2.5 w-2.5 shrink-0 rounded-full"
+                        className="h-2 w-2 shrink-0 rounded-full"
                         style={{
                           backgroundColor:
                             PILLAR_PASTELS[i % PILLAR_PASTELS.length],
@@ -173,32 +163,30 @@ export function DashboardSidebar({ planId, onTodayClick }: Props) {
                 })}
               </div>
             ) : null}
-          </div>
+          </>
         ) : null}
+      </nav>
 
-        {onTodayClick ? (
+      {onTodayClick ? (
+        <div className="border-t border-border px-3 py-3">
           <button
             type="button"
             onClick={onTodayClick}
-            className="mt-2 flex items-center justify-center rounded-xl border border-border bg-surface px-3 py-2.5 text-secondary shadow-soft transition-colors duration-150 hover:border-border-strong hover:text-primary"
-            title="Today (T)"
+            className="flex w-full items-center gap-3 rounded-lg border border-border bg-surface px-3 py-2 text-[13px] font-medium text-secondary shadow-soft transition-colors duration-150 hover:border-border-strong hover:text-primary"
           >
             <span
-              className="flex h-5 w-5 shrink-0 items-center justify-center text-tertiary"
+              className="flex h-4 w-4 shrink-0 items-center justify-center text-tertiary"
               aria-hidden
             >
               <IconToday />
             </span>
-            <span className="sr-only">Today</span>
+            Today
+            <kbd className="ml-auto rounded border border-border bg-elevated px-1.5 py-0.5 text-[10px] font-medium text-tertiary">
+              T
+            </kbd>
           </button>
-        ) : null}
-      </nav>
-
-      <div className="border-t border-border p-3">
-        <div className="flex h-5 items-center justify-center text-[10px] font-medium text-tertiary">
-          <kbd className="rounded border border-border bg-elevated px-1">T</kbd>
         </div>
-      </div>
+      ) : null}
     </aside>
   );
 }
@@ -206,8 +194,8 @@ export function DashboardSidebar({ planId, onTodayClick }: Props) {
 function PathwiseMark() {
   return (
     <svg
-      width="24"
-      height="24"
+      width="20"
+      height="20"
       viewBox="0 0 24 24"
       aria-hidden
       className="shrink-0"
@@ -244,27 +232,9 @@ function IconStrategy() {
     <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden>
       <circle cx="8" cy="8" r="2" fill="currentColor" />
       <circle cx="3" cy="3" r="1.4" stroke="currentColor" strokeWidth="1.3" />
-      <circle
-        cx="13"
-        cy="3"
-        r="1.4"
-        stroke="currentColor"
-        strokeWidth="1.3"
-      />
-      <circle
-        cx="3"
-        cy="13"
-        r="1.4"
-        stroke="currentColor"
-        strokeWidth="1.3"
-      />
-      <circle
-        cx="13"
-        cy="13"
-        r="1.4"
-        stroke="currentColor"
-        strokeWidth="1.3"
-      />
+      <circle cx="13" cy="3" r="1.4" stroke="currentColor" strokeWidth="1.3" />
+      <circle cx="3" cy="13" r="1.4" stroke="currentColor" strokeWidth="1.3" />
+      <circle cx="13" cy="13" r="1.4" stroke="currentColor" strokeWidth="1.3" />
       <path
         d="M4 4l3 3M12 4l-3 3M4 12l3-3M12 12l-3-3"
         stroke="currentColor"
@@ -291,42 +261,10 @@ function IconOpportunity() {
 function IconPillars() {
   return (
     <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden>
-      <rect
-        x="2"
-        y="2"
-        width="5"
-        height="5"
-        rx="1.2"
-        stroke="currentColor"
-        strokeWidth="1.3"
-      />
-      <rect
-        x="9"
-        y="2"
-        width="5"
-        height="5"
-        rx="1.2"
-        stroke="currentColor"
-        strokeWidth="1.3"
-      />
-      <rect
-        x="2"
-        y="9"
-        width="5"
-        height="5"
-        rx="1.2"
-        stroke="currentColor"
-        strokeWidth="1.3"
-      />
-      <rect
-        x="9"
-        y="9"
-        width="5"
-        height="5"
-        rx="1.2"
-        stroke="currentColor"
-        strokeWidth="1.3"
-      />
+      <rect x="2" y="2" width="5" height="5" rx="1.2" stroke="currentColor" strokeWidth="1.3" />
+      <rect x="9" y="2" width="5" height="5" rx="1.2" stroke="currentColor" strokeWidth="1.3" />
+      <rect x="2" y="9" width="5" height="5" rx="1.2" stroke="currentColor" strokeWidth="1.3" />
+      <rect x="9" y="9" width="5" height="5" rx="1.2" stroke="currentColor" strokeWidth="1.3" />
     </svg>
   );
 }
@@ -334,22 +272,9 @@ function IconPillars() {
 function IconToday() {
   return (
     <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden>
-      <rect
-        x="2"
-        y="3.5"
-        width="12"
-        height="10"
-        rx="2"
-        stroke="currentColor"
-        strokeWidth="1.3"
-      />
+      <rect x="2" y="3.5" width="12" height="10" rx="2" stroke="currentColor" strokeWidth="1.3" />
       <path d="M2 6.5h12" stroke="currentColor" strokeWidth="1.3" />
-      <path
-        d="M5.5 2v3M10.5 2v3"
-        stroke="currentColor"
-        strokeWidth="1.3"
-        strokeLinecap="round"
-      />
+      <path d="M5.5 2v3M10.5 2v3" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
     </svg>
   );
 }
