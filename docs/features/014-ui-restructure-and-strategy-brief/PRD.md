@@ -1,7 +1,7 @@
 # Feature PRD: UI Restructure and Strategy Brief
 
 ## Status
-In Progress
+Complete (pending manual desktop pass)
 
 ## Summary
 Sharpen Pathwise's branding and polish across the home page, Flowgram, Week View, Opportunity Validation, and Assessments pages, then add a new "Strategy Brief" panel on the Strategy Web that explains the current plan in one scannable view.

@@ -1,7 +1,7 @@
 # Feature Tech Spec: UI Restructure and Strategy Brief
 
 ## Status
-In Progress
+Complete
 
 ## Related Docs
 - Global PRD: `docs/architecture/PRD.md`
