@@ -13,6 +13,16 @@ const PILLAR_NODE_RADIUS = 0.28;
 const ACTION_NODE_RADIUS = 0.14;
 const GOAL_NODE_RADIUS = 0.42;
 
+const PILLAR_PASTELS = [
+  "#8B4A6B",
+  "#9B9267",
+  "#B5707E",
+  "#C4A882",
+  "#8FA68B",
+  "#7E6B8A",
+];
+const GOAL_PASTEL = "#7D9B8A";
+
 export function findBottleneckPillarId(
   pillars: StrategicPillar[],
   mainBottleneck: string,
@@ -52,6 +62,9 @@ export function buildGraphLayout(
     position: goalPos,
     radius: GOAL_NODE_RADIUS,
     parentId: null,
+    pastelColor: GOAL_PASTEL,
+    progressPercent: 0,
+    actionCount: 0,
   });
 
   pillars.forEach((pillar, i) => {
@@ -75,6 +88,9 @@ export function buildGraphLayout(
       position: pillarPos,
       radius: PILLAR_NODE_RADIUS,
       parentId: null,
+      pastelColor: PILLAR_PASTELS[i % PILLAR_PASTELS.length],
+      progressPercent: 0,
+      actionCount: pillar.actions.length,
     });
 
     edges.push({
