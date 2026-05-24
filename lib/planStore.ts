@@ -1,5 +1,6 @@
 "use client";
 
+import { createSupabaseAnonClient } from "./supabase";
 import type { OpportunityCheck, StrategyPlan } from "./types";
 
 export type ActionState = "open" | "done" | "skipped";
@@ -124,6 +125,7 @@ export function setActionState(
   try {
     window.localStorage.setItem(planKey(planId), JSON.stringify(next));
   } catch {}
+  syncToSupabase(planId, next);
   return next;
 }
 
@@ -214,6 +216,7 @@ export function addTasksToNode(
         JSON.stringify(stored),
       );
     } catch {}
+    syncToSupabase(planId, stored);
   }
 
   return created;
@@ -237,6 +240,21 @@ function attachToAction(
     }
   }
   return false;
+}
+
+function syncToSupabase(planId: string, stored: StoredPlan): void {
+  if (planId.startsWith("demo-") || planId === "onboarding-preview") return;
+  try {
+    const sb = createSupabaseAnonClient();
+    if (!sb) return;
+    sb.from("strategy_plans")
+      .update({
+        plan: stored.plan,
+        action_states: stored.actionStates,
+      })
+      .eq("id", planId)
+      .then(() => {});
+  } catch {}
 }
 
 export function deletePlan(planId: string): void {
