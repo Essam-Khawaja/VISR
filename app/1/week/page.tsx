@@ -15,8 +15,7 @@ import {
   blocksToPhantomEvents,
 } from "@/lib/1/personal-time";
 import { getCategoryStyles, getCategoryIcon } from "@/lib/1/category-colors";
-import ScrollingText from "@/components/1/ui/ScrollingText";
-import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, Loader2, MapPin } from "lucide-react";
 import Link from "next/link";
 
 function startOfWeek(d: Date): Date {
@@ -81,7 +80,7 @@ export default function WeekPage() {
 
   return (
     <div className="min-h-screen pb-24">
-      <main className="max-w-6xl mx-auto px-4 py-6 sm:py-8 space-y-4">
+      <main className="max-w-7xl mx-auto px-4 py-6 sm:py-8 space-y-4">
         <div className="flex items-center justify-between gap-3 glass-card rounded-2xl px-3 py-2">
           <button
             onClick={() => setWeekStart(addDays(weekStart, -7))}
@@ -119,7 +118,7 @@ export default function WeekPage() {
             <Loader2 className="w-5 h-5 animate-spin text-stone-400" />
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-7 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7 gap-3">
             {days.map((day) => {
               const key = isoDateFromDate(day);
               const realEvents = eventsByDay[key] ?? [];
@@ -137,7 +136,7 @@ export default function WeekPage() {
                 <Link
                   key={key}
                   href={`/1?date=${key}`}
-                  className={`glass-card rounded-2xl p-3 hover:scale-[1.005] transition-transform flex flex-col min-h-[180px] ${
+                  className={`glass-card rounded-2xl p-3 hover:scale-[1.005] transition-transform flex flex-col min-h-[200px] ${
                     isCurrentDay
                       ? "ring-2 ring-orange-300 ring-offset-2 ring-offset-transparent"
                       : ""
@@ -153,7 +152,7 @@ export default function WeekPage() {
                       {day.getDate()}
                     </p>
                   </div>
-                  <div className="space-y-1 flex-1">
+                  <div className="space-y-1.5 flex-1">
                     {dayEvents.length === 0 ? (
                       <p className="text-[11px] text-stone-400 italic">Empty</p>
                     ) : (
@@ -164,24 +163,41 @@ export default function WeekPage() {
                           e.start_time,
                           e.end_time
                         );
+                        const locationLabel = e.location?.trim();
                         return (
                           <div
                             key={e.id}
-                            className={`flex items-start gap-1.5 px-1.5 py-1 rounded-lg ${styles.bgSoft} border ${styles.border}`}
+                            className={`flex items-start gap-1.5 px-2 py-1.5 rounded-lg ${styles.bgSoft} border ${styles.border}`}
                           >
                             <Icon
                               className={`w-3 h-3 mt-0.5 shrink-0 ${styles.text}`}
                               strokeWidth={2.5}
                             />
                             <div className="min-w-0 flex-1">
-                              <ScrollingText
-                                text={e.title}
-                                className="text-[11px] font-medium text-stone-900 leading-tight"
-                              />
-                              <p className="text-[10px] text-stone-500 leading-tight">
+                              <p
+                                className="text-[11px] font-medium text-stone-900 leading-snug break-words line-clamp-2"
+                                title={e.title}
+                              >
+                                {e.title}
+                              </p>
+                              <p className="text-[10px] text-stone-500 leading-tight mt-0.5">
                                 {formatTime(e.start_time)} ·{" "}
                                 {formatDuration(dur)}
                               </p>
+                              {locationLabel ? (
+                                <p
+                                  className="text-[10px] text-stone-500/90 leading-tight mt-0.5 flex items-center gap-1 truncate"
+                                  title={locationLabel}
+                                >
+                                  <MapPin
+                                    className="w-2.5 h-2.5 shrink-0"
+                                    strokeWidth={1.8}
+                                  />
+                                  <span className="truncate">
+                                    {locationLabel}
+                                  </span>
+                                </p>
+                              ) : null}
                             </div>
                           </div>
                         );
