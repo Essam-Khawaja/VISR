@@ -229,16 +229,16 @@ export default function GoalTree({
         : focusPath[focusPath.length - 1].id;
 
     if (nodeId === currentNucleusId) {
-      // Clicked the nucleus — show task dialog for it
+      // Clicked the nucleus — show task dialog
       setExploreDialogId(nodeId);
       clearSelection();
       return;
     }
 
-    // Clicked an orbit node — always drill in + show dialog
+    // Clicked an orbit node — only drill in, no dialog
     const name = findNodeName(plan, nodeId);
     setFocusPath((prev) => [...prev, { id: nodeId, name }]);
-    setExploreDialogId(nodeId);
+    setExploreDialogId(null);
     clearSelection();
   }, [selection, explore, focusPath, plan, clearSelection]);
 
