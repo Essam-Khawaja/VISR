@@ -1,6 +1,5 @@
 import Link from "next/link";
 import {
-  ArrowUpRight,
   Calendar,
   Compass,
   GitBranch,
@@ -29,46 +28,47 @@ function HomeBody() {
     <>
       <section className="relative mx-auto mt-10 flex w-full max-w-4xl flex-col items-center text-center sm:mt-16">
         <h1 className="font-display text-[44px] font-medium leading-[1.04] tracking-tight text-primary text-balance sm:text-[68px] lg:text-[84px]">
-          One home for two ways
+          You say what,
           <br />
           <span className="bg-gradient-to-r from-amaranth via-thulian to-amaranth bg-clip-text italic text-transparent">
-            to plan your week.
+            Pathwise shows you how.
           </span>
         </h1>
         <p className="mt-7 max-w-2xl text-[16px] leading-relaxed text-secondary sm:text-[17px]">
-          Some weeks you need a calm map of today. Some weeks you need a
-          ruthless strategist asking what to cut. Pathwise is both, in one
-          place.
+          Set the destination. Pathwise maps the route, names the bottleneck,
+          and turns it into the next thing to do today.
         </p>
       </section>
 
       <section className="relative mx-auto mt-16 grid w-full max-w-6xl gap-6 sm:mt-20 md:grid-cols-2">
         <PerspectiveCard
-          href="/1"
-          eyebrow="Perspective 1"
-          title="StraighterNoodles"
-          subtitle="Daily flow"
-          description="A calm vertical timeline for today. Packing list, weather-aware reminders, free-time finder, routines, voice briefing. Built for chaotic mornings."
-          accent="var(--amaranth)"
-          gradient="linear-gradient(135deg, rgba(147,59,91,0.10) 0%, rgba(181,114,138,0.08) 60%, transparent 100%)"
-          features={[
-            { icon: <Sparkles className="size-3.5" strokeWidth={1.7} />, label: "Today's Flowgram" },
-            { icon: <Calendar className="size-3.5" strokeWidth={1.7} />, label: "Week View" },
-            { icon: <StickyNote className="size-3.5" strokeWidth={1.7} />, label: "Notes Hub" },
-          ]}
-        />
-        <PerspectiveCard
           href={`/2/dashboard/${demoPlanId}`}
-          eyebrow="Perspective 2"
+          eyebrow="Big Picture"
+          eyebrowColor="var(--sage)"
           title="Pathwise Strategy"
-          subtitle="Big picture"
-          description="A strategy dashboard that names your bottleneck, builds a strategy map, recommends what to cut or defer, and evaluates new opportunities against your real plan."
+          subtitle="Zoomed-out goal view"
+          description="The global map of your goal — pillars, bottleneck, and what to cut."
           accent="var(--sage)"
           gradient="linear-gradient(135deg, rgba(138,154,91,0.12) 0%, rgba(170,186,174,0.10) 60%, transparent 100%)"
           features={[
             { icon: <Compass className="size-3.5" strokeWidth={1.7} />, label: "Strategy Web" },
             { icon: <GitBranch className="size-3.5" strokeWidth={1.7} />, label: "Assessments" },
             { icon: <Lightbulb className="size-3.5" strokeWidth={1.7} />, label: "Opportunity Validation" },
+          ]}
+        />
+        <PerspectiveCard
+          href="/1"
+          eyebrow="Daily Flow"
+          eyebrowColor="var(--amaranth)"
+          title="StraighterNoodles"
+          subtitle="Day-to-day execution"
+          description="Today's timeline that turns the plan into the next thing to do."
+          accent="var(--amaranth)"
+          gradient="linear-gradient(135deg, rgba(147,59,91,0.10) 0%, rgba(181,114,138,0.08) 60%, transparent 100%)"
+          features={[
+            { icon: <Sparkles className="size-3.5" strokeWidth={1.7} />, label: "Today's Flowgram" },
+            { icon: <Calendar className="size-3.5" strokeWidth={1.7} />, label: "Week View" },
+            { icon: <StickyNote className="size-3.5" strokeWidth={1.7} />, label: "Notes Hub" },
           ]}
         />
       </section>
@@ -83,6 +83,7 @@ type Feature = { icon: React.ReactNode; label: string };
 function PerspectiveCard({
   href,
   eyebrow,
+  eyebrowColor,
   title,
   subtitle,
   description,
@@ -92,6 +93,7 @@ function PerspectiveCard({
 }: {
   href: string;
   eyebrow: string;
+  eyebrowColor: string;
   title: string;
   subtitle: string;
   description: string;
@@ -115,19 +117,12 @@ function PerspectiveCard({
         style={{ background: gradient }}
       />
 
-      <div className="relative flex items-center justify-between">
+      <div className="relative flex items-center">
         <span
           className="text-[10px] font-semibold uppercase tracking-[0.18em]"
-          style={{ color: accent }}
+          style={{ color: eyebrowColor }}
         >
           {eyebrow}
-        </span>
-        <span className="inline-flex items-center gap-1 rounded-full border border-border bg-white/70 px-2.5 py-1 text-[11px] font-medium text-secondary transition-all duration-300 group-hover:border-border-strong group-hover:text-primary">
-          Open
-          <ArrowUpRight
-            className="size-3 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
-            strokeWidth={1.8}
-          />
         </span>
       </div>
 
