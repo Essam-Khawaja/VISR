@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { TimelineEvent } from "@/lib/1/types";
 import {
   formatTime,
@@ -43,6 +44,9 @@ export default function EndOfDayReschedule({
   const [pickerDate, setPickerDate] = useState<string>("");
   const [slots, setSlots] = useState<Slot[] | null>(null);
   const [loadingSlots, setLoadingSlots] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => setMounted(true), []);
 
   const incomplete = events.filter(
     (e) =>
@@ -176,10 +180,14 @@ export default function EndOfDayReschedule({
         </div>
       </div>
 
-      {scheduling && (
-        <div
-          className="fixed inset-0 z-50 bg-stone-900/30 backdrop-blur-sm flex items-center justify-center p-3 sm:p-6"
+      {mounted && scheduling
+        ? createPortal(
+            <div
+          className="fixed inset-0 z-[80] bg-stone-900/40 backdrop-blur-md flex items-center justify-center p-3 sm:p-6"
           onClick={closePicker}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Reschedule"
         >
           <div
             className="relative w-full sm:max-w-md bg-white rounded-3xl shadow-2xl border border-stone-200 max-h-[90dvh] sm:max-h-[92dvh] flex flex-col"
@@ -260,8 +268,10 @@ export default function EndOfDayReschedule({
               </div>
             </div>
           </div>
-        </div>
-      )}
+        </div>,
+            document.body,
+          )
+        : null}
     </>
   );
 }

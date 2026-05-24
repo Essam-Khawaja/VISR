@@ -19,11 +19,11 @@ const SOURCE_META: Record<
 > = {
   weather: {
     label: "weather",
-    className: "text-pomelo bg-pomelo/[0.10] border-pomelo/25",
+    className: "text-amber-700 bg-amber-100/60 border-amber-300/70",
   },
   event_specific: {
     label: "one-time",
-    className: "text-thulian bg-thulian/[0.10] border-thulian/25",
+    className: "text-purple-700 bg-purple-100/60 border-purple-300/70",
   },
   manual: {
     label: "custom",

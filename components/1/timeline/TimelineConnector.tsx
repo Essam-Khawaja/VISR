@@ -14,11 +14,11 @@ export default function TimelineConnector({
     <div className="flex flex-col items-center py-0.5">
       <div className="w-px h-4 bg-gradient-to-b from-border to-border-strong" />
       <ChevronDown
-        className="w-3.5 h-3.5 text-tertiary/60 -mt-1"
+        className="w-3.5 h-3.5 text-secondary/80 -mt-1"
         strokeWidth={1.8}
       />
       {gapMinutes != null && gapMinutes > 5 && (
-        <p className="text-[10px] text-tertiary font-medium -mt-0.5">
+        <p className="text-[10px] text-primary font-semibold -mt-0.5">
           {formatDuration(gapMinutes)}
         </p>
       )}

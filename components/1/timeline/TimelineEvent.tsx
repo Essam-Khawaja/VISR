@@ -171,10 +171,10 @@ export default function TimelineEventCard({
                       stop(e);
                       onToggleComplete(event);
                     }}
-                    className={`w-7 h-7 sm:w-6 sm:h-6 rounded-full border flex items-center justify-center transition-colors ${
+                    className={`w-7 h-7 sm:w-6 sm:h-6 rounded-full border-2 flex items-center justify-center transition-colors ${
                       event.completed
                         ? "bg-sage border-sage text-white"
-                        : "border-border-strong hover:border-sage hover:bg-sage/[0.08]"
+                        : "border-stone-500 hover:border-sage hover:bg-sage/[0.08]"
                     }`}
                     aria-label={event.completed ? "Mark incomplete" : "Mark complete"}
                   >
