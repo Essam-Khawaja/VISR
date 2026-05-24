@@ -94,3 +94,23 @@ export const OpportunityCheckSchema = z.object({
 export const GenerateRequestSchema = z.object({
   profile: ProfileSchema,
 });
+
+export const OnboardingInsightRequestSchema = z.object({
+  step: z.enum(["destination", "courses", "commitments", "constraints", "brain-dump"]),
+  profile: z.object({
+    targetGoal: z.string().max(280).default(""),
+    university: z.string().max(120).default(""),
+    degree: z.string().max(120).default(""),
+    year: z.string().max(40).default(""),
+    currentCourses: z.array(z.string().max(120)).default([]),
+    commitments: z.array(z.string().max(200)).default([]),
+    workHoursPerWeek: z.number().min(0).max(80).default(0),
+    constraints: z.array(z.string().max(200)).default([]),
+    brainDump: z.string().max(4000).default(""),
+  }),
+  map: z.object({
+    goal: z.object({ label: z.string() }).nullable().default(null),
+    courses: z.array(z.object({ id: z.string(), label: z.string() })).default([]),
+    commitments: z.array(z.object({ id: z.string(), label: z.string() })).default([]),
+  }).optional(),
+});
