@@ -16,9 +16,9 @@ import {
   isPastEvent,
   todayISODate,
   isSameDay,
-} from "@/lib/flowgram/timeline-utils";
-import { isRoutineScheduledOnDate } from "@/lib/flowgram/routine-schedule";
-import { blocksForDate } from "@/lib/flowgram/personal-time";
+} from "@/lib/flowgram/timelineUtils";
+import { isRoutineScheduledOnDate } from "@/lib/flowgram/routineSchedule";
+import { blocksForDate } from "@/lib/flowgram/personalTime";
 import { Volume2, VolumeX } from "lucide-react";
 
 type VoiceBriefingButtonProps = {

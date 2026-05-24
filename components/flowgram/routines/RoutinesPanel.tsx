@@ -15,8 +15,8 @@ import {
   isRoutineScheduledOnDate,
   routineStatusForDate,
   RoutineStatus,
-} from "@/lib/flowgram/routine-schedule";
-import { isSameDay } from "@/lib/flowgram/timeline-utils";
+} from "@/lib/flowgram/routineSchedule";
+import { isSameDay } from "@/lib/flowgram/timelineUtils";
 import TimePicker from "@/components/flowgram/ui/TimePicker";
 
 function frequencyLabel(r: Routine): string {

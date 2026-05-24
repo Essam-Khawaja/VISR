@@ -1,3 +1,13 @@
+/**
+ * itemIcons.ts
+ *
+ * Best-guess Lucide icon for a packing-item name. Used by the checklist and
+ * the defaults manager so that "Laptop", "Water bottle", "Charger", etc.
+ * each render with a recognizable glyph without forcing the user to pick
+ * one. The match is regex-based to tolerate user phrasing variants like
+ * "iPad Pro" or "USB-C cable".
+ */
+
 import {
   Laptop,
   Tablet,
@@ -29,6 +39,8 @@ import {
   LucideIcon,
 } from "lucide-react";
 
+// Order matters: more specific patterns must precede broader ones so
+// "gym clothes" picks the dumbbell instead of the generic shirt.
 const RULES: Array<{ test: RegExp; icon: LucideIcon }> = [
   { test: /\blaptop\b/i, icon: Laptop },
   { test: /\b(ipad|tablet)\b/i, icon: Tablet },
@@ -62,5 +74,6 @@ export function getItemIcon(itemName: string): LucideIcon {
   for (const r of RULES) {
     if (r.test.test(itemName)) return r.icon;
   }
+  // Generic parcel icon when no rule matches.
   return Package;
 }

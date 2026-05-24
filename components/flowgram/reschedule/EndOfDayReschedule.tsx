@@ -11,7 +11,7 @@ import {
   formatDateLong,
   addDays,
   isoDateFromDate,
-} from "@/lib/flowgram/timeline-utils";
+} from "@/lib/flowgram/timelineUtils";
 import {
   Calendar,
   Loader2,

@@ -1,3 +1,13 @@
+/**
+ * lib/strategyweb/planStore.ts
+ *
+ * Local-first plan state for the dashboard. Plans live in localStorage so
+ * the demo works offline; Supabase is best-effort and merged in when an
+ * anon client is available. The store tracks the canonical plan, action
+ * state per node, recent opportunity checks, and the active plan id used
+ * by the sidebar's "Strategy Map" link.
+ */
+
 "use client";
 
 import { createSupabaseAnonClient } from "@/lib/shared/supabase";

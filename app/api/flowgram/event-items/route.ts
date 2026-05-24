@@ -1,3 +1,9 @@
+﻿/**
+ * /api/flowgram/event-items
+ *
+ * Many-to-many join between events and packing items, with a flag for
+ * one-time-only items (so the checklist knows they don't recur).
+ */
 import { getSupabase } from "@/lib/flowgram/supabase";
 import { NextRequest, NextResponse } from "next/server";
 

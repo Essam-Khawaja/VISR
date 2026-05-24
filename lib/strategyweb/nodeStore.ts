@@ -1,3 +1,11 @@
+/**
+ * lib/strategyweb/nodeStore.ts
+ *
+ * CRUD and persistence helpers for the StrategyNode graph (university,
+ * year, semester, course, commitment, project, ...). Same dual-write
+ * pattern as planStore and taskStore: localStorage first, Supabase when
+ * available. The graph powers the goal tree and the pillar drilldown.
+ */
 import { createSupabaseAnonClient } from "@/lib/shared/supabase";
 import type {
   AcademicTerm,

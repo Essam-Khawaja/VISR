@@ -1,3 +1,12 @@
+/**
+ * categoryColors.ts
+ *
+ * Public access layer for Flowgram event categories. Maps an EventCategory
+ * to a Lucide icon, the human label, and the Tailwind style bundle defined
+ * in `constants.ts`. All Flowgram timeline cards, badges, and filters route
+ * styling decisions through these helpers so a category change is one edit.
+ */
+
 import { EventCategory } from "@/lib/flowgram/types";
 import { CATEGORY_CONFIG, CategoryStyles } from "./constants";
 import {
@@ -18,6 +27,8 @@ import {
   LucideIcon,
 } from "lucide-react";
 
+// Stable category to Lucide icon map. Custom categories are not present in
+// this map and fall back to the generic `Tag` icon via getCategoryIcon.
 export const CATEGORY_ICONS: Record<EventCategory, LucideIcon> = {
   class: BookOpen,
   meeting: Users,
@@ -34,6 +45,7 @@ export const CATEGORY_ICONS: Record<EventCategory, LucideIcon> = {
   errand: Package,
 };
 
+// Used as the fallback when a custom category does not exist in CATEGORY_CONFIG.
 const GENERIC_STYLES: CategoryStyles = {
   label: "Custom",
   bgGradient: "from-chalk/[0.20] to-chalk/[0.35]",

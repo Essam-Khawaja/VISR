@@ -1,3 +1,13 @@
+/**
+ * PATCH /api/strategyweb/tasks/[taskId]
+ *
+ * Partial updates for a single strategy task. Used by the Kanban board, the
+ * Flowgram day strip, and the node task dialog when the user changes a
+ * task's title, due date, priority, or status. Setting status to "done"
+ * also stamps `completed_at` server-side so semester-progress math stays
+ * accurate.
+ */
+
 import { NextResponse } from "next/server";
 import {
   createSupabaseAnonClient,

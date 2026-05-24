@@ -1,4 +1,4 @@
-# Feature Tech Spec: Node Task Dialog and AI Generator
+﻿# Feature Tech Spec: Node Task Dialog and AI Generator
 
 ## Status
 Complete
@@ -268,7 +268,7 @@ export function taskGenerationUserPrompt(
   userPrompt: string,
 ): string {
   return `Overall goal: ${parentContext}
-Area of focus: ${nodeName} — ${nodeDescription}
+Area of focus: ${nodeName} - ${nodeDescription}
 Student's request: ${userPrompt}
 
 Generate concrete tasks to help with this request.`;

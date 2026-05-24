@@ -1,3 +1,11 @@
+/**
+ * lib/strategyweb/demoData.ts
+ *
+ * Aggregator export used by API routes and the demo dashboard. Combines
+ * the static fixture plan (`fixture.ts`) with a hand-written demo student
+ * profile so the GET /api/strategyweb/plan/[planId] route can return a
+ * complete payload for the canonical demo id.
+ */
 import type { StudentProfile } from "./types";
 import {
   DEMO_PLAN_ID,

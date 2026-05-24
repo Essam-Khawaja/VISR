@@ -1,3 +1,16 @@
+/**
+ * POST /api/strategyweb/opportunity
+ *
+ * Evaluates a new opportunity (e.g. "Should I join the robotics club?")
+ * against the user's current StrategyPlan. Returns an `OpportunityCheck`
+ * with a fit score, recommendation, why-it-fits / tradeoffs / conditions
+ * lists, and the explicit cuts the student would have to accept.
+ *
+ * The route always returns a check: when Groq is unavailable or returns
+ * invalid JSON, `buildDeterministicOpportunity` produces a plausible
+ * keyword-driven fallback so the demo never breaks.
+ */
+
 import { NextResponse } from "next/server";
 import { callGroqJson } from "@/lib/strategyweb/groq";
 import { buildDeterministicOpportunity } from "@/lib/strategyweb/deterministicOpportunity";

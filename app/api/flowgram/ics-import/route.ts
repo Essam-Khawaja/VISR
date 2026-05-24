@@ -1,3 +1,10 @@
+﻿/**
+ * /api/flowgram/ics-import
+ *
+ * Parses an .ics file or feed and bulk-inserts events. URL imports are
+ * SSRF-guarded against private hosts. Each event is run through
+ * `guessCategory` so the chronology adopts the right styling.
+ */
 import { NextRequest, NextResponse } from "next/server";
 import { getSupabase } from "@/lib/flowgram/supabase";
 import { parseICS } from "@/lib/flowgram/ics";

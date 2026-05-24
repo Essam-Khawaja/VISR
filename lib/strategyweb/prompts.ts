@@ -1,4 +1,20 @@
-﻿import type { z } from "zod";
+﻿/**
+ * lib/strategyweb/prompts.ts
+ *
+ * Prompt builders for every AI surface in Strategy Web. Each builder
+ * returns a system + user message pair tuned to produce strict JSON that
+ * matches the corresponding Zod schema in `validate.ts`.
+ *
+ * Style rules:
+ *   - VISR is opinionated. Prompts demand a single bottleneck and a willingness
+ *     to say "no".
+ *   - JSON only. The system prompt forbids markdown fences or prose.
+ *   - Avoid em dashes. The validate / deterministic layers do not depend on
+ *     this, but we ask the model not to introduce them so the user-facing copy
+ *     stays consistent.
+ */
+
+import type { z } from "zod";
 import type { ProfileSchema } from "./validate";
 
 type Profile = z.infer<typeof ProfileSchema>;

@@ -1,3 +1,15 @@
+﻿/**
+ * app/page.tsx
+ *
+ * VISR landing page. Two CTAs:
+ *   - "Build my route" -> /strategyweb/onboarding
+ *   - "View demo"      -> /strategyweb/dashboard/{demoPlanId}
+ *
+ * Returning users with a saved active plan see "Open dashboard" and
+ * "Re-onboard" instead. Honors `?demo` and `?onboard` query shortcuts so
+ * deep links from older docs still resolve.
+ */
+
 "use client";
 
 import { Suspense, useEffect, useState } from "react";
@@ -82,7 +94,7 @@ function HomeLanding() {
                 icon={<Compass className="size-[18px]" strokeWidth={1.7} />}
                 eyebrow="Continue"
                 title="Open your strategy map"
-                body="Pick up where you left off — same plan, latest tasks."
+                body="Pick up where you left off - same plan, latest tasks."
                 ctaLabel="Open dashboard"
                 href={`/strategyweb/dashboard/${activePlanId}`}
               />

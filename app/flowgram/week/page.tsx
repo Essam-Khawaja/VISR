@@ -1,3 +1,12 @@
+﻿/**
+ * app/flowgram/week/page.tsx
+ *
+ * Seven-day grid that places events, personal time, routines, and strategy
+ * tasks across columns. Each day links into the Flowgram day view via the
+ * `?date=YYYY-MM-DD` query param. Useful for spotting overload before the
+ * day arrives.
+ */
+
 "use client";
 
 import { useEffect, useState, useCallback, useMemo } from "react";
@@ -9,12 +18,12 @@ import {
   addDays,
   isoDateFromDate,
   isSameDay,
-} from "@/lib/flowgram/timeline-utils";
+} from "@/lib/flowgram/timelineUtils";
 import {
   blocksForDate,
   blocksToPhantomEvents,
-} from "@/lib/flowgram/personal-time";
-import { getCategoryStyles, getCategoryIcon } from "@/lib/flowgram/category-colors";
+} from "@/lib/flowgram/personalTime";
+import { getCategoryStyles, getCategoryIcon } from "@/lib/flowgram/categoryColors";
 import ScrollingText from "@/components/flowgram/ui/ScrollingText";
 import { ChevronLeft, ChevronRight, Loader2, Target } from "lucide-react";
 import Link from "next/link";
@@ -40,7 +49,7 @@ function strategyTaskClass(task: StrategyTask): string {
   if (task.status === "done") {
     return "border-slate-200 bg-slate-50 text-slate-400 line-through";
   }
-  // Past-but-open tasks share the same priority styling as upcoming ones —
+  // Past-but-open tasks share the same priority styling as upcoming ones -
   // we don't surface a separate "overdue" state in the week pane.
   if (task.priority === "High") {
     return "border-orange-200 bg-orange-50 text-orange-700";

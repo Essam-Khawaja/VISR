@@ -1,3 +1,11 @@
+/**
+ * app/flowgram/notes/page.tsx
+ *
+ * Cross-day notes inbox. Aggregates every event note in a sliding 180-day
+ * window and lets the user filter by note status (Open / In progress /
+ * Done / Snoozed). Editing posts back through the events PATCH route.
+ */
+
 "use client";
 
 import { useEffect, useState } from "react";
@@ -7,8 +15,8 @@ import {
   formatTime,
   addDays,
   isoDateFromDate,
-} from "@/lib/flowgram/timeline-utils";
-import { getCategoryStyles, getCategoryIcon } from "@/lib/flowgram/category-colors";
+} from "@/lib/flowgram/timelineUtils";
+import { getCategoryStyles, getCategoryIcon } from "@/lib/flowgram/categoryColors";
 import { renderTextWithLinks } from "@/lib/flowgram/linkify";
 import {
   StickyNote,

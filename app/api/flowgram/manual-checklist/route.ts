@@ -1,3 +1,10 @@
+﻿/**
+ * /api/flowgram/manual-checklist
+ *
+ * Per-day manual checklist rows. Used by the BeforeYouLeave component
+ * for items the user adds on the fly that aren't tied to an event or a
+ * category default.
+ */
 import { getSupabase } from "@/lib/flowgram/supabase";
 import { NextRequest, NextResponse } from "next/server";
 

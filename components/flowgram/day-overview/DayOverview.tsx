@@ -6,7 +6,7 @@ import {
   formatDuration,
   dayIntensity,
   formatTime,
-} from "@/lib/flowgram/timeline-utils";
+} from "@/lib/flowgram/timelineUtils";
 import { AlertTriangle, Coffee, Activity, Bus } from "lucide-react";
 
 type DayOverviewProps = {

@@ -1,3 +1,22 @@
+/**
+ * app/flowgram/page.tsx
+ *
+ * The Flowgram day view. This page is intentionally the orchestration
+ * layer for the "today" experience and pulls together a lot of state:
+ *   - Events for the selected date plus their per-event packing items.
+ *   - User settings (city, country, timezone, wake/sleep windows).
+ *   - Personal time blocks rendered as phantom timeline events.
+ *   - Weather + auto-derived "before you leave" checklist items.
+ *   - Free-time slots, routines, transit auto-blocks, voice briefing,
+ *     end-of-day reschedule, ICS import, manual checklist, notes.
+ *   - Strategy tasks for the day (sourced from the Strategy Web task store
+ *     so the same plan flows from the dashboard down to the timeline).
+ *
+ * The view is deliberately client-side: the layered widgets depend on
+ * sequential fetches, optimistic updates, and timers, which would be
+ * awkward to express server-side without sacrificing snappiness.
+ */
+
 "use client";
 
 import { Suspense, useEffect, useState, useCallback, useMemo, useRef } from "react";
@@ -14,12 +33,12 @@ import {
   PersonalTimeBlock,
 } from "@/lib/flowgram/types";
 import { getWeatherAdvice } from "@/lib/flowgram/weather";
-import { formatDateLong, isSameDay, isoDateFromDate, todayISODate } from "@/lib/flowgram/timeline-utils";
-import { useSelectedDate } from "@/lib/flowgram/use-selected-date";
+import { formatDateLong, isSameDay, isoDateFromDate, todayISODate } from "@/lib/flowgram/timelineUtils";
+import { useSelectedDate } from "@/lib/flowgram/useSelectedDate";
 import {
   blocksForDate,
   blocksToPhantomEvents,
-} from "@/lib/flowgram/personal-time";
+} from "@/lib/flowgram/personalTime";
 import DayNavigator from "@/components/flowgram/layout/DayNavigator";
 import Timeline from "@/components/flowgram/timeline/Timeline";
 import BeforeYouLeave from "@/components/flowgram/checklist/BeforeYouLeave";

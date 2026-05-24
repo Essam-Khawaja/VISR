@@ -1,8 +1,18 @@
+/**
+ * useSelectedDate.ts
+ *
+ * Hook that synchronizes the Flowgram day-view selection with the URL
+ * `?date=YYYY-MM-DD` query param. Today is the default and is represented
+ * as the absence of the param so that bookmarks remain stable. All page
+ * components rely on this hook so the day, week, settings, and notes views
+ * navigate to the same date consistently.
+ */
+
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
-import { todayISODate } from "./timeline-utils";
+import { todayISODate } from "./timelineUtils";
 
 const ISO_RE = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -11,6 +21,7 @@ export function useSelectedDate(): [string, (iso: string) => void] {
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
+  // Initialize from the URL on first paint to avoid a hydration flash.
   const initial = (() => {
     const q = searchParams.get("date");
     return q && ISO_RE.test(q) ? q : todayISODate();
@@ -29,6 +40,7 @@ export function useSelectedDate(): [string, (iso: string) => void] {
       if (!ISO_RE.test(iso)) return;
       setDate(iso);
       const params = new URLSearchParams(Array.from(searchParams.entries()));
+      // Drop the date param entirely when it equals today so the URL stays clean.
       if (iso === todayISODate()) {
         params.delete("date");
       } else {

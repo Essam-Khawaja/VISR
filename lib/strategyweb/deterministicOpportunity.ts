@@ -1,4 +1,14 @@
-﻿import type {
+﻿/**
+ * lib/strategyweb/deterministicOpportunity.ts
+ *
+ * Heuristic opportunity classifier used as a Groq fallback. The kind is
+ * detected by keyword (club, research, internship, course, side-project,
+ * or generic) and a fit score is composed from how well the opportunity
+ * complements the active strategy versus how much existing commitment it
+ * displaces. The output shape matches `OpportunityCheck` exactly so the UI
+ * doesn't care whether the result came from the AI or this module.
+ */
+import type {
   OpportunityCheck,
   Recommendation,
   StrategyPlan,

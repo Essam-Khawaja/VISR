@@ -7,9 +7,9 @@ import {
   EVENT_CATEGORIES,
   CustomCategory,
 } from "@/lib/flowgram/types";
-import { getCategoryStyles, getCategoryIcon } from "@/lib/flowgram/category-colors";
+import { getCategoryStyles, getCategoryIcon } from "@/lib/flowgram/categoryColors";
 import { Plus, X, Trash2, Loader2, Backpack } from "lucide-react";
-import { getItemIcon } from "@/lib/flowgram/item-icons";
+import { getItemIcon } from "@/lib/flowgram/itemIcons";
 
 type CatRow = {
   key: string;

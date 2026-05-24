@@ -1,3 +1,13 @@
+/**
+ * components/shared/Sidebar.tsx
+ *
+ * The cross-product navigation. The same component renders as a sticky
+ * column on desktop and a drawer on mobile. The "Strategy Map" entry
+ * always points at the user's active plan id (from localStorage), or
+ * falls back to the demo plan when there isn't one yet, so the link is
+ * always meaningful regardless of state.
+ */
+
 "use client";
 
 import { useEffect, useState } from "react";

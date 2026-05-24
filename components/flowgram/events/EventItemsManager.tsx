@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { Item } from "@/lib/flowgram/types";
 import { Plus, X, Loader2 } from "lucide-react";
-import { getItemIcon } from "@/lib/flowgram/item-icons";
+import { getItemIcon } from "@/lib/flowgram/itemIcons";
 
 type LinkedItem = {
   id: string;

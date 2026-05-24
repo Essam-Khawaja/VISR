@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
@@ -313,7 +313,7 @@ function NextSevenDaysPanel({
       />
       {tasks.length === 0 ? (
         <p className="mt-4 rounded-[14px] border border-dashed border-border px-4 py-6 text-center text-[13px] text-tertiary">
-          No strategy tasks due in the next 7 days — add tasks on the map.
+          No strategy tasks due in the next 7 days - add tasks on the map.
         </p>
       ) : (
         <div className="mt-4 grid gap-3 md:grid-cols-2">

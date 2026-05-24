@@ -1,3 +1,9 @@
+﻿/**
+ * /api/flowgram/personal-time
+ *
+ * CRUD for personal time blocks (sleep, deep work windows, etc.). Blocks
+ * appear as phantom events on the timeline via `blocksToPhantomEvents`.
+ */
 import { getSupabase } from "@/lib/flowgram/supabase";
 import { NextRequest, NextResponse } from "next/server";
 

@@ -1,3 +1,13 @@
+/**
+ * GET /api/strategyweb/plan/[planId]
+ *
+ * Returns a saved StrategyPlan plus the linked StudentProfile.
+ *   - For the canonical demo plan id, returns the static fixture so the
+ *     judging path works with zero environment configuration.
+ *   - Otherwise reads from `strategy_plans` and `student_profiles` in
+ *     Supabase.
+ */
+
 import { NextResponse } from "next/server";
 import {
   DEMO_PLAN_ID,

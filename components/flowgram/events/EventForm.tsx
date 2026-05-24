@@ -7,11 +7,11 @@ import {
   SavedLocation,
   CustomCategory,
 } from "@/lib/flowgram/types";
-import { getCategoryStyles, getCategoryIcon } from "@/lib/flowgram/category-colors";
+import { getCategoryStyles, getCategoryIcon } from "@/lib/flowgram/categoryColors";
 import {
   toLocalDateTimeInput,
   fromLocalDateTimeInput,
-} from "@/lib/flowgram/timeline-utils";
+} from "@/lib/flowgram/timelineUtils";
 import { X, Trash2, Loader2 } from "lucide-react";
 import DateTimePicker from "../ui/DateTimePicker";
 import EventItemsManager from "./EventItemsManager";

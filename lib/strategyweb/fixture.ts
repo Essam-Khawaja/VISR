@@ -1,4 +1,17 @@
-﻿import type { OpportunityCheck, StrategyPlan } from "./types";
+﻿/**
+ * lib/strategyweb/fixture.ts
+ *
+ * Static demo plan and opportunity check used by `/strategyweb/dashboard/
+ * demo-cs-student-001` and the landing page CTA. The plan describes a
+ * canonical second-year CS student aiming for a software engineering
+ * internship: bottleneck "no shipped project", five strategic pillars,
+ * cuts, risks, and a next-seven-days route. The opportunity check answers
+ * "Should I join the robotics club?" with conditions and required cuts.
+ *
+ * The demo path bypasses Supabase entirely so judging works with no env
+ * variables configured.
+ */
+import type { OpportunityCheck, StrategyPlan } from "./types";
 import { DEMO_PLAN_ID } from "@/lib/shared/env";
 
 export { DEMO_PLAN_ID };

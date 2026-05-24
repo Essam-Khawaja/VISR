@@ -1,4 +1,6 @@
-# VISR Research Foundation
+﻿# VISR Research Foundation
+
+> **Why this document exists.** VISR is a hackathon MVP, but every design decision (single bottleneck framing, pillar count, the cut list, dated micro-actions, the visual map) maps to a specific empirical finding. This document is the receipt: what the literature says, where in the product the finding shows up, and an honest note on the limits of the evidence.
 
 ## Product Thesis
 
@@ -31,7 +33,7 @@ Strategy Web consolidates goals, pillars, bottlenecks, and cut-list items into o
 
 ### Too many options reduce follow-through
 
-Choice overload and decision fatigue research shows that having many options can reduce follow-through, even when initial motivation is high. Iyengar and Lepper (2000) found across field and laboratory experiments that people were more likely to act and were more satisfied with their choices when presented with a limited array of options rather than an extensive one. Vohs et al. (2008) demonstrated that making many choices—such as among consumer goods or college courses—can impair subsequent self-control, reducing persistence and task performance.
+Choice overload and decision fatigue research shows that having many options can reduce follow-through, even when initial motivation is high. Iyengar and Lepper (2000) found across field and laboratory experiments that people were more likely to act and were more satisfied with their choices when presented with a limited array of options rather than an extensive one. Vohs et al. (2008) demonstrated that making many choices-such as among consumer goods or college courses-can impair subsequent self-control, reducing persistence and task performance.
 
 **How this maps to Strategy Web**  
 Strategy Web includes an explicit cut-list and bottleneck surfacing to help students narrow their active commitments. By visually highlighting trade-offs and suggesting that certain projects be dropped, delayed, or deprioritized, Strategy Web is designed to mitigate choice overload and decision fatigue, increasing the odds of sustained action on the most important pillars.
@@ -80,7 +82,7 @@ Flowgram decomposes large strategic pillars and projects into micro-tasks that c
 Meta-analytic evidence shows that higher procrastination is reliably associated with poorer academic performance. Sirois et al. (2019) report that interventions targeting procrastination can meaningfully reduce it, and they highlight links between procrastination, self-regulation, and academic functioning. Survey research among public university students suggests that a large majority procrastinate to some degree, with poor time management and lack of planning cited as central reasons (Tadesse et al., 2022).
 
 **How this maps to Flowgram**  
-Flowgram directly targets planning and time allocation—key levers implicated in academic procrastination. By embedding decomposition, scheduling, and re-planning into the daily workflow, Flowgram aims to provide some of the self-regulatory support that successful interventions offer, but in the form of a lightweight execution assistant.
+Flowgram directly targets planning and time allocation-key levers implicated in academic procrastination. By embedding decomposition, scheduling, and re-planning into the daily workflow, Flowgram aims to provide some of the self-regulatory support that successful interventions offer, but in the form of a lightweight execution assistant.
 
 ---
 

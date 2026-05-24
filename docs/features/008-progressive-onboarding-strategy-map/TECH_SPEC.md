@@ -1,4 +1,4 @@
-# Feature Tech Spec: Progressive Onboarding Strategy Map
+﻿# Feature Tech Spec: Progressive Onboarding Strategy Map
 
 ## Status
 Complete
@@ -27,32 +27,32 @@ Final submit still calls `POST /api/generate` with the accumulated `StudentProfi
 
 ### New
 - `docs/features/008-progressive-onboarding-strategy-map/*` (this folder)
-- `components/onboarding/OnboardingShell.tsx` — split layout wrapper
-- `components/onboarding/OnboardingMapPanel.tsx` — bottom graph host
-- `components/onboarding/OnboardingInsightStrip.tsx` — AI copy + loading
+- `components/onboarding/OnboardingShell.tsx` - split layout wrapper
+- `components/onboarding/OnboardingMapPanel.tsx` - bottom graph host
+- `components/onboarding/OnboardingInsightStrip.tsx` - AI copy + loading
 - `components/onboarding/steps/StepDestination.tsx` (refactor)
 - `components/onboarding/steps/StepCourses.tsx` (rename/refactor from StepAcademic)
 - `components/onboarding/steps/StepCommitments.tsx` (refactor)
 - `components/onboarding/steps/StepConstraints.tsx` (new, split from commitments)
 - `components/onboarding/steps/StepBrainDump.tsx` (refactor)
-- `components/onboarding/ChipInput.tsx` — tag/chip list input (fixes comma/space bug)
-- `components/onboarding/onboardingMapTypes.ts` — builder state types
-- `components/onboarding/useOnboardingMap.ts` — derive layout + apply step deltas
-- `components/graph/buildOnboardingLayout.ts` — radial rings for goal / courses / commitments
-- `app/api/onboarding/insight/route.ts` — per-step insight + bottleneck preview
+- `components/onboarding/ChipInput.tsx` - tag/chip list input (fixes comma/space bug)
+- `components/onboarding/onboardingMapTypes.ts` - builder state types
+- `components/onboarding/useOnboardingMap.ts` - derive layout + apply step deltas
+- `components/graph/buildOnboardingLayout.ts` - radial rings for goal / courses / commitments
+- `app/api/onboarding/insight/route.ts` - per-step insight + bottleneck preview
 
 ### Modified
-- `components/onboarding/OnboardingForm.tsx` — orchestration, map state, per-step insight fetch
-- `components/onboarding/OnboardingProgress.tsx` — step labels tied to map phases
-- `app/onboarding/page.tsx` — full-height layout, no narrow-only column
-- `components/graph/GoalTree.tsx` — `displayMode: "onboarding" | "preview" | "full"`
-- `components/graph/useGraphScene.ts` — support onboarding node kinds + read-only interaction
-- `components/graph/graphTypes.ts` — `OnboardingNodeKind` if needed
-- `lib/validate.ts` — `OnboardingInsightRequestSchema`
-- `lib/deterministicOnboardingInsight.ts` — fallback copy
+- `components/onboarding/OnboardingForm.tsx` - orchestration, map state, per-step insight fetch
+- `components/onboarding/OnboardingProgress.tsx` - step labels tied to map phases
+- `app/onboarding/page.tsx` - full-height layout, no narrow-only column
+- `components/graph/GoalTree.tsx` - `displayMode: "onboarding" | "preview" | "full"`
+- `components/graph/useGraphScene.ts` - support onboarding node kinds + read-only interaction
+- `components/graph/graphTypes.ts` - `OnboardingNodeKind` if needed
+- `lib/validate.ts` - `OnboardingInsightRequestSchema`
+- `lib/deterministicOnboardingInsight.ts` - fallback copy
 
 ### Deprecated / shrink
-- `components/onboarding/GenerationLoading.tsx` — may become overlay on map (morph animation) instead of full-page replace
+- `components/onboarding/GenerationLoading.tsx` - may become overlay on map (morph animation) instead of full-page replace
 
 ## Components
 
@@ -103,10 +103,10 @@ export type OnboardingStepId =
 ### Layout geometry (onboarding rings)
 
 ```text
-Ring 0  radius 0     — goal (1 node)
-Ring 1  radius R1    — courses (evenly spaced angles)
-Ring 2  radius R2    — commitments (evenly spaced angles, offset angle)
-Ring 3  (post-generate only) — standard pillar layout from StrategyPlan
+Ring 0  radius 0     - goal (1 node)
+Ring 1  radius R1    - courses (evenly spaced angles)
+Ring 2  radius R2    - commitments (evenly spaced angles, offset angle)
+Ring 3  (post-generate only) - standard pillar layout from StrategyPlan
 ```
 
 Reuse constants pattern from `graphLayout.ts` (`PILLAR_RADIUS`, etc.) with onboarding-specific radii:
@@ -155,7 +155,7 @@ type OnboardingInsightResponse =
 
 **Logic**
 1. Validate with Zod.
-2. If `GROQ_API_KEY`: short prompt (max 120 tokens) — advisor tone, reference `targetGoal` and counts of courses/commitments.
+2. If `GROQ_API_KEY`: short prompt (max 120 tokens) - advisor tone, reference `targetGoal` and counts of courses/commitments.
 3. Else: `buildDeterministicOnboardingInsight(step, profile)`.
 4. Brain dump: run keyword scan (reuse `detectBottleneck` patterns from `deterministicPlan.ts`) for `bottleneckPreview`.
 
@@ -222,9 +222,9 @@ Splitting on every keystroke strips trailing commas and prevents natural typing.
 
 ### Morph to full plan (submit success)
 
-Option A (MVP): Hard swap — onboarding layout replaced by `buildGraphLayout(plan)` after redirect.
+Option A (MVP): Hard swap - onboarding layout replaced by `buildGraphLayout(plan)` after redirect.
 
-Option B (nice): 1.5s tween: course/commitment nodes fade; pillar nodes fade in at outer ring — can be post-MVP.
+Option B (nice): 1.5s tween: course/commitment nodes fade; pillar nodes fade in at outer ring - can be post-MVP.
 
 ## Validation
 
@@ -243,8 +243,8 @@ Option B (nice): 1.5s tween: course/commitment nodes fade; pillar nodes fade in 
 
 ## Testing / Verification
 
-- [ ] Type `Linear Algebra` as one course — chip shows full string with space
-- [ ] Type `Algorithms, Databases` with comma — two chips or one chip depending on chip rules (document: comma on blur adds chip)
+- [ ] Type `Linear Algebra` as one course - chip shows full string with space
+- [ ] Type `Algorithms, Databases` with comma - two chips or one chip depending on chip rules (document: comma on blur adds chip)
 - [ ] Step 1 → center node only
 - [ ] Step 2 → N course nodes
 - [ ] Step 3 → M commitment nodes, distinct styling
@@ -255,7 +255,7 @@ Option B (nice): 1.5s tween: course/commitment nodes fade; pillar nodes fade in 
 
 ## Performance
 
-- One insight API call per Continue (max 4 before submit) — acceptable.
+- One insight API call per Continue (max 4 before submit) - acceptable.
 - Map layout is O(n) on node count; typical n &lt; 20.
 - Do not call insight API on every `oninput` event.
 

@@ -1,4 +1,17 @@
-﻿import type { z } from "zod";
+﻿/**
+ * lib/strategyweb/deterministicPlan.ts
+ *
+ * Offline strategy generator. When Groq is unavailable or returns invalid
+ * JSON, the API falls back here so the demo and the onboarding flow always
+ * produce a believable plan.
+ *
+ * The generator detects a "track" (software, medicine, finance, consulting,
+ * startup, research, design, or generic) from keywords in the student's
+ * profile and assembles a templated 5-pillar plan, cut list, risks, and
+ * next-7-day actions. It is deliberately heuristic and easy to extend by
+ * adding more tracks below.
+ */
+import type { z } from "zod";
 import type { ProfileSchema } from "./validate";
 import type {
   ActionNode,

@@ -1,3 +1,10 @@
+/**
+ * Framer Motion design tokens.
+ *
+ * Keeping easing curves, durations, and stagger values centralised lets the
+ * UI feel cohesive: cards share entry timing, route lines draw at the same
+ * pace, and reveal animations don't compete with each other.
+ */
 import type { Transition, Variants } from "framer-motion";
 
 export const ease = [0.2, 0.8, 0.2, 1] as const;

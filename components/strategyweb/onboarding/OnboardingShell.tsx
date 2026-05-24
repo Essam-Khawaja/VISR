@@ -1,3 +1,17 @@
+/**
+ * components/strategyweb/onboarding/OnboardingShell.tsx
+ *
+ * Orchestrator for the multi-step onboarding flow. Owns:
+ *   - Form state and sessionStorage drafting so a refresh keeps progress.
+ *   - The live onboarding map (course/commitment ring graph) that grows
+ *     as the user fills steps.
+ *   - Per-step insight fetches against /api/strategyweb/onboarding/insight.
+ *   - Final submit to /api/strategyweb/generate, which produces the
+ *     StrategyPlan, plus persistence of the seed nodes/tasks the user
+ *     placed during onboarding.
+ *   - The transition from "live map" to "loading" to "dashboard redirect".
+ */
+
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";

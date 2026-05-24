@@ -1,3 +1,12 @@
+/**
+ * lib/flowgram/types.ts
+ *
+ * Canonical Flowgram domain types and the literal arrays the UI uses to
+ * derive options. Field names match the Postgres schema (snake_case in DB
+ * rows, kept as-is on the wire because the hackathon path doesn't go
+ * through a heavy ORM).
+ */
+
 export const EVENT_CATEGORIES = [
   "class",
   "meeting",

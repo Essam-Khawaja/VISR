@@ -1,3 +1,14 @@
+/**
+ * lib/strategyweb/validate.ts
+ *
+ * Zod schemas mirroring `types.ts`. These are the contract every API route
+ * uses to defend itself from bad input (client requests, AI output) before
+ * it touches the database or the React tree.
+ *
+ * Anything the AI produces is parsed through `StrategyPlanSchema` or
+ * `OpportunityCheckSchema`. If validation fails, the API route falls back
+ * to a deterministic generator instead of returning a 500.
+ */
 import { z } from "zod";
 
 const LocalDateSchema = z

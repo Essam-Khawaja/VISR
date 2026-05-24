@@ -5,14 +5,14 @@ import {
   getCategoryStyles,
   getCategoryIcon,
   getCategoryLabel,
-} from "@/lib/flowgram/category-colors";
+} from "@/lib/flowgram/categoryColors";
 import {
   formatTimeRange,
   formatDuration,
   getDurationMinutes,
   isCurrentEvent,
   isPastEvent,
-} from "@/lib/flowgram/timeline-utils";
+} from "@/lib/flowgram/timelineUtils";
 import {
   MapPin,
   Trash2,

@@ -1,3 +1,10 @@
+﻿/**
+ * /api/flowgram/routines
+ *
+ * CRUD for recurring routines (daily, weekly, monthly, every-N-days).
+ * PATCH supports `mark_complete` / `mark_incomplete` mode and DELETE
+ * supports a soft end via `from_date` so we don't lose history.
+ */
 import { getSupabase } from "@/lib/flowgram/supabase";
 import { NextRequest, NextResponse } from "next/server";
 

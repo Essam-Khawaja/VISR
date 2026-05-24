@@ -3,7 +3,7 @@
 import { ChecklistItem as CItem } from "@/lib/flowgram/types";
 import { Check, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
-import { getItemIcon } from "@/lib/flowgram/item-icons";
+import { getItemIcon } from "@/lib/flowgram/itemIcons";
 
 type ChecklistItemProps = {
   item: CItem;

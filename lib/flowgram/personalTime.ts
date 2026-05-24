@@ -1,6 +1,19 @@
-import { PersonalTimeBlock, TimelineEvent } from "@/lib/flowgram/types";
-import { isoDateFromDate } from "./timeline-utils";
+/**
+ * personalTime.ts
+ *
+ * Helpers for the user's personal time blocks (sleep windows, recurring
+ * focus blocks, etc.). Personal time blocks are stored in their own table
+ * separate from events. The dashboard surfaces them as "phantom" events on
+ * the timeline so they visually consume the same slots without being
+ * editable like real events.
+ */
 
+import { PersonalTimeBlock, TimelineEvent } from "@/lib/flowgram/types";
+import { isoDateFromDate } from "./timelineUtils";
+
+// Heuristic list of substrings that indicate the user is at home / remote.
+// Used by the checklist to decide whether a "before you leave" reminder is
+// relevant for a given event.
 const HOME_KEYWORDS = [
   "home",
   "house",
@@ -33,6 +46,7 @@ export function blocksForDate(
   return blocks
     .filter((b) => b.active)
     .filter((b) => {
+      // A specific date block wins over a recurring weekday rule.
       if (b.specific_date) return b.specific_date === iso;
       if (b.weekday != null) return b.weekday === weekday;
       return false;
@@ -53,6 +67,7 @@ export function blocksToPhantomEvents(
     const end = new Date(dayStart);
     end.setHours(eh, em, 0, 0);
     return {
+      // Phantom IDs are intentionally non-UUID so write paths can ignore them.
       id: `personal-${b.id}-${idx}`,
       title: b.label,
       description: null,

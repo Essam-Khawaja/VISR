@@ -1,4 +1,4 @@
-# Feature PRD: Progressive Onboarding Strategy Map
+﻿# Feature PRD: Progressive Onboarding Strategy Map
 
 ## Status
 Complete
@@ -7,13 +7,13 @@ Complete
 
 Replace the current “fill a form, then wait, then see your plan” onboarding with a **live strategy-map builder**. After each answer, the student sees the map below update: a center goal node appears first, then course nodes orbit it, then commitments (clubs, jobs, projects) form an outer ring. Short AI copy beside each step explains what VISR is inferring (“This looks like a skill-signal bottleneck”) while the graph animates in.
 
-Onboarding’s job is no longer only to collect a `StudentProfile` — it is to **assemble the student’s strategic map in front of them** so they trust the output before they reach the dashboard.
+Onboarding’s job is no longer only to collect a `StudentProfile` - it is to **assemble the student’s strategic map in front of them** so they trust the output before they reach the dashboard.
 
 ## User Problem
 
 Today onboarding feels like paperwork. The strategy map only exists after a long generate step, so the product’s hero moment is delayed. Students also hit broken list inputs (commas and spaces disappear while typing courses or commitments), which makes the flow feel buggy before they see any value.
 
-Students need to *see* their goal, classes, and commitments become a visual route as they type — the same mental model as the dashboard graph, but built step by step.
+Students need to *see* their goal, classes, and commitments become a visual route as they type - the same mental model as the dashboard graph, but built step by step.
 
 ## User Story
 
@@ -40,7 +40,7 @@ As a hackathon judge, I want onboarding to look like the product (graph-first), 
 ├─────────────────────────────────────────────────────────────┤
 │  PROMPT CARD (top ~40% viewport, scrollable if needed)       │
 │  • Question + short helper copy                             │
-│  • Input(s) — chips or plain text, fixed for spaces/commas    │
+│  • Input(s) - chips or plain text, fixed for spaces/commas    │
 │  • AI insight strip (1–2 sentences from last step response) │
 │  • Back | Continue                                          │
 ├─────────────────────────────────────────────────────────────┤
@@ -55,26 +55,26 @@ As a hackathon judge, I want onboarding to look like the product (graph-first), 
 
 | Step | User provides | Map update (immediate on Continue) | AI response (shown in insight strip + optional label on nodes) |
 |---|---|---|---|
-| **1 — Destination** | `targetGoal`, `degree`, `year`, `university` | **Center node** appears: goal label = `targetGoal`. No pillars yet. Subtle pulse on center. | “Your destination is set. Everything we add next connects back here.” |
-| **2 — Classes** | `currentCourses[]`, `workHoursPerWeek` | **Inner ring**: one node per course, curved edges to center. Nodes use academic styling (neutral/slate). Work hours shown as a small badge on the map chrome, not a node. | “These are your fixed academic load — they constrain how much else you can take on.” |
-| **3 — Commitments** | `commitments[]` | **Middle ring**: one node per commitment (club, job, project, etc.), edges to center. Distinct color from courses. | “These compete for the same hours as your goal. VISR will score them against your route.” |
-| **4 — Constraints** | `constraints[]`, optional | No new nodes required for MVP; optional **dashed ring** or small “constraint” chips on the map legend. | “We’ll respect these when recommending cuts and your next 7 days.” |
-| **5 — Brain dump** | `brainDump` | **Preview intelligence**: AI may add 1–3 faint “concern” satellite nodes OR highlight the future bottleneck pillar in red on center halo (no full pillar expansion yet). Map does not need final pillars until generate. | “Reading your mess…”, then a one-line bottleneck preview: e.g. “Likely bottleneck: no shipped project.” |
-| **6 — Build route** | Submit | Full-screen or overlay progress while `POST /api/generate` runs. Map **morphs**: course/commitment nodes fold into strategic pillars; actions appear on outer ring; alignment/bottleneck from final plan. Redirect to `/dashboard/[planId]`. | Cycling messages tied to map: “Naming bottleneck…”, “Placing pillars…”, etc. |
+| **1 - Destination** | `targetGoal`, `degree`, `year`, `university` | **Center node** appears: goal label = `targetGoal`. No pillars yet. Subtle pulse on center. | “Your destination is set. Everything we add next connects back here.” |
+| **2 - Classes** | `currentCourses[]`, `workHoursPerWeek` | **Inner ring**: one node per course, curved edges to center. Nodes use academic styling (neutral/slate). Work hours shown as a small badge on the map chrome, not a node. | “These are your fixed academic load - they constrain how much else you can take on.” |
+| **3 - Commitments** | `commitments[]` | **Middle ring**: one node per commitment (club, job, project, etc.), edges to center. Distinct color from courses. | “These compete for the same hours as your goal. VISR will score them against your route.” |
+| **4 - Constraints** | `constraints[]`, optional | No new nodes required for MVP; optional **dashed ring** or small “constraint” chips on the map legend. | “We’ll respect these when recommending cuts and your next 7 days.” |
+| **5 - Brain dump** | `brainDump` | **Preview intelligence**: AI may add 1–3 faint “concern” satellite nodes OR highlight the future bottleneck pillar in red on center halo (no full pillar expansion yet). Map does not need final pillars until generate. | “Reading your mess…”, then a one-line bottleneck preview: e.g. “Likely bottleneck: no shipped project.” |
+| **6 - Build route** | Submit | Full-screen or overlay progress while `POST /api/generate` runs. Map **morphs**: course/commitment nodes fold into strategic pillars; actions appear on outer ring; alignment/bottleneck from final plan. Redirect to `/dashboard/[planId]`. | Cycling messages tied to map: “Naming bottleneck…”, “Placing pillars…”, etc. |
 
 ### Progressive graph mental model
 
 ```text
         [ Club B ]     [ Club A ]
               \         /
-    [ Course 2 ] — [ GOAL ] — [ Course 1 ]
+    [ Course 2 ] - [ GOAL ] - [ Course 1 ]
               /         \
         [ Job ]          [ Side project ]
 ```
 
 - **Center** = destination (always present after step 1).
-- **Ring 1 (inner)** = courses — “what the university assigns you.”
-- **Ring 2 (middle)** = commitments — “what you chose to add.”
+- **Ring 1 (inner)** = courses - “what the university assigns you.”
+- **Ring 2 (middle)** = commitments - “what you chose to add.”
 - **Ring 3 (outer, post-generate only)** = strategic pillars + actions (dashboard graph).
 
 The student should describe this as: *“I set my goal in the middle, hung my classes on it, then my clubs around that.”*
@@ -125,7 +125,7 @@ The student should describe this as: *“I set my goal in the middle, hung my cl
 - Full pillar/action editing during onboarding (deferred to dashboard click-to-expand).
 - Opportunity checker during onboarding.
 - Auth / accounts.
-- Real-time map updates on every keystroke (only on **Continue** for MVP — avoids API spam).
+- Real-time map updates on every keystroke (only on **Continue** for MVP - avoids API spam).
 - Replacing final `StrategyPlan` schema with a permanently different graph model (onboarding graph is a **phase**, then converts to standard plan).
 - Transcript upload or course catalog autocomplete.
 
@@ -136,9 +136,9 @@ Match light command-center theme ([004-dashboard-command-center](../004-dashboar
 
 ### Copy tone
 Sharp advisor, same as global PRD. Examples:
-- Step 1: “What are you actually trying to achieve this semester? Be specific — we’ll put it at the center of your map.”
+- Step 1: “What are you actually trying to achieve this semester? Be specific - we’ll put it at the center of your map.”
 - Step 2: “What classes are you in? Each one becomes a node tied to your goal.”
-- Step 3: “What else is on your plate? Clubs, jobs, projects — each one gets a node.”
+- Step 3: “What else is on your plate? Clubs, jobs, projects - each one gets a node.”
 
 ### Empty / error states
 | State | Behavior |
@@ -163,7 +163,7 @@ This feature is complete when:
 - [ ] After step 3, commitment nodes appear on a middle ring connected to the goal.
 - [ ] After each continue, an AI insight sentence appears (Groq or fallback).
 - [ ] Submit produces a full plan and lands on the dashboard with a graph that feels like the same map “leveled up.”
-- [ ] Hackathon demo: judge sees the map grow three times before the final generate — under 90 seconds.
+- [ ] Hackathon demo: judge sees the map grow three times before the final generate - under 90 seconds.
 
 ## Open Questions (resolve in DECISIONS before build)
 

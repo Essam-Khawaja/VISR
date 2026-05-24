@@ -1,3 +1,9 @@
+﻿/**
+ * /api/flowgram/items
+ *
+ * The catalog of packing items (`Laptop`, `Water bottle`, ...). POST
+ * dedupes by case-insensitive name so the catalog stays clean.
+ */
 import { getSupabase } from "@/lib/flowgram/supabase";
 import { NextRequest, NextResponse } from "next/server";
 

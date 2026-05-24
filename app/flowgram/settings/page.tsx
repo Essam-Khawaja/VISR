@@ -1,3 +1,11 @@
+/**
+ * app/flowgram/settings/page.tsx
+ *
+ * Stack of four self-contained managers (city, saved locations, personal
+ * time blocks, category defaults). Each manager owns its own fetches so
+ * this shell stays trivial.
+ */
+
 import SettingsForm from "@/components/flowgram/settings/SettingsForm";
 import SavedLocationsManager from "@/components/flowgram/settings/SavedLocationsManager";
 import DefaultsManager from "@/components/flowgram/settings/DefaultsManager";

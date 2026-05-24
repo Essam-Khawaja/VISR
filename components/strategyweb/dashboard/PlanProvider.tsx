@@ -1,3 +1,18 @@
+/**
+ * components/strategyweb/dashboard/PlanProvider.tsx
+ *
+ * React context that loads and exposes the active StrategyPlan, its
+ * StrategyNodes, and its StrategyTasks to the dashboard, opportunity
+ * page, and Kanban drilldown. Also owns the demo / non-demo branching:
+ * for the canonical demo id we serve the static fixture instantly; for
+ * any other plan id we read localStorage first and merge Supabase next.
+ *
+ * Mutations (action state changes, opportunity application, task
+ * additions, node updates) flow back through `planStore`, `nodeStore`,
+ * and `taskStore` so localStorage stays the source of truth and Supabase
+ * receives best-effort writes.
+ */
+
 "use client";
 
 import {

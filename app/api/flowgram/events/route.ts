@@ -1,3 +1,15 @@
+/**
+ * /api/flowgram/events
+ *
+ * CRUD for the Flowgram `events` table.
+ *   GET   : List events for a date or date range. Day bounds respect the
+ *           user's saved IANA timezone so cross-midnight events still show
+ *           up on the right day.
+ *   POST  : Create an event.
+ *   PATCH : Field-whitelisted update.
+ *   DELETE: Remove an event.
+ */
+
 import { getSupabase } from "@/lib/flowgram/supabase";
 import { NextRequest, NextResponse } from "next/server";
 

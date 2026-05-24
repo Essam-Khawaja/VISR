@@ -1,3 +1,11 @@
+﻿/**
+ * /api/flowgram/weather
+ *
+ * OpenWeather proxy. Returns either the current conditions (today, with
+ * a few hours of POP/precipitation peek) or a forecast slice for a future
+ * date. Any past date returns 404 because OpenWeather's free tier does not
+ * provide historical data.
+ */
 import { NextRequest, NextResponse } from "next/server";
 import { WeatherData } from "@/lib/flowgram/types";
 

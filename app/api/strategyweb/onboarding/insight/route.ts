@@ -1,3 +1,12 @@
+/**
+ * POST /api/strategyweb/onboarding/insight
+ *
+ * Returns the per-step coaching insight that appears on the onboarding map.
+ * Groq is queried for one or two sentences plus an optional bottleneck
+ * preview and a few concern labels for the brain-dump step. A deterministic
+ * fallback is always available so the strip never goes blank.
+ */
+
 import { NextResponse } from "next/server";
 import { callGroqJson } from "@/lib/strategyweb/groq";
 import { buildDeterministicOnboardingInsight } from "@/lib/strategyweb/deterministicOnboardingInsight";

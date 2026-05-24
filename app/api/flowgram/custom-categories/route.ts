@@ -1,3 +1,10 @@
+﻿/**
+ * /api/flowgram/custom-categories
+ *
+ * User-defined event categories. Useful when the built-in 13 categories
+ * (class, club, transit, ...) don't cover something specific. POST
+ * slugifies the human label into a stable `name` for joins.
+ */
 import { getSupabase } from "@/lib/flowgram/supabase";
 import { NextRequest, NextResponse } from "next/server";
 

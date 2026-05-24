@@ -1,4 +1,14 @@
-﻿import type { OnboardingStepId } from "@/components/strategyweb/onboarding/onboardingMapTypes";
+﻿/**
+ * lib/strategyweb/deterministicOnboardingInsight.ts
+ *
+ * Per-step insight strings used when Groq is unavailable. Each onboarding
+ * step has a narrow, hand-tuned response that references the student's
+ * inputs (goal, courses, brain dump) so the strip never feels generic.
+ * For the brain-dump step, simple keyword matching extracts a likely
+ * bottleneck (no shipped project, low GPA, scattered effort, etc.).
+ */
+
+import type { OnboardingStepId } from "@/components/strategyweb/onboarding/onboardingMapTypes";
 
 type InsightProfile = {
   targetGoal?: string;

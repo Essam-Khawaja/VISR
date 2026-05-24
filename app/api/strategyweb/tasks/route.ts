@@ -1,3 +1,14 @@
+/**
+ * /api/strategyweb/tasks
+ *
+ *   GET  : List strategy tasks for a plan, optionally filtered by date,
+ *          date range, parent node, or parent task. Used by the dashboard
+ *          and the day/week Flowgram views.
+ *   POST : Create a new strategy task. The task is the unit of execution
+ *          that connects strategic pillars to dated work that shows up on
+ *          the Flowgram timeline.
+ */
+
 import { NextResponse } from "next/server";
 import {
   createSupabaseAnonClient,

@@ -1,6 +1,13 @@
+﻿/**
+ * /api/flowgram/free-time
+ *
+ * Returns the gaps between events for a given date, treating personal
+ * time blocks as occupied. Powers the FreeTimeFinder and the end-of-day
+ * reschedule flow.
+ */
 import { getSupabase } from "@/lib/flowgram/supabase";
 import { NextRequest, NextResponse } from "next/server";
-import { findFreeSlots } from "@/lib/flowgram/timeline-utils";
+import { findFreeSlots } from "@/lib/flowgram/timelineUtils";
 import { TimelineEvent, PersonalTimeBlock } from "@/lib/flowgram/types";
 
 export async function GET(request: NextRequest) {

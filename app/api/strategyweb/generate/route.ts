@@ -1,3 +1,22 @@
+/**
+ * POST /api/strategyweb/generate
+ *
+ * Generates a personalised StrategyPlan from an onboarding profile.
+ *
+ * Flow:
+ *   1. Validate the request body with `GenerateRequestWithSeedsSchema`.
+ *   2. Call Groq with a strict JSON-only prompt and a fast model.
+ *   3. Parse + Zod-validate the response.
+ *   4. If anything in step 2 or 3 fails (no API key, timeout, bad JSON, schema
+ *      mismatch), fall back to `buildDeterministicPlan` so the demo never
+ *      breaks in front of judges.
+ *   5. Best-effort persist to Supabase (profile, plan, seed nodes, tasks).
+ *      Failures here are logged but never surface as a 500: the client also
+ *      writes to localStorage and merges on next read.
+ *
+ * Returns the plan plus seed nodes/tasks re-IDed to the new plan ID.
+ */
+
 import { NextResponse } from "next/server";
 import { callGroqJson } from "@/lib/strategyweb/groq";
 import { buildDeterministicPlan } from "@/lib/strategyweb/deterministicPlan";

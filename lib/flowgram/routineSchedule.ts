@@ -1,5 +1,15 @@
+/**
+ * routineSchedule.ts
+ *
+ * Schedule math for recurring routines (daily, weekly, monthly, every-N-days).
+ * Routines are intentionally a separate concept from events: they are
+ * "habits" that the dashboard reminds the user of but does not place on the
+ * timeline. The helpers below decide whether a routine fires on a given
+ * date and what completion status to render.
+ */
+
 import { Routine } from "@/lib/flowgram/types";
-import { isSameDay } from "./timeline-utils";
+import { isSameDay } from "./timelineUtils";
 
 export function routineIntervalDays(routine: Routine): number {
   switch (routine.frequency) {
@@ -14,6 +24,7 @@ export function routineIntervalDays(routine: Routine): number {
   }
 }
 
+// Strip time-of-day so day comparisons are stable across DST boundaries.
 function midnight(d: Date): Date {
   const x = new Date(d);
   x.setHours(0, 0, 0, 0);
@@ -26,6 +37,9 @@ function diffInDays(a: Date, b: Date): number {
   );
 }
 
+// Resolve the anchor date a recurring routine cycles from. We prefer the
+// explicit next_due, then derive from last_completed, and finally fall back
+// to today.
 function anchorDate(routine: Routine): Date {
   if (routine.next_due) return midnight(new Date(routine.next_due));
   if (routine.last_completed) {
@@ -43,6 +57,7 @@ export function isRoutineScheduledOnDate(
   if (!routine.active) return false;
 
   if (routine.ends_on) {
+    // The +T12:00:00 avoids local-midnight rollback when ends_on is parsed.
     const endsOn = midnight(new Date(`${routine.ends_on}T12:00:00`));
     if (midnight(date).getTime() > endsOn.getTime()) return false;
   }
@@ -94,4 +109,3 @@ export function routineStatusForDate(
   }
   return "past";
 }
-

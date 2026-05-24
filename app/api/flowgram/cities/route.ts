@@ -1,3 +1,9 @@
+﻿/**
+ * /api/flowgram/cities
+ *
+ * Nominatim (OpenStreetMap) proxy used by the city autocomplete in
+ * Settings. Keeps the User-Agent and rate limits server-side.
+ */
 import { NextRequest, NextResponse } from "next/server";
 import { CityResult } from "@/lib/flowgram/types";
 

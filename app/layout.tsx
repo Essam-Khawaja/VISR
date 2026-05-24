@@ -1,4 +1,17 @@
-﻿import type { Metadata, Viewport } from "next";
+﻿/**
+ * app/layout.tsx
+ *
+ * The HTML root for every page. Loads the local Plus Jakarta Sans (sans)
+ * and Fraunces (display) fonts as CSS variables, applies the global
+ * stylesheet, and mounts the LiquidCursor ambient effect that runs on the
+ * landing, Flowgram, and Strategy Web surfaces.
+ *
+ * Sub-route layouts (`app/flowgram/layout.tsx`,
+ * `app/strategyweb/layout.tsx`) add the shared sidebar shell on top of
+ * this root. The landing page deliberately renders without the sidebar.
+ */
+
+import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
 import "@/styles/globals.css";
 import { LiquidCursor } from "@/components/shared/LiquidCursor";
@@ -73,7 +86,7 @@ const display = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "VISR — Visual Intelligence for Student Roadmapping",
+  title: "VISR - Visual Intelligence for Student Roadmapping",
   description:
     "VISR (Visual Intelligence for Student Roadmapping) connects your strategy map to day and week execution, so goals, cuts, and dated tasks stay in sync.",
 };

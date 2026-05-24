@@ -1,3 +1,18 @@
+/**
+ * lib/strategyweb/taskStore.ts
+ *
+ * The spine that connects strategy to daily execution. Strategy tasks are
+ * dated work items materialised from `nextSevenDays` and from manual
+ * additions on the Kanban board. They get persisted to Supabase when
+ * available, mirrored to localStorage, and surfaced on both the dashboard
+ * (semester progress, next 7 days) and the Flowgram day/week views.
+ *
+ * The helpers here cover:
+ *   - CRUD for tasks (create/update/delete) with localStorage merge.
+ *   - Date math (`todayLocalDate`, `addLocalDays`, `tasksForDate`).
+ *   - `materializeStrategyTasks(plan)` which seeds tasks from the AI plan.
+ *   - `computeSemesterProgress` and `computeNodeRollup` for the dashboard.
+ */
 import { createSupabaseAnonClient } from "@/lib/shared/supabase";
 import type {
   ActionItem,

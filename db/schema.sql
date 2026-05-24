@@ -1,5 +1,5 @@
--- =============================================================
--- VISR — Visual Intelligence for Student Roadmapping
+﻿-- =============================================================
+-- VISR - Visual Intelligence for Student Roadmapping
 -- Consolidated Supabase schema (May 2026)
 -- -------------------------------------------------------------
 -- Idempotent: safe to run on a fresh DB or an existing one.

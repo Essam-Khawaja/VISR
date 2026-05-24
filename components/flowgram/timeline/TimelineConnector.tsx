@@ -1,7 +1,7 @@
 "use client";
 
 import { ChevronDown } from "lucide-react";
-import { formatDuration } from "@/lib/flowgram/timeline-utils";
+import { formatDuration } from "@/lib/flowgram/timelineUtils";
 
 type TimelineConnectorProps = {
   gapMinutes?: number;

@@ -11,7 +11,7 @@ import {
   getDurationMinutes,
   isCurrentEvent,
   isPastEvent,
-} from "@/lib/flowgram/timeline-utils";
+} from "@/lib/flowgram/timelineUtils";
 import TimelineEventCard from "./TimelineEvent";
 import TimelineConnector from "./TimelineConnector";
 import CurrentTimeMarker from "./CurrentTimeMarker";

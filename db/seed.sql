@@ -1,5 +1,5 @@
--- =============================================================
--- VISR — Showcase Seed
+﻿-- =============================================================
+-- VISR - Showcase Seed
 -- -------------------------------------------------------------
 -- Safe to run on an EMPTY database or a populated one.
 -- Wipes app data tables (TRUNCATE ... CASCADE) and repopulates

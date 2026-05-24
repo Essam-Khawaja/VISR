@@ -5,7 +5,7 @@ import {
   addDays,
   isoDateFromDate,
   isSameDay,
-} from "@/lib/flowgram/timeline-utils";
+} from "@/lib/flowgram/timelineUtils";
 
 type DayNavigatorProps = {
   selectedDate: string;

@@ -9,8 +9,8 @@ import {
   EventItem,
   Item,
 } from "@/lib/flowgram/types";
-import { addDays, isoDateFromDate, isSameDay } from "@/lib/flowgram/timeline-utils";
-import { isRoutineScheduledOnDate } from "@/lib/flowgram/routine-schedule";
+import { addDays, isoDateFromDate, isSameDay } from "@/lib/flowgram/timelineUtils";
+import { isRoutineScheduledOnDate } from "@/lib/flowgram/routineSchedule";
 import { LineChart, Loader2 } from "lucide-react";
 
 type WeekChartProps = {

@@ -4,7 +4,7 @@ import { ChecklistItem, ManualChecklistItem } from "@/lib/flowgram/types";
 import ChecklistItemRow from "./ChecklistItem";
 import { Backpack, Plus, X } from "lucide-react";
 import { useState } from "react";
-import { todayISODate } from "@/lib/flowgram/timeline-utils";
+import { todayISODate } from "@/lib/flowgram/timelineUtils";
 
 type BeforeYouLeaveProps = {
   items: ChecklistItem[];

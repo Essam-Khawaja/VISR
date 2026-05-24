@@ -1,3 +1,9 @@
+﻿/**
+ * /api/flowgram/saved-locations
+ *
+ * CRUD for the user's saved places (home, gym, campus, etc.). Locations
+ * carry a transit estimate that the dashboard uses for auto-transit blocks.
+ */
 import { getSupabase } from "@/lib/flowgram/supabase";
 import { NextRequest, NextResponse } from "next/server";
 

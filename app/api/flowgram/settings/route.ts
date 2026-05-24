@@ -1,3 +1,10 @@
+﻿/**
+ * /api/flowgram/settings
+ *
+ * Read or upsert the singleton `user_settings` row (city, country,
+ * timezone, wake/sleep windows). The MVP is single-user so the row is
+ * pinned to the first record.
+ */
 import { getSupabase } from "@/lib/flowgram/supabase";
 import { NextRequest, NextResponse } from "next/server";
 

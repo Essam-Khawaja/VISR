@@ -1,3 +1,12 @@
+/**
+ * timelineUtils.ts
+ *
+ * Pure date / time / event helpers shared by the day, week, and free-time
+ * surfaces. Everything here is timezone-naive in the sense that it operates
+ * on local Date objects and ISO strings without doing IANA conversions; the
+ * server side day-bounding (see app/api/flowgram/events) handles that.
+ */
+
 import { TimelineEvent, FreeSlot } from "@/lib/flowgram/types";
 
 export function sortEventsByTime(events: TimelineEvent[]): TimelineEvent[] {
@@ -7,6 +16,9 @@ export function sortEventsByTime(events: TimelineEvent[]): TimelineEvent[] {
   );
 }
 
+// Walk the day in order and produce gaps between events that are at least
+// `minMinutes` long. This is the single canonical free-slot algorithm and is
+// reused by the API route, the FreeTimeFinder, and the end-of-day reschedule.
 export function findFreeSlots(
   events: TimelineEvent[],
   dayStart: Date,
@@ -33,6 +45,7 @@ export function findFreeSlots(
       }
     }
 
+    // Overlapping events should not collapse the cursor backwards.
     cursor = Math.max(cursor, eventEnd);
   }
 
@@ -78,6 +91,7 @@ export function formatDateLong(isoString: string): string {
   });
 }
 
+// Returns a friendly greeting string suitable for the day-view hero band.
 export function getGreeting(): string {
   const hour = new Date().getHours();
   if (hour < 5) return "It's late";
@@ -133,6 +147,7 @@ export function isPastEvent(event: TimelineEvent): boolean {
   return new Date(event.end_time).getTime() < Date.now();
 }
 
+// Convert an ISO datetime to the value shape expected by <input type="datetime-local">.
 export function toLocalDateTimeInput(iso: string): string {
   const d = new Date(iso);
   const pad = (n: number) => n.toString().padStart(2, "0");
@@ -143,6 +158,8 @@ export function fromLocalDateTimeInput(value: string): string {
   return new Date(value).toISOString();
 }
 
+// YYYY-MM-DD in local time. Used everywhere the URL or DB stores dates as
+// plain calendar days (settings, manual checklist, week navigation, etc.).
 export function todayISODate(): string {
   const d = new Date();
   const pad = (n: number) => n.toString().padStart(2, "0");
@@ -168,6 +185,8 @@ export function isSameDay(a: Date, b: Date): boolean {
   );
 }
 
+// Surface a five-hour-plus run of focused events with no real break, so the
+// dashboard can suggest the user take one.
 export function detectLongStretchWithoutBreak(
   events: TimelineEvent[]
 ): { start: string; end: string; minutes: number } | null {
@@ -218,6 +237,8 @@ export function detectLongStretchWithoutBreak(
   return null;
 }
 
+// Coarse, human-readable sense of how heavy the day is. Tuned for the
+// dashboard hero strip and not for any kind of analytic precision.
 export function dayIntensity(events: TimelineEvent[]): "calm" | "moderate" | "intense" {
   const highPriority = events.filter(
     (e) => e.category === "assignment" || e.category === "meeting"

@@ -1,3 +1,9 @@
+﻿/**
+ * /api/flowgram/category-defaults
+ *
+ * Default packing items per event category, with a join into `items` so
+ * the checklist can show icons and labels without a second round trip.
+ */
 import { getSupabase } from "@/lib/flowgram/supabase";
 import { NextRequest, NextResponse } from "next/server";
 

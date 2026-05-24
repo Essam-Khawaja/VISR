@@ -7,7 +7,7 @@ import {
   formatDuration,
   formatDateLong,
   todayISODate,
-} from "@/lib/flowgram/timeline-utils";
+} from "@/lib/flowgram/timelineUtils";
 import { Search, X, Loader2, Sparkles, CalendarPlus } from "lucide-react";
 import DatePicker from "@/components/flowgram/ui/DatePicker";
 

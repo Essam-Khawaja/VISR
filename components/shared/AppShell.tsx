@@ -1,3 +1,11 @@
+/**
+ * components/shared/AppShell.tsx
+ *
+ * Two-column layout used by the Flowgram and Strategy Web route segments.
+ * The landing page (/) and the 404 page render full-bleed, so they
+ * deliberately do not use this shell.
+ */
+
 import { Sidebar } from "./Sidebar";
 
 type Props = {

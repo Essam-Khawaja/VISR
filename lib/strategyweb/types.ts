@@ -1,3 +1,20 @@
+/**
+ * lib/strategyweb/types.ts
+ *
+ * Canonical Strategy Web domain types. Every layer (Zod validators, AI
+ * prompts, Supabase mappers, React components) keeps the same field names
+ * so a feature change is a one-file refactor, not a cross-module hunt.
+ *
+ * Highlights:
+ *   - StudentProfile     : raw onboarding inputs.
+ *   - StrategyPlan       : the AI/deterministic output rendered on the
+ *                          dashboard (destination, pillars, cuts, risks).
+ *   - StrategyNode       : a node in the goal graph (university, year,
+ *                          semester, course, commitment, etc.).
+ *   - StrategyTask       : an action item with a due date that the
+ *                          Flowgram day/week views surface.
+ *   - OpportunityCheck   : structured "should I take this on?" output.
+ */
 export type StudentProfile = {
   id: string;
   university: string;

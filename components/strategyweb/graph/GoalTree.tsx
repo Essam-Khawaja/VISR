@@ -1,3 +1,16 @@
+/**
+ * components/strategyweb/graph/GoalTree.tsx
+ *
+ * The Three.js Strategy Map. The same component is used in three modes:
+ *   - "onboarding" : minimal radial preview that grows as the user types.
+ *   - "preview"    : compact card on the dashboard.
+ *   - "full"       : full-screen Explore Map with HUD and intelligence dock.
+ *
+ * Layout, node meshes, edges, and animations live in sibling files so
+ * this file stays focused on data wiring, hover/select state, and the
+ * popover/dialog overlays.
+ */
+
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";

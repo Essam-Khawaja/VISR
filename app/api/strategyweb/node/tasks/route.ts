@@ -1,3 +1,13 @@
+/**
+ * POST /api/strategyweb/node/tasks
+ *
+ * Generates 3 to 6 actionable tasks for a single graph node (e.g. "GitHub
+ * portfolio" inside the Skill Signal pillar). Used by the Kanban dialog so
+ * the student can ask the AI to break a node down into next moves without
+ * leaving the dashboard. Falls back to a templated triplet when Groq is
+ * unavailable.
+ */
+
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { callGroqJson } from "@/lib/strategyweb/groq";

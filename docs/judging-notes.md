@@ -1,12 +1,18 @@
-# Judging Notes
+﻿# Judging Notes - VISR
 
-## Quick Summary
+> **Product name:** VISR (Visual Intelligence for Student Roadmapping). Repo folder is `Pathwise/`; both names refer to the same MVP.
 
-Pathwise is a strategy dashboard for overwhelmed university students. It takes a messy student situation, names the single biggest bottleneck, builds a visual Strategy Map, recommends what to cut or defer, generates a 7-day action route, and evaluates new opportunities against the student's current strategy.
+## TL;DR for the grading model
 
-The personal pain point is concrete. Students are not just struggling to plan. They are juggling courses, clubs, internships, projects, networking, and outside advice while trying to figure out which actions actually move them toward their goal. Most productivity tools assume the student already knows what matters. Pathwise is built for the moment before that, when the student knows the goal but cannot tell which commitments are pulling them forward and which are just noise.
+VISR is a strategy dashboard for overwhelmed university students. Three things make it different from any planner, AI chatbot, or Notion template you have seen:
 
-The repo includes a working demo plan (a second-year CS student aiming for a software engineering internship) so judges can see the full loop end to end without onboarding.
+1. **It starts at "what should you stop doing?"** Every plan ships with a `cutList` of explicit Cut / Defer / Keep / Double Down decisions, with reasons tied back to a single named bottleneck. The product is willing to say no.
+2. **The strategy is a 3D map, not a list.** The destination sits at the centre, five strategic pillars orbit it, and action nodes cluster around each pillar. Status colours make the bottleneck visually loud the moment the page loads.
+3. **Strategy lands on the calendar.** Pillar actions materialise into dated `StrategyTask` rows that the day view (`/flowgram`) and week view (`/flowgram/week`) render alongside calendar events. There is one workspace, not two.
+
+The repo ships a working demo plan (a second-year CS student aiming for a software engineering internship) plus an opportunity check ("Should I join the robotics club?") so judges can see the full loop end to end without configuring a single environment variable.
+
+**One-line pitch:** _You say the what. VISR tells you the how, and what to drop._
 
 ---
 
@@ -14,13 +20,13 @@ The repo includes a working demo plan (a second-year CS student aiming for a sof
 
 ### Innovation & Originality (25%)
 
-Pathwise is meaningfully different from a planner, task app, AI chatbot, or Notion dashboard:
+VISR is meaningfully different from a planner, task app, AI chatbot, or Notion dashboard:
 
-- **Strategy first, tasks second.** Most productivity tools start at "what tasks do you have?" Pathwise starts at "what are you trying to achieve, what is blocking you, and what should you cut?" Tasks are derived from that strategy, not the other way around.
-- **The Strategy Map (`components/2/graph/GoalTree.tsx`).** A three.js scene that renders the student's destination at the center, surrounded by 3 to 5 strategic pillars and their action nodes. Pillar status (Strong, Okay, Weak, Missing) and action status (On Track, Behind, At Risk, Deferred, Cut) are visible at a glance, so the bottleneck is something a student sees, not something they read.
-- **Opportunity Validation (`/2/opportunity/[planId]`).** A new commitment is scored against the student's current plan. The output is not vibes; it is a structured `OpportunityCheck` with `fitScore`, recommendation (`Say Yes` / `Say Yes With Conditions` / `Defer` / `Say No`), `whyItFits`, `tradeoffs`, `conditions`, and explicit `cutsRequired`. The student sees what they would have to give up to take it.
+- **Strategy first, tasks second.** Most productivity tools start at "what tasks do you have?" VISR starts at "what are you trying to achieve, what is blocking you, and what should you cut?" Tasks are derived from that strategy, not the other way around.
+- **The Strategy Map (`components/strategyweb/graph/GoalTree.tsx`).** A three.js scene that renders the student's destination at the center, surrounded by 3 to 5 strategic pillars and their action nodes. Pillar status (Strong, Okay, Weak, Missing) and action status (On Track, Behind, At Risk, Deferred, Cut) are visible at a glance, so the bottleneck is something a student sees, not something they read.
+- **Opportunity Validation (`/strategyweb/opportunity/[planId]`).** A new commitment is scored against the student's current plan. The output is not vibes; it is a structured `OpportunityCheck` with `fitScore`, recommendation (`Say Yes` / `Say Yes With Conditions` / `Defer` / `Say No`), `whyItFits`, `tradeoffs`, `conditions`, and explicit `cutsRequired`. The student sees what they would have to give up to take it.
 - **Cut list as a first-class surface.** Every plan ships with a `cutList` of 4 to 6 items tagged `Cut`, `Defer`, `Keep`, or `Double Down`. The product treats subtraction as part of strategy, not an afterthought.
-- **Strategy → daily handoff (`Flowgram`).** Strategy tasks materialized from pillar actions show up on the day view (`/1`) and week view (`/1/week`) with priority and due date. The work generated by strategy planning lands in the same surface a student already uses for their day.
+- **Strategy → daily handoff (`Flowgram`).** Strategy tasks materialized from pillar actions show up on the day view (`/flowgram`) and week view (`/flowgram/week`) with priority and due date. The work generated by strategy planning lands in the same surface a student already uses for their day.
 
 The combination matters. Strategy mapping, tradeoff analysis, opportunity filtering, and execution handoff are all in one product, not three.
 
@@ -28,14 +34,14 @@ The combination matters. Strategy mapping, tradeoff analysis, opportunity filter
 
 Stack and architecture (verified from the repo, not aspirational):
 
-- **Framework:** Next.js 14 (App Router) with React 18 and TypeScript 5. Two parallel route trees, `app/1/*` for the daily/weekly planner ("Flowgram", internally `StraighterNoodles`) and `app/2/*` for the strategy product (onboarding, dashboard, pillar drilldown, opportunity check).
-- **AI layer:** A small, dependency-free Groq wrapper at `lib/2/groq.ts` (default model `llama-3.3-70b-versatile`) with `response_format: json_object`, an 18s timeout, and a try/catch that returns `null` on any failure. Used by `/api/2/generate` (strategy plan) and `/api/2/opportunity` (opportunity check). The wrapper also strips stray markdown fences before parsing.
-- **Validated AI output.** Every AI response is JSON-parsed and run through Zod schemas (`StrategyPlanSchema`, `OpportunityCheckSchema`, `lib/2/validate.ts`). On parse or schema failure, the route falls back to a deterministic generator (`lib/2/deterministicPlan.ts`, `lib/2/deterministicOpportunity.ts`) that uses keyword-based track detection (software, medicine, finance, consulting, startup, research, design) to produce a plausible plan. This means the demo never breaks during judging, even with no API key.
+- **Framework:** Next.js 14 (App Router) with React 18 and TypeScript 5. Two parallel route trees, `app/flowgram/*` for the daily/weekly planner and `app/strategyweb/*` for the strategy product (onboarding, dashboard, pillar drilldown, opportunity check).
+- **AI layer:** A small, dependency-free Groq wrapper at `lib/strategyweb/groq.ts` (default model `llama-3.3-70b-versatile`) with `response_format: json_object`, an 18s timeout, and a try/catch that returns `null` on any failure. Used by `/api/strategyweb/generate` (strategy plan) and `/api/strategyweb/opportunity` (opportunity check). The wrapper also strips stray markdown fences before parsing.
+- **Validated AI output.** Every AI response is JSON-parsed and run through Zod schemas (`StrategyPlanSchema`, `OpportunityCheckSchema`, `lib/strategyweb/validate.ts`). On parse or schema failure, the route falls back to a deterministic generator (`lib/strategyweb/deterministicPlan.ts`, `lib/strategyweb/deterministicOpportunity.ts`) that uses keyword-based track detection (software, medicine, finance, consulting, startup, research, design) to produce a plausible plan. This means the demo never breaks during judging, even with no API key.
 - **Data model and persistence.** Postgres schema in `db/schema.sql` with `student_profiles`, `strategy_plans`, `strategy_nodes`, `strategy_tasks`, and `opportunity_checks` (JSONB for the plan blob plus normalized tables for nodes and dated tasks). Service-role and anon Supabase clients in `lib/shared/supabase.ts`. The full schema is idempotent and runnable with `scripts/db_setup.py`. The whole app degrades gracefully to `localStorage` if no Supabase env is set, which is what the demo plan relies on.
-- **Strategy/daily integration via `taskStore`.** `lib/2/taskStore.ts` materializes pillar actions into dated `StrategyTask` rows, merges localStorage and Supabase results, and exposes helpers (`tasksForDate`, `tasksDueNextDays`, `computeSemesterProgress`, `computeNodeRollup`) that both the dashboard and the day/week views consume. This is the spine that connects the two perspectives.
-- **Visualization implementation.** `components/2/graph/useGraphScene.ts` is a self-contained three.js scene with a layered layout (`graphLayout.ts`, `universityGraphLayout.ts`), node mesh creation, edge rendering, glow textures, hover state, and selection handling. The same scene is used in three modes: `onboarding` (live preview), `preview` (dashboard card), and `full` (Explore Map).
-- **Reusable UI primitives.** `Button`, `Card`, `Badge`, `NumberDial`, `Skeleton`, `Stamp`, `Reticle`, `RouteLine`, `Grain`, `ScanLine` (`components/2/ui/*`, `components/2/signature/*`). Custom local fonts (Plus Jakarta Sans, Fraunces) and a pastel design system in `tailwind.config.ts`.
-- **Practical demo posture.** A static demo plan (`lib/2/fixture.ts`) is wired through the same components as the AI-generated path, so the dashboard, opportunity checker, and graph all render the same data shape regardless of whether the plan came from Groq or the fixture.
+- **Strategy/daily integration via `taskStore`.** `lib/strategyweb/taskStore.ts` materializes pillar actions into dated `StrategyTask` rows, merges localStorage and Supabase results, and exposes helpers (`tasksForDate`, `tasksDueNextDays`, `computeSemesterProgress`, `computeNodeRollup`) that both the dashboard and the day/week views consume. This is the spine that connects the two perspectives.
+- **Visualization implementation.** `components/strategyweb/graph/useGraphScene.ts` is a self-contained three.js scene with a layered layout (`graphLayout.ts`, `universityGraphLayout.ts`), node mesh creation, edge rendering, glow textures, hover state, and selection handling. The same scene is used in three modes: `onboarding` (live preview), `preview` (dashboard card), and `full` (Explore Map).
+- **Reusable UI primitives.** `Button`, `Card`, `Badge`, `NumberDial`, `Skeleton`, `Stamp`, `Reticle`, `RouteLine`, `Grain`, `ScanLine` (`components/strategyweb/ui/*`, `components/strategyweb/signature/*`). Custom local fonts (Plus Jakarta Sans, Fraunces) and a pastel design system in `tailwind.config.ts`.
+- **Practical demo posture.** A static demo plan (`lib/strategyweb/fixture.ts`) is wired through the same components as the AI-generated path, so the dashboard, opportunity checker, and graph all render the same data shape regardless of whether the plan came from Groq or the fixture.
 
 The strength of the implementation is that the AI output, the schema, the data model, and the UI all share a single TypeScript type (`StrategyPlan`, `OpportunityCheck`, `StrategyTask`). Adding a feature usually means extending one schema and one component, not rewriting plumbing.
 
@@ -45,19 +51,19 @@ The strength of the implementation is that the AI output, the schema, the data m
 
 1. Land on `/` and either jump to onboarding or open the demo plan.
 2. See the demo student's goal: **Software Engineering Internship**.
-3. Open the **Strategy Map** (`/2/dashboard/demo-cs-student-001`), which shows the destination at the center and the five pillars (Skill Signal, Interview Readiness, Recruiting, Network, Academics) with status colors.
+3. Open the **Strategy Map** (`/strategyweb/dashboard/demo-cs-student-001`), which shows the destination at the center and the five pillars (Skill Signal, Interview Readiness, Recruiting, Network, Academics) with status colors.
 4. Read the **main bottleneck** at the top of the dashboard: "No shipped project - GitHub is empty."
 5. Read the **Strategy Brief panels** below the map: semester progress, semester priorities, cut list (Cut / Defer / Keep / Double Down with reasons), risks, and Next 7 days.
 6. See the **next 7 days** as actionable tasks with priority and due date.
-7. Open the **embedded Opportunity Checker** on the dashboard (or the dedicated `/2/opportunity/[planId]` route).
+7. Open the **embedded Opportunity Checker** on the dashboard (or the dedicated `/strategyweb/opportunity/[planId]` route).
 8. Type an opportunity, for example "Should I join the robotics club?".
 9. Read the structured recommendation: fit score, recommendation, why it fits, tradeoffs, required conditions, and explicit cuts.
-10. Switch to **Flowgram** (`/1`) and see strategy tasks for today alongside calendar events. Switch to `/1/week` to see strategy tasks scattered across the week.
-11. Click a pillar from the map to land on its **Kanban detail page** (`/2/dashboard/[planId]/pillar/[pillarId]`) for action-level drilldown.
+10. Switch to **Flowgram** (`/flowgram`) and see strategy tasks for today alongside calendar events. Switch to `/flowgram/week` to see strategy tasks scattered across the week.
+11. Click a pillar from the map to land on its **Kanban detail page** (`/strategyweb/dashboard/[planId]/pillar/[pillarId]`) for action-level drilldown.
 
 #### Built and demoable
-- Onboarding shell with multi-step form, live map preview, sessionStorage draft (`components/2/onboarding/OnboardingShell.tsx`).
-- AI strategy generation with deterministic fallback and Supabase persistence (`/api/2/generate`).
+- Onboarding shell with multi-step form, live map preview, sessionStorage draft (`components/strategyweb/onboarding/OnboardingShell.tsx`).
+- AI strategy generation with deterministic fallback and Supabase persistence (`/api/strategyweb/generate`).
 - Strategy Map (three.js) in three modes: onboarding, dashboard preview, full Explore Map.
 - Dashboard with route status, destination, bottleneck, semester progress dial, cut list, semester priorities, risks, embedded opportunity checker.
 - Pillar Kanban drilldown with action state changes (Open / Doing / Done / Skipped / At Risk).
@@ -70,7 +76,7 @@ The strength of the implementation is that the AI output, the schema, the data m
 
 #### Partial / demo-level
 - Strategy task → daily timeline link is one-way: tasks appear in the day and week panels, but they do not create timed calendar events automatically. The student still places the work into a time slot themselves.
-- Voice briefing exists as a button (`components/1/voice/VoiceBriefingButton.tsx`) wired into the day view; treat it as a polish element rather than a headline feature.
+- Voice briefing exists as a button (`components/flowgram/voice/VoiceBriefingButton.tsx`) wired into the day view; treat it as a polish element rather than a headline feature.
 - Onboarding can produce a personal plan via Groq, but the most reliable demo route is the fixture plan, since judges may not have a Groq key configured.
 - Supabase persistence works when env vars are set; without them the app uses localStorage transparently. Same UX, smaller blast radius if anything in the demo environment changes.
 
@@ -87,7 +93,7 @@ This product directly answers the prompt "Build something that solves a pain poi
 
 - The pain point is real and specific: an ambitious university student feeling scattered despite working hard. The canonical case in the repo is a CS student at the University of Calgary aiming for a software engineering internship, taking five courses, working part-time, helping run a club, considering another club, with two unfinished side projects, an empty GitHub, and no LeetCode started. Most students recognize at least three of those simultaneously.
 - The problem is not "I need a to-do list." It is "I do not know which of my commitments actually move me toward my goal, what I should cut, and how to turn direction into action." A planner cannot answer that. A chatbot can answer it once and forget the next day.
-- Pathwise targets each part of that problem in the same surface: deciding what matters (Strategy Map, pillars, bottleneck), cutting what does not (cut list with explicit recommendations), evaluating new opportunities against the existing strategy (Opportunity Validation with required cuts), and converting strategy into next steps (semester priorities, next 7 days, daily Flowgram).
+- VISR targets each part of that problem in the same surface: deciding what matters (Strategy Map, pillars, bottleneck), cutting what does not (cut list with explicit recommendations), evaluating new opportunities against the existing strategy (Opportunity Validation with required cuts), and converting strategy into next steps (semester priorities, next 7 days, daily Flowgram).
 - The product avoids the trap most student tools fall into. It does not generate motivational content, it does not pretend to replace an academic advisor, and it does not require the student to maintain a Notion-style hierarchy of nested pages.
 
 ### UX & Design (5%)
@@ -108,8 +114,8 @@ Suggested screenshots to include in the submission, in priority order:
 2. **Dashboard top band** showing destination, bottleneck callout, route status badge, and semester progress dial.
 3. **Cut list panel** showing Cut, Defer, Keep, Double Down columns side by side with reasons.
 4. **Opportunity Validation result** for "Should I join the robotics club?" with fit score, recommendation, tradeoffs, and required cuts.
-5. **Flowgram day view** (`/1`) with the Strategy Tasks panel and a timeline visible together.
-6. **Week view** (`/1/week`) with strategy tasks distributed across days.
+5. **Flowgram day view** (`/flowgram`) with the Strategy Tasks panel and a timeline visible together.
+6. **Week view** (`/flowgram/week`) with strategy tasks distributed across days.
 7. **Onboarding step with live map preview** showing the strategy graph being built as the user types.
 8. **Pillar Kanban drilldown** for one pillar, showing action states.
 
@@ -129,18 +135,18 @@ Things the team stretched to build under hackathon constraints:
 
 Implemented MVP features (grounded in the repo):
 
-- **Strategy Map** (three.js, `components/2/graph/GoalTree.tsx`) with three modes: onboarding live preview, dashboard preview, full Explore Map.
+- **Strategy Map** (three.js, `components/strategyweb/graph/GoalTree.tsx`) with three modes: onboarding live preview, dashboard preview, full Explore Map.
 - **Strategy Brief panels** on the dashboard: route status, destination, main bottleneck callout, semester progress dial, semester priorities, cut list, risks, next 7 days, embedded opportunity checker.
-- **Pillar Kanban drilldown** at `/2/dashboard/[planId]/pillar/[pillarId]`.
-- **Opportunity Validation** at `/2/opportunity/[planId]` and as an embedded panel on the dashboard.
+- **Pillar Kanban drilldown** at `/strategyweb/dashboard/[planId]/pillar/[pillarId]`.
+- **Opportunity Validation** at `/strategyweb/opportunity/[planId]` and as an embedded panel on the dashboard.
 - **Onboarding flow** with multi-step form, live strategy map preview, sessionStorage drafts, and AI generation that lands the user on their dashboard.
-- **AI strategy generation and opportunity evaluation** through Groq with strict Zod validation and deterministic fallbacks (`lib/2/deterministicPlan.ts`, `lib/2/deterministicOpportunity.ts`).
+- **AI strategy generation and opportunity evaluation** through Groq with strict Zod validation and deterministic fallbacks (`lib/strategyweb/deterministicPlan.ts`, `lib/strategyweb/deterministicOpportunity.ts`).
 - **Supabase schema and persistence** for plans, nodes, tasks, opportunity checks, plus the daily-flow tables (events, items, routines, settings, locations, personal time blocks).
-- **Flowgram day view** at `/1` with timeline, Before-You-Leave checklist, weather banner, day overview, free-time finder, voice briefing button, ICS import, manual checklist, end-of-day reschedule, routines panel, and an embedded Strategy Tasks panel sourced from the strategy map.
-- **Week view** at `/1/week` with seven-day grid, strategy tasks rendered per day, current-day highlight, navigation across weeks.
-- **Notes inbox** at `/1/notes` with status filters across a sliding window of events.
-- **Settings** at `/1/settings` for city, timezone, wake/sleep, saved locations, defaults, custom categories, personal time blocks.
-- **Demo plan and demo opportunity** as static fixtures (`lib/2/fixture.ts`) so judging works without any environment configuration.
+- **Flowgram day view** at `/flowgram` with timeline, Before-You-Leave checklist, weather banner, day overview, free-time finder, voice briefing button, ICS import, manual checklist, end-of-day reschedule, routines panel, and an embedded Strategy Tasks panel sourced from the strategy map.
+- **Week view** at `/flowgram/week` with seven-day grid, strategy tasks rendered per day, current-day highlight, navigation across weeks.
+- **Notes inbox** at `/flowgram/notes` with status filters across a sliding window of events.
+- **Settings** at `/flowgram/settings` for city, timezone, wake/sleep, saved locations, defaults, custom categories, personal time blocks.
+- **Demo plan and demo opportunity** as static fixtures (`lib/strategyweb/fixture.ts`) so judging works without any environment configuration.
 
 ---
 
@@ -183,7 +189,7 @@ Value the product creates:
 
 This is a hackathon MVP. Honest limits:
 
-- The deeper sync between the strategy map and the daily calendar is one-way today. Strategy tasks appear in `/1` and `/1/week`, but the app does not yet auto-place them into time blocks on the timeline.
+- The deeper sync between the strategy map and the daily calendar is one-way today. Strategy tasks appear in `/flowgram` and `/flowgram/week`, but the app does not yet auto-place them into time blocks on the timeline.
 - Opportunity checks are evaluated and applied to the active plan, but the UI does not yet maintain a saved history of past checks (the database table is in place).
 - AI generation depends on a Groq key. Without it, every route falls back to the deterministic generator, which is good enough for judging but is not as personalized as the AI path.
 - Supabase persistence is optional and the demo plan is intentionally local-first via `localStorage`. Multi-device sync is not part of the demo path.
@@ -198,18 +204,44 @@ Future work: deeper calendar integration, saved opportunity sessions, richer nod
 
 A clean four-minute path for judging:
 
-1. Open `/` and land on the demo plan via `/2/dashboard/demo-cs-student-001` (or `?demo=1`).
+1. Open `/` and land on the demo plan via `/strategyweb/dashboard/demo-cs-student-001` (or `?demo=1`).
 2. Read the destination ("Software Engineering Internship") and the main bottleneck ("No shipped project - GitHub is empty").
 3. Click into the **Strategy Map** preview to expand the Explore Map. Point out the five pillars, their status colors, and the bottleneck pillar.
 4. Return to the dashboard and walk the **strategy brief**: semester priorities, the cut list (call out one Cut, one Defer, one Double Down), and risks.
 5. Show the **next 7 days** with priority badges.
 6. Use the embedded **Opportunity Checker** with the prompt "Should I join the robotics club?". Read the recommendation (`Say Yes With Conditions`), the tradeoff list, the required conditions, and the explicit cuts.
-7. Switch to **Flowgram** at `/1` and show the Strategy Tasks panel for today next to the timeline.
-8. Switch to `/1/week` to show strategy tasks distributed across the week alongside calendar events.
-9. Optional: click a pillar from the map to show the **Kanban drilldown** at `/2/dashboard/[planId]/pillar/[pillarId]` and toggle an action's state.
+7. Switch to **Flowgram** at `/flowgram` and show the Strategy Tasks panel for today next to the timeline.
+8. Switch to `/flowgram/week` to show strategy tasks distributed across the week alongside calendar events.
+9. Optional: click a pillar from the map to show the **Kanban drilldown** at `/strategyweb/dashboard/[planId]/pillar/[pillarId]` and toggle an action's state.
 
 ---
 
 ## Why This Can Win
 
-Pathwise stands out because it does not stop at generating advice. It makes the student's strategy visible, turns tradeoffs into explicit decisions, and connects long-term goals to a 7-day action route and a daily timeline that already sits in the same workspace. The personal pain point is unmistakable and well documented in the demo data. The visual system is memorable without being noisy. The technical execution pairs an AI generation layer with a typed schema, deterministic fallback, and a real persistence story. The MVP is demoable end to end today, and the parts that are partial are scoped so they do not break the demo.
+VISR stands out because it does not stop at generating advice. It makes the student's strategy visible, turns tradeoffs into explicit decisions, and connects long-term goals to a 7-day action route and a daily timeline that already sits in the same workspace. The personal pain point is unmistakable and well documented in the demo data. The visual system is memorable without being noisy. The technical execution pairs an AI generation layer with a typed schema, deterministic fallback, and a real persistence story. The MVP is demoable end to end today, and the parts that are partial are scoped so they do not break the demo.
+
+---
+
+## Reviewer cheat sheet
+
+If you have only sixty seconds to evaluate VISR, look at:
+
+| Aspect | File |
+|---|---|
+| The product brief in plain English | [`docs/architecture/PRD.md`](architecture/PRD.md) |
+| The architecture (routes, data flow, AI boundary, demo strategy) | [`docs/architecture/ARCHITECTURE.md`](architecture/ARCHITECTURE.md) |
+| The data model and Zod contracts | [`docs/architecture/DATA_MODEL.md`](architecture/DATA_MODEL.md), [`lib/strategyweb/types.ts`](../lib/strategyweb/types.ts), [`lib/strategyweb/validate.ts`](../lib/strategyweb/validate.ts) |
+| The AI layer with strict JSON + Zod + deterministic fallback | [`lib/strategyweb/groq.ts`](../lib/strategyweb/groq.ts), [`lib/strategyweb/deterministicPlan.ts`](../lib/strategyweb/deterministicPlan.ts), [`app/api/strategyweb/generate/route.ts`](../app/api/strategyweb/generate/route.ts) |
+| The visual centrepiece (Three.js Strategy Map) | [`components/strategyweb/graph/GoalTree.tsx`](../components/strategyweb/graph/GoalTree.tsx), [`components/strategyweb/graph/useGraphScene.ts`](../components/strategyweb/graph/useGraphScene.ts) |
+| The strategy-to-day spine | [`lib/strategyweb/taskStore.ts`](../lib/strategyweb/taskStore.ts) |
+| The demo path that works without env vars | [`lib/strategyweb/fixture.ts`](../lib/strategyweb/fixture.ts), [`app/strategyweb/dashboard/demo-cs-student-001/page.tsx`](../app/strategyweb/dashboard/demo-cs-student-001/page.tsx) |
+| The research foundation behind the design | [`docs/research.md`](research.md) |
+| Visual diagrams (PlantUML) | [`docs/diagrams/`](diagrams/) |
+
+The single best demo URL is:
+
+```
+http://localhost:3000/strategyweb/dashboard/demo-cs-student-001
+```
+
+It loads instantly with zero environment configuration, and exercises the Strategy Map, the strategy brief, the cut list, the next 7 days, and the embedded opportunity checker.

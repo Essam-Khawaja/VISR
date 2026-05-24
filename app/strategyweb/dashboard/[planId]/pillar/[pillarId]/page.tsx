@@ -1,3 +1,12 @@
+/**
+ * app/strategyweb/dashboard/[planId]/pillar/[pillarId]/page.tsx
+ *
+ * Kanban drilldown for a single strategic pillar. The user can move pillar
+ * actions through Open / Doing / Done / Skipped / At Risk states; state
+ * changes flow back into the plan store so the dashboard graph reflects
+ * the new posture.
+ */
+
 "use client";
 
 import Link from "next/link";
