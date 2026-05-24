@@ -13,3 +13,8 @@ export function easeOutCubic(t: number): number {
 export function bottleneckPulse(t: number): number {
   return 0.55 + 0.35 * Math.sin(t * Math.PI);
 }
+
+export const PULSE_SPEED = 0.8;
+export const PULSE_MIN_SCALE = 1.0;
+export const PULSE_MAX_SCALE = 1.15;
+export const PULSE_OPACITY = 0.15;
