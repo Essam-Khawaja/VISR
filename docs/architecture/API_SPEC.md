@@ -2,68 +2,72 @@
 
 ## API Principles
 
-- All AI calls happen server-side.
-- Claude responses must be JSON only.
-- Every Claude response is parsed and validated with Zod before use.
+- All Groq calls happen server-side.
+- Groq responses must be JSON only.
+- Every Groq response is parsed and validated with Zod before use.
 - API errors are structured and safe to show in the UI.
 - The demo plan can be served without live AI or Supabase.
 
 ---
 
-## Anthropic Wrapper
+## Groq Wrapper
 
-File: `lib/anthropic.ts`
+File: `lib/groq.ts`
 
 Responsibilities:
 
-- Create Anthropic client using `process.env.ANTHROPIC_API_KEY`.
-- Export `callClaudeJson(prompt: string)`.
-- Use model `claude-sonnet-4-5` by default.
+- Call Groq chat completions using `process.env.GROQ_API_KEY`.
+- Export `callGroqJson(system: string, user: string, opts?: GroqOptions)`.
+- Use model `llama-3.3-70b-versatile` by default.
 - Keep the model string easy to change.
-- Use `max_tokens` high enough for the strategy plan.
+- Use `max_completion_tokens` high enough for the strategy plan.
 - Use `temperature` around `0.3`.
 - Demand JSON only in prompts.
-- Strip markdown code fences if Claude returns them.
+- Strip markdown code fences if Groq returns them.
 - Throw useful errors for missing API key, empty response, non-text response, and JSON parse failure.
+- Groq docs source: https://console.groq.com/docs/api-reference and https://console.groq.com/docs/models.
 
 Reference shape:
 
 ```ts
-import Anthropic from "@anthropic-ai/sdk";
+const MODEL = process.env.GROQ_MODEL || "llama-3.3-70b-versatile";
 
-const MODEL = process.env.ANTHROPIC_MODEL || "claude-sonnet-4-5";
+export async function callGroqJson(
+  system: string,
+  user: string
+): Promise<string | null> {
+  const apiKey = process.env.GROQ_API_KEY;
+  if (!apiKey) return null;
 
-export async function callClaudeJson(prompt: string): Promise<unknown> {
-  if (!process.env.ANTHROPIC_API_KEY) {
-    throw new Error("ANTHROPIC_API_KEY is not configured");
-  }
-
-  const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-
-  const response = await client.messages.create({
-    model: MODEL,
-    max_tokens: 6000,
-    temperature: 0.3,
-    messages: [{ role: "user", content: prompt }]
+  const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${apiKey}`
+    },
+    body: JSON.stringify({
+      model: MODEL,
+      max_completion_tokens: 6000,
+      temperature: 0.3,
+      response_format: { type: "json_object" },
+      messages: [
+        { role: "system", content: system },
+        { role: "user", content: user }
+      ]
+    })
   });
 
-  const block = response.content[0];
-  if (!block || block.type !== "text") {
-    throw new Error("Claude returned an unexpected response type");
-  }
+  if (!response.ok) return null;
+  const data = await response.json();
+  const text = data.choices?.[0]?.message?.content;
+  if (!text) return null;
 
-  const text = block.text
+  return text
     .trim()
     .replace(/^```json\s*/i, "")
     .replace(/^```\s*/i, "")
     .replace(/```$/i, "")
     .trim();
-
-  try {
-    return JSON.parse(text);
-  } catch {
-    throw new Error("Claude returned invalid JSON");
-  }
 }
 ```
 
@@ -71,7 +75,7 @@ export async function callClaudeJson(prompt: string): Promise<unknown> {
 
 ## POST /api/generate
 
-Purpose: accept a `StudentProfile` from onboarding, call Claude, validate the result, save it to Supabase, and return the `planId`.
+Purpose: accept a `StudentProfile` from onboarding, call Groq, validate the result, save it to Supabase, and return the `planId`.
 
 Request body:
 
@@ -97,7 +101,7 @@ Internal flow:
 3. Generate UUID for student profile.
 4. Save profile to Supabase table `student_profiles`.
 5. Build strategy prompt using `buildStrategyPrompt(profile)`.
-6. Call `callClaudeJson(prompt)`.
+6. Call `callGroqJson(system, user)`.
 7. Validate parsed response using `StrategyPlanSchema`.
 8. If validation fails, retry once with a correction prompt that includes the validation error and asks for corrected JSON only.
 9. Generate UUID for strategy plan.
@@ -110,7 +114,7 @@ Error response:
 ```ts
 {
   error: {
-    code: "INVALID_REQUEST" | "PROFILE_SAVE_FAILED" | "CLAUDE_FAILED" | "VALIDATION_FAILED" | "PLAN_SAVE_FAILED";
+    code: "INVALID_REQUEST" | "PROFILE_SAVE_FAILED" | "GROK_FAILED" | "VALIDATION_FAILED" | "PLAN_SAVE_FAILED";
     message: string;
   }
 }
@@ -120,7 +124,7 @@ Error response:
 
 ## POST /api/opportunity
 
-Purpose: accept an opportunity string and `planId`, fetch the existing `StrategyPlan`, call Claude, validate the opportunity analysis, save it, and return the structured result.
+Purpose: accept an opportunity string and `planId`, fetch the existing `StrategyPlan`, call Groq, validate the opportunity analysis, save it, and return the structured result.
 
 Request body:
 
@@ -145,7 +149,7 @@ Internal flow:
 2. If `planId` is `demo-cs-student-001`, load demo plan from `lib/demoData.ts`.
 3. Otherwise fetch strategy plan from Supabase by `planId`.
 4. Build opportunity prompt using `buildOpportunityPrompt(plan, opportunityText)`.
-5. Call `callClaudeJson(prompt)`.
+5. Call `callGroqJson(system, user)`.
 6. Validate parsed response using `OpportunityCheckSchema`.
 7. Save validated result to `opportunity_checks.check` as JSONB.
 8. Return `{ check }`.
@@ -160,7 +164,7 @@ Error response:
 ```ts
 {
   error: {
-    code: "INVALID_REQUEST" | "PLAN_NOT_FOUND" | "CLAUDE_FAILED" | "VALIDATION_FAILED" | "CHECK_SAVE_FAILED";
+    code: "INVALID_REQUEST" | "PLAN_NOT_FOUND" | "GROK_FAILED" | "VALIDATION_FAILED" | "CHECK_SAVE_FAILED";
     message: string;
   }
 }
@@ -221,7 +225,7 @@ Prompt requirements:
 - Job: identify destination, current stage, main bottleneck, priorities, cut list, risks, and next 7 days.
 - Output strict JSON matching `StrategyPlan`.
 
-Claude must:
+Groq must:
 
 - Identify one specific main bottleneck.
 - Avoid generic advice.
@@ -272,7 +276,7 @@ The response must include:
 - `conditions`
 - `cutsRequired`
 
-Claude must:
+Groq must:
 
 - Be willing to say no.
 - If it says yes, explain what the student should cut or cap.
@@ -301,4 +305,3 @@ Claude must:
 - `created_at`
 
 The application types remain camelCase.
-

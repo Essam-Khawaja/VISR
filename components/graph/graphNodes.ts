@@ -8,6 +8,7 @@ export type NodeMesh = {
   core: THREE.Mesh;
   ring: THREE.Mesh;
   halo: THREE.Sprite;
+  pulseHalo: THREE.Sprite;
   data: LayoutNode;
   parentId: string | null;
   basePosition: THREE.Vector3;
@@ -23,7 +24,7 @@ export type NodeMesh = {
 
 const colorCache = new Map<string, number>();
 
-function resolveColor(cssColor: string, fallback = "#2563eb"): number {
+function resolveColor(cssColor: string, fallback = "#8B6B5A"): number {
   if (cssColor.startsWith("#")) return hexToThreeColor(cssColor);
   if (colorCache.has(cssColor)) return colorCache.get(cssColor)!;
   const map: Record<string, string> = {
@@ -42,7 +43,9 @@ function resolveColor(cssColor: string, fallback = "#2563eb"): number {
 }
 
 export function createNodeMesh(node: LayoutNode): NodeMesh {
-  const colorHex = resolveColor(node.color);
+  const colorHex = node.pastelColor
+    ? hexToThreeColor(node.pastelColor)
+    : resolveColor(node.color);
   const color = new THREE.Color(colorHex);
 
   const group = new THREE.Group();
@@ -87,11 +90,24 @@ export function createNodeMesh(node: LayoutNode): NodeMesh {
   halo.scale.setScalar(node.radius * haloFactor);
   group.add(halo);
 
+  const pulseHaloMat = new THREE.SpriteMaterial({
+    map: getGlowTexture(),
+    color,
+    transparent: true,
+    blending: THREE.NormalBlending,
+    depthWrite: false,
+    opacity: 0,
+  });
+  const pulseHalo = new THREE.Sprite(pulseHaloMat);
+  pulseHalo.scale.setScalar(node.radius * 9);
+  group.add(pulseHalo);
+
   return {
     group,
     core,
     ring,
     halo,
+    pulseHalo,
     data: node,
     parentId: node.parentId,
     basePosition: new THREE.Vector3(...node.position),

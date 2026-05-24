@@ -91,6 +91,39 @@ Return JSON only:
 }`;
 }
 
+export function onboardingInsightSystemPrompt(): string {
+  return `You are Pathwise, a sharp personal strategist. Given a student's onboarding step data, return 1-2 sentences of direct advisor insight. No hedging. Reference their specific goal and data.
+
+Return ONLY a JSON object: { "insight": "...", "bottleneckPreview": "..." (only for brain-dump step), "concernLabels": ["..."] (only for brain-dump step, max 3) }`;
+}
+
+export function onboardingInsightUserPrompt(
+  step: string,
+  profile: { targetGoal?: string; currentCourses?: string[]; commitments?: string[]; constraints?: string[]; workHoursPerWeek?: number; brainDump?: string },
+): string {
+  const parts = [`step: ${step}`, `targetGoal: ${profile.targetGoal ?? "not set"}`];
+  if (profile.currentCourses?.length) parts.push(`courses (${profile.currentCourses.length}): ${profile.currentCourses.join(", ")}`);
+  if (profile.commitments?.length) parts.push(`commitments (${profile.commitments.length}): ${profile.commitments.join(", ")}`);
+  if (profile.constraints?.length) parts.push(`constraints: ${profile.constraints.join(", ")}`);
+  if (profile.workHoursPerWeek) parts.push(`workHoursPerWeek: ${profile.workHoursPerWeek}`);
+  if (profile.brainDump) parts.push(`brainDump: """${profile.brainDump}"""`);
+
+  return `Generate a sharp 1-2 sentence insight for this onboarding step.\n\n${parts.join("\n")}\n\nFor brain-dump step: also return bottleneckPreview (specific bottleneck name) and concernLabels (up to 3 keyword concerns).`;
+}
+
+export function taskGenerationSystemPrompt(): string {
+  return `You are Pathwise, a strategic academic advisor. Given a student's goal context and area of focus, generate 3-6 concrete, actionable tasks. Each task must have a "name" (short, action-oriented, max 60 chars) and a "recommendation" (1-2 sentences of practical guidance). Return ONLY a JSON object: { "tasks": [...] }. No other text.`;
+}
+
+export function taskGenerationUserPrompt(
+  parentContext: string,
+  nodeName: string,
+  nodeDescription: string,
+  userPrompt: string,
+): string {
+  return `Overall goal: ${parentContext}\nArea of focus: ${nodeName} — ${nodeDescription}\nStudent's request: ${userPrompt}\n\nGenerate concrete tasks to help with this request.`;
+}
+
 export function summarizePlan(plan: {
   destination: string;
   currentStage: string;

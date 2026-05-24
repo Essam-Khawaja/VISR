@@ -7,7 +7,7 @@ components/OpportunityChecker.tsx
 components/OpportunityResult.tsx
 app/api/opportunity/route.ts
 lib/prompts/opportunityPrompt.ts
-lib/anthropic.ts
+lib/groq.ts
 lib/demoData.ts
 lib/validation.ts
 ```
@@ -44,7 +44,7 @@ Flow:
 1. Validate request body.
 2. Load plan from demo data or Supabase.
 3. Build prompt with `buildOpportunityPrompt(plan, opportunityText)`.
-4. Call Claude.
+4. Call Groq.
 5. Validate with `OpportunityCheckSchema`.
 6. Save to `opportunity_checks`.
 7. Return `{ check }`.

@@ -1,8 +1,19 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/cn";
+import { usePlanOptional } from "@/components/dashboard/PlanProvider";
+
+const PILLAR_PASTELS = [
+  "#8B4A6B",
+  "#9B9267",
+  "#B5707E",
+  "#C4A882",
+  "#8FA68B",
+  "#7E6B8A",
+];
 
 type Props = {
   planId: string;
@@ -17,10 +28,16 @@ type NavItem = {
 
 export function DashboardSidebar({ planId, onTodayClick }: Props) {
   const pathname = usePathname();
+  const ctx = usePlanOptional();
+  const [pillarsOpen, setPillarsOpen] = useState(true);
 
   const items: NavItem[] = [
     { href: "/", label: "Home", icon: <IconHome /> },
-    { href: `/dashboard/${planId}`, label: "Strategy", icon: <IconStrategy /> },
+    {
+      href: `/dashboard/${planId}`,
+      label: "Strategy",
+      icon: <IconStrategy />,
+    },
     {
       href: `/opportunity/${planId}`,
       label: "Opportunity",
@@ -30,35 +47,38 @@ export function DashboardSidebar({ planId, onTodayClick }: Props) {
 
   return (
     <aside
-      className="flex h-full w-[72px] shrink-0 flex-col border-r border-border bg-surface md:w-[240px]"
+      className="flex h-full w-[220px] shrink-0 flex-col border-r border-border bg-surface"
       aria-label="Dashboard navigation"
     >
-      <div className="flex h-16 items-center justify-center px-4 md:justify-start md:px-6">
+      <div className="flex h-14 items-center gap-2.5 px-5">
         <Link
           href="/"
           className="flex items-center gap-2.5 text-primary transition-colors hover:text-accent"
         >
           <PathwiseMark />
-          <span className="hidden font-display text-[15px] font-semibold tracking-tight md:inline">
+          <span className="font-display text-[15px] font-semibold tracking-tight">
             Pathwise
           </span>
         </Link>
       </div>
 
-      <div className="mx-3 my-1 h-px bg-border md:mx-5" />
+      <div className="mx-4 h-px bg-border" />
 
-      <nav className="flex flex-1 flex-col gap-1 p-3 md:p-4">
+      <nav className="flex flex-1 flex-col gap-0.5 overflow-y-auto px-3 py-3">
         {items.map((item) => {
           const active =
             item.href === "/"
               ? pathname === "/"
-              : pathname.startsWith(item.href.split("?")[0]);
+              : pathname === item.href ||
+                (item.label === "Strategy" &&
+                  pathname.startsWith(`/dashboard/${planId}`) &&
+                  !pathname.includes("/pillar/"));
           return (
             <Link
               key={item.href}
               href={item.href}
               className={cn(
-                "group flex items-center gap-3 rounded-xl px-3 py-2.5 transition-colors duration-150",
+                "group flex items-center gap-3 rounded-lg px-3 py-2 text-[13px] font-medium transition-colors duration-150",
                 active
                   ? "bg-accent-soft text-accent-strong"
                   : "text-secondary hover:bg-elevated hover:text-primary",
@@ -66,52 +86,120 @@ export function DashboardSidebar({ planId, onTodayClick }: Props) {
             >
               <span
                 className={cn(
-                  "flex h-5 w-5 shrink-0 items-center justify-center",
-                  active ? "text-accent" : "text-tertiary group-hover:text-secondary",
+                  "flex h-4 w-4 shrink-0 items-center justify-center",
+                  active
+                    ? "text-accent"
+                    : "text-tertiary group-hover:text-secondary",
                 )}
                 aria-hidden
               >
                 {item.icon}
               </span>
-              <span className="hidden text-[13px] font-medium md:inline">
-                {item.label}
-              </span>
+              {item.label}
             </Link>
           );
         })}
 
-        {onTodayClick ? (
-          <button
-            type="button"
-            onClick={onTodayClick}
-            className="mt-2 flex items-center gap-3 rounded-xl border border-border bg-surface px-3 py-2.5 text-secondary shadow-soft transition-colors duration-150 hover:border-border-strong hover:text-primary"
-          >
-            <span className="flex h-5 w-5 shrink-0 items-center justify-center text-tertiary" aria-hidden>
-              <IconToday />
-            </span>
-            <span className="hidden flex-1 text-left text-[13px] font-medium md:inline">
-              Today
-            </span>
-            <kbd className="hidden h-5 rounded-md border border-border bg-elevated px-1.5 text-[10px] font-medium text-tertiary md:inline-flex md:items-center">
-              T
-            </kbd>
-          </button>
+        {ctx ? (
+          <>
+            <div className="mx-1 my-2 h-px bg-border" />
+            <button
+              type="button"
+              onClick={() => setPillarsOpen((v) => !v)}
+              className="flex items-center gap-3 rounded-lg px-3 py-2 text-[13px] font-medium text-secondary transition-colors hover:bg-elevated hover:text-primary"
+            >
+              <span className="flex h-4 w-4 shrink-0 items-center justify-center text-tertiary" aria-hidden>
+                <IconPillars />
+              </span>
+              <span className="flex-1 text-left">Pillars</span>
+              <svg
+                width="12"
+                height="12"
+                viewBox="0 0 12 12"
+                fill="none"
+                className={cn(
+                  "shrink-0 text-tertiary transition-transform duration-150",
+                  pillarsOpen ? "rotate-90" : "",
+                )}
+                aria-hidden
+              >
+                <path
+                  d="M4 2l4 4-4 4"
+                  stroke="currentColor"
+                  strokeWidth="1.3"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </button>
+
+            {pillarsOpen ? (
+              <div className="flex flex-col gap-0.5 pl-4">
+                {ctx.plan.strategicPillars.map((pillar, i) => {
+                  const href = `/dashboard/${planId}/pillar/${pillar.id}`;
+                  const active = pathname === href;
+                  return (
+                    <Link
+                      key={pillar.id}
+                      href={href}
+                      className={cn(
+                        "flex items-center gap-2.5 rounded-lg px-3 py-1.5 text-[12px] transition-colors",
+                        active
+                          ? "bg-accent-soft font-medium text-primary"
+                          : "text-secondary hover:bg-elevated hover:text-primary",
+                      )}
+                    >
+                      <span
+                        className="h-2 w-2 shrink-0 rounded-full"
+                        style={{
+                          backgroundColor:
+                            PILLAR_PASTELS[i % PILLAR_PASTELS.length],
+                        }}
+                        aria-hidden
+                      />
+                      <span className="min-w-0 truncate">{pillar.name}</span>
+                    </Link>
+                  );
+                })}
+              </div>
+            ) : null}
+          </>
         ) : null}
       </nav>
 
-      <div className="hidden border-t border-border p-5 md:block">
-        <p className="text-[11px] font-medium text-tertiary">Tip</p>
-        <p className="mt-1 text-[12px] leading-relaxed text-secondary">
-          Click a pillar to expand. Press <kbd className="rounded border border-border bg-elevated px-1 text-[10px]">T</kbd> for today.
-        </p>
-      </div>
+      {onTodayClick ? (
+        <div className="border-t border-border px-3 py-3">
+          <button
+            type="button"
+            onClick={onTodayClick}
+            className="flex w-full items-center gap-3 rounded-lg border border-border bg-surface px-3 py-2 text-[13px] font-medium text-secondary shadow-soft transition-colors duration-150 hover:border-border-strong hover:text-primary"
+          >
+            <span
+              className="flex h-4 w-4 shrink-0 items-center justify-center text-tertiary"
+              aria-hidden
+            >
+              <IconToday />
+            </span>
+            Today
+            <kbd className="ml-auto rounded border border-border bg-elevated px-1.5 py-0.5 text-[10px] font-medium text-tertiary">
+              T
+            </kbd>
+          </button>
+        </div>
+      ) : null}
     </aside>
   );
 }
 
 function PathwiseMark() {
   return (
-    <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden className="shrink-0">
+    <svg
+      width="20"
+      height="20"
+      viewBox="0 0 24 24"
+      aria-hidden
+      className="shrink-0"
+    >
       <circle
         cx="12"
         cy="12"
@@ -170,25 +258,23 @@ function IconOpportunity() {
   );
 }
 
+function IconPillars() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden>
+      <rect x="2" y="2" width="5" height="5" rx="1.2" stroke="currentColor" strokeWidth="1.3" />
+      <rect x="9" y="2" width="5" height="5" rx="1.2" stroke="currentColor" strokeWidth="1.3" />
+      <rect x="2" y="9" width="5" height="5" rx="1.2" stroke="currentColor" strokeWidth="1.3" />
+      <rect x="9" y="9" width="5" height="5" rx="1.2" stroke="currentColor" strokeWidth="1.3" />
+    </svg>
+  );
+}
+
 function IconToday() {
   return (
     <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden>
-      <rect
-        x="2"
-        y="3.5"
-        width="12"
-        height="10"
-        rx="2"
-        stroke="currentColor"
-        strokeWidth="1.3"
-      />
+      <rect x="2" y="3.5" width="12" height="10" rx="2" stroke="currentColor" strokeWidth="1.3" />
       <path d="M2 6.5h12" stroke="currentColor" strokeWidth="1.3" />
-      <path
-        d="M5.5 2v3M10.5 2v3"
-        stroke="currentColor"
-        strokeWidth="1.3"
-        strokeLinecap="round"
-      />
+      <path d="M5.5 2v3M10.5 2v3" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
     </svg>
   );
 }

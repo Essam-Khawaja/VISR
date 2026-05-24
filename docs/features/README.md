@@ -18,36 +18,52 @@ Each feature must explain both product behavior and technical implementation arc
 
 | Order | Folder | Name | Role |
 |---|---|---|---|
+| 0 | [000-project-foundation-and-data-contract](000-project-foundation-and-data-contract/) | Project Foundation and Data Contract | Dependencies, env, types, validation, demo data, Supabase schema |
 | 1 | [001-landing-and-onboarding](001-landing-and-onboarding/) | Landing and Onboarding | Capture the student profile and start generation |
-| 2 | [002-strategy-generation-ai](002-strategy-generation-ai/) | Strategy Generation AI | Claude prompt, validation, and plan creation |
+| 2 | [002-strategy-generation-ai](002-strategy-generation-ai/) | Strategy Generation AI | Groq prompt, validation, and plan creation |
 | 3 | [003-demo-data-and-plan-fetching](003-demo-data-and-plan-fetching/) | Demo Data and Plan Fetching | Reliable demo route and plan retrieval |
 | 4 | [004-dashboard-command-center](004-dashboard-command-center/) | Dashboard Command Center | Main strategy dashboard composition |
 | 5 | [005-strategy-map-visualization](005-strategy-map-visualization/) | Strategy Map Visualization | Hero graph, bottleneck highlight, graph fallback |
 | 6 | [006-opportunity-checker](006-opportunity-checker/) | Opportunity Checker | Evaluate new opportunities against the current plan |
-| 7 | [007-supabase-persistence-and-api](007-supabase-persistence-and-api/) | Supabase Persistence and API | Database schema, API persistence, environment boundary |
+| 7 | [007-supabase-persistence-and-api](007-supabase-persistence-and-api/) | Supabase Persistence and API | Database implementation and persistence helpers |
+| 8 | [008-progressive-onboarding-strategy-map](008-progressive-onboarding-strategy-map/) | Progressive Onboarding Strategy Map | Live map-building onboarding; fixes list inputs; per-step AI insights |
+| 9 | [009-pastel-theme-overhaul](009-pastel-theme-overhaul/) | Pastel Theme Overhaul | Sitewide warm pastel palette replacing cool blue/slate tokens |
+| 10 | [010-graph-visual-redesign](010-graph-visual-redesign/) | Graph Visual Redesign | Per-pillar pastel nodes, pulse animation, dashed edges with progress, zoom fix |
+| 11 | [011-node-task-dialog](011-node-task-dialog/) | Node Task Dialog and AI Generator | Tabbed dialog with task list, manual add, AI task generation, recursive expansion |
+| 12 | [012-project-sidebar](012-project-sidebar/) | Project Sidebar | Collapsible sidebar with pillar-based projects, task checkboxes, inline add |
+| 13 | [013-kanban-dashboard](013-kanban-dashboard/) | Kanban Dashboard | Tabbed Map/Insights workspace, per-pillar Kanban boards, navbar dropdown |
+
+---
+
+## Onboarding source of truth
+
+For **onboarding UX** (split layout, progressive map, chip inputs), use **[008-progressive-onboarding-strategy-map](008-progressive-onboarding-strategy-map/)**.  
+[001-landing-and-onboarding](001-landing-and-onboarding/) remains the reference for the landing page only.
 
 ---
 
 ## Recommended Build Order
 
-1. `001-landing-and-onboarding`
-2. `002-strategy-generation-ai`
-3. `003-demo-data-and-plan-fetching`
-4. `004-dashboard-command-center`
-5. `005-strategy-map-visualization`
-6. `006-opportunity-checker`
-7. `007-supabase-persistence-and-api`
+1. `000-project-foundation-and-data-contract`
+2. `003-demo-data-and-plan-fetching`
+3. `004-dashboard-command-center`
+4. `005-strategy-map-visualization`
+5. `006-opportunity-checker`
+6. `001-landing-and-onboarding`
+7. `002-strategy-generation-ai`
+8. `007-supabase-persistence-and-api`
 
 For hackathon execution, the practical priority is:
 
-1. Types, validation, and demo data
+1. Foundation contract: dependencies, types, validation, status colors, demo data
 2. Demo dashboard
 3. Strategy header, cut list, next 7 days, and risks
 4. Strategy Map
 5. Opportunity Checker with mocked fallback
-6. Claude integration
-7. Supabase persistence
-8. Landing, onboarding, and polish
+6. Landing and onboarding shell
+7. Groq integration
+8. Supabase persistence
+9. Polish
 
 ---
 
@@ -60,7 +76,7 @@ Landing
 Onboarding -> POST /api/generate
   |              |
   |              v
-  |         Claude + Zod
+  |         Groq + Zod
   |              |
   |              v
   |         Supabase JSONB
@@ -106,4 +122,3 @@ Before coding any feature:
 4. Read the feature `TECH_SPEC.md`.
 5. Work through `TASKS.md`.
 6. Add new decisions to `DECISIONS.md`.
-

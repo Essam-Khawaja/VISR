@@ -13,11 +13,24 @@ export const ProfileSchema = z.object({
   brainDump: z.string().min(10).max(4000),
 });
 
-export const ActionNodeSchema = z.object({
-  id: z.string(),
-  name: z.string().max(80),
-  status: z.enum(["On Track", "Behind", "At Risk", "Deferred", "Cut"]),
-  recommendation: z.string().max(400),
+export const ActionNodeSchema: z.ZodType<import("./types").ActionNode> =
+  z.object({
+    id: z.string(),
+    name: z.string().max(80),
+    status: z.enum(["On Track", "Behind", "At Risk", "Deferred", "Cut"]),
+    recommendation: z.string().max(400),
+    children: z.lazy(() => z.array(ActionNodeSchema)).optional(),
+    dueDate: z.string().optional(),
+    priority: z.enum(["High", "Medium", "Low"]).optional(),
+    notes: z.string().max(1000).optional(),
+  });
+
+export const TaskGenerationRequestSchema = z.object({
+  nodeId: z.string(),
+  nodeName: z.string(),
+  nodeDescription: z.string(),
+  parentContext: z.string(),
+  userPrompt: z.string().min(1).max(500),
 });
 
 export const StrategicPillarSchema = z.object({
@@ -93,4 +106,24 @@ export const OpportunityCheckSchema = z.object({
 
 export const GenerateRequestSchema = z.object({
   profile: ProfileSchema,
+});
+
+export const OnboardingInsightRequestSchema = z.object({
+  step: z.enum(["destination", "courses", "commitments", "constraints", "brain-dump"]),
+  profile: z.object({
+    targetGoal: z.string().max(280).default(""),
+    university: z.string().max(120).default(""),
+    degree: z.string().max(120).default(""),
+    year: z.string().max(40).default(""),
+    currentCourses: z.array(z.string().max(120)).default([]),
+    commitments: z.array(z.string().max(200)).default([]),
+    workHoursPerWeek: z.number().min(0).max(80).default(0),
+    constraints: z.array(z.string().max(200)).default([]),
+    brainDump: z.string().max(4000).default(""),
+  }),
+  map: z.object({
+    goal: z.object({ label: z.string() }).nullable().default(null),
+    courses: z.array(z.object({ id: z.string(), label: z.string() })).default([]),
+    commitments: z.array(z.object({ id: z.string(), label: z.string() })).default([]),
+  }).optional(),
 });

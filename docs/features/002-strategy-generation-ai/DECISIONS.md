@@ -2,7 +2,7 @@
 
 ## D1: JSON-Only AI Boundary
 
-Claude output is never rendered directly. It must parse as JSON and pass Zod validation.
+Groq output is never rendered directly. It must parse as JSON and pass Zod validation.
 
 ## D2: Retry Once
 

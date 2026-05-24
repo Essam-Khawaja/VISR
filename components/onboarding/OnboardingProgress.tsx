@@ -2,13 +2,17 @@
 
 import { cn } from "@/lib/cn";
 
+type StepConfig = { id: string; label: string; mapHint?: string };
+
 type Props = {
-  steps: { id: string; label: string }[];
+  steps: StepConfig[];
   current: number;
   className?: string;
 };
 
 export function OnboardingProgress({ steps, current, className }: Props) {
+  const hint = steps[current]?.mapHint;
+
   return (
     <div className={cn("flex w-full flex-col gap-3", className)}>
       <div className="flex items-center justify-between gap-2">
@@ -27,7 +31,7 @@ export function OnboardingProgress({ steps, current, className }: Props) {
             <span
               key={step.id}
               className={cn(
-                "h-1.5 flex-1 rounded-full transition-colors duration-300",
+                "h-1.5 flex-1 rounded-full transition-all duration-300",
                 state === "active"
                   ? "bg-accent"
                   : state === "done"
@@ -38,6 +42,9 @@ export function OnboardingProgress({ steps, current, className }: Props) {
           );
         })}
       </div>
+      {hint ? (
+        <p className="text-[11px] text-tertiary">{hint}</p>
+      ) : null}
     </div>
   );
 }

@@ -1,8 +1,9 @@
 "use client";
 
+import { createSupabaseAnonClient } from "./supabase";
 import type { OpportunityCheck, StrategyPlan } from "./types";
 
-export type ActionState = "open" | "done" | "skipped";
+export type ActionState = "open" | "doing" | "done" | "skipped";
 
 export type JournalEntry = {
   id: string;
@@ -124,6 +125,7 @@ export function setActionState(
   try {
     window.localStorage.setItem(planKey(planId), JSON.stringify(next));
   } catch {}
+  syncToSupabase(planId, next);
   return next;
 }
 
@@ -177,6 +179,82 @@ export function addJournalEntry(planId: string, text: string): StoredPlan | null
     window.localStorage.setItem(planKey(planId), JSON.stringify(next));
   } catch {}
   return next;
+}
+
+export function addTasksToNode(
+  planId: string,
+  parentNodeId: string,
+  tasks: Array<{ name: string; recommendation: string }>,
+): import("./types").ActionNode[] {
+  const stored = loadStoredPlan(planId);
+  if (!stored) return [];
+
+  const created: import("./types").ActionNode[] = tasks.map((t) => ({
+    id: `task-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+    name: t.name,
+    status: "On Track" as const,
+    recommendation: t.recommendation,
+  }));
+
+  let attached = false;
+  for (const pillar of stored.plan.strategicPillars) {
+    if (pillar.id === parentNodeId) {
+      pillar.actions.push(...created);
+      attached = true;
+      break;
+    }
+    if (attachToAction(pillar.actions, parentNodeId, created)) {
+      attached = true;
+      break;
+    }
+  }
+
+  if (attached) {
+    try {
+      window.localStorage.setItem(
+        `pathwise.plan.${planId}`,
+        JSON.stringify(stored),
+      );
+    } catch {}
+    syncToSupabase(planId, stored);
+  }
+
+  return created;
+}
+
+function attachToAction(
+  actions: import("./types").ActionNode[],
+  parentId: string,
+  children: import("./types").ActionNode[],
+): boolean {
+  for (const action of actions) {
+    if (action.id === parentId) {
+      action.children = [...(action.children ?? []), ...children];
+      return true;
+    }
+    if (
+      action.children &&
+      attachToAction(action.children, parentId, children)
+    ) {
+      return true;
+    }
+  }
+  return false;
+}
+
+function syncToSupabase(planId: string, stored: StoredPlan): void {
+  if (planId.startsWith("demo-") || planId === "onboarding-preview") return;
+  try {
+    const sb = createSupabaseAnonClient();
+    if (!sb) return;
+    sb.from("strategy_plans")
+      .update({
+        plan: stored.plan,
+        action_states: stored.actionStates,
+      })
+      .eq("id", planId)
+      .then(() => {});
+  } catch {}
 }
 
 export function deletePlan(planId: string): void {

@@ -118,9 +118,9 @@ Acceptance criteria:
 
 ### 3. Strategy Generation
 
-Takes a `StudentProfile`, calls Claude with a strict JSON-output prompt, validates the result with Zod, and saves it to Supabase.
+Takes a `StudentProfile`, calls Groq with a strict JSON-output prompt, validates the result with Zod, and saves it to Supabase.
 
-Claude must:
+Groq must:
 
 - Identify one specific main bottleneck.
 - Avoid generic advice.
@@ -374,10 +374,10 @@ Tone:
 Hackathon judging:
 
 - Innovation and Originality: strategy dashboard, Strategy Map, opportunity-cost lens.
-- Technical Execution: typed Next.js app, Claude JSON validation, Supabase persistence, polished graph.
+- Technical Execution: typed Next.js app, Groq JSON validation, Supabase persistence, polished graph.
 - Functional Completeness: full onboarding to dashboard to opportunity-check loop.
 - Problem-Solution Fit: scattered students get a bottleneck, cut list, and 7-day route.
-- UX and Design: premium dark command center, screenshot-ready.
+- UX and Design: premium light strategy dashboard, screenshot-ready.
 - Learning and Ambition: AI, validation, database, graph visualization, end-to-end product.
 
 MVP complete when:
@@ -391,7 +391,6 @@ MVP complete when:
 - Cut List displays recommendations and reasons.
 - Next Seven Days displays actionable items.
 - Opportunity Checker accepts input and returns structured result.
-- Claude API is used for opportunity checker, or mocked cleanly if API key is missing.
+- Groq API is used for opportunity checker, or mocked cleanly if API key is missing.
 - Strategy generation API exists.
 - No blank loading states.
-

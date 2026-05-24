@@ -8,10 +8,11 @@ export function StepDestination({ value, onChange, errors }: StepProps) {
     <div className="flex flex-col gap-5">
       <div>
         <h2 className="font-display text-3xl font-semibold leading-tight text-primary">
-          Where are you going?
+          What are you actually trying to achieve?
         </h2>
         <p className="mt-2 text-[14px] text-secondary">
-          Start with the destination. We&rsquo;ll figure out the route together.
+          Be specific &mdash; we&rsquo;ll put it at the center of your map.
+          Everything else connects back here.
         </p>
       </div>
 

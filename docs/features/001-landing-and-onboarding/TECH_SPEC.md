@@ -61,7 +61,7 @@ value.split(",").map((item) => item.trim()).filter(Boolean)
 ## Styling
 
 - Use global CSS variables from `styles/globals.css`.
-- Dark premium background: `--bg-base`.
+- Light premium background: `--bg-base`.
 - Form panels: `--bg-surface`, `--border`.
 - Primary CTA: `--accent`.
 - Error CTA: include demo escape hatch.
@@ -72,4 +72,3 @@ value.split(",").map((item) => item.trim()).filter(Boolean)
 - Use semantic `<button>` elements.
 - Keep step navigation keyboard accessible.
 - Do not rely only on placeholder text.
-

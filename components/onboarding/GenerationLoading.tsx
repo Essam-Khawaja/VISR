@@ -2,22 +2,26 @@
 
 import { motion, useReducedMotion } from "framer-motion";
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { Button } from "@/components/ui/Button";
+import { demoPlanId } from "@/lib/env";
 import { ease } from "@/lib/motion";
 
 const MESSAGES = [
   "Reading your inputs",
-  "Mapping your strategic pillars",
-  "Identifying your bottleneck",
+  "Naming your bottleneck",
+  "Placing strategic pillars",
   "Building your route",
 ];
 
 type Props = {
   error?: string | null;
   onRetry?: () => void;
+  /** Render as a transparent overlay instead of opaque full-page. */
+  overlay?: boolean;
 };
 
-export function GenerationLoading({ error, onRetry }: Props) {
+export function GenerationLoading({ error, onRetry, overlay = false }: Props) {
   const reduce = useReducedMotion();
   const [shown, setShown] = useState(reduce ? MESSAGES.length : 1);
 
@@ -29,22 +33,34 @@ export function GenerationLoading({ error, onRetry }: Props) {
     return () => clearInterval(id);
   }, [reduce, error]);
 
+  const wrapperClass = overlay
+    ? "absolute inset-0 z-40 flex items-center justify-center bg-base/60 backdrop-blur-sm px-6"
+    : "fixed inset-0 z-50 flex items-center justify-center bg-base px-6";
+
   return (
-    <div
+    <motion.div
       role="status"
       aria-live="polite"
-      className="fixed inset-0 z-50 flex items-center justify-center bg-base px-6"
+      className={wrapperClass}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.3, ease }}
     >
-      <div className="relative w-full max-w-[520px] rounded-3xl border border-border bg-surface p-8 shadow-card sm:p-10">
+      <motion.div
+        className="relative w-full max-w-[520px] rounded-3xl border border-border bg-surface p-8 shadow-card sm:p-10"
+        initial={reduce ? false : { opacity: 0, y: 16, scale: 0.98 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        transition={{ duration: 0.35, ease, delay: 0.1 }}
+      >
         <div className="flex flex-col gap-3">
-          <span className="text-[11px] font-medium uppercase tracking-wider text-tertiary">
-            Pathwise · Generating
+          <span className="text-[11px] font-semibold uppercase tracking-widest text-tertiary">
+            Pathwise &middot; Generating
           </span>
           <h2 className="font-display text-3xl font-semibold leading-tight text-primary">
             Building your route
           </h2>
           <p className="text-[14px] leading-relaxed text-secondary">
-            Hold on a moment — naming your bottleneck and choosing what to cut.
+            Hold on a moment &mdash; naming your bottleneck and choosing what to cut.
           </p>
         </div>
 
@@ -101,16 +117,19 @@ export function GenerationLoading({ error, onRetry }: Props) {
         {error ? (
           <div className="mt-8 flex flex-col gap-4 rounded-2xl border border-danger/30 bg-danger-soft p-4">
             <p className="text-[14px] text-danger">{error}</p>
-            {onRetry ? (
-              <div>
+            <div className="flex flex-wrap gap-3">
+              {onRetry ? (
                 <Button variant="secondary" onClick={onRetry}>
                   Try again
                 </Button>
-              </div>
-            ) : null}
+              ) : null}
+              <Link href={`/dashboard/${demoPlanId}`}>
+                <Button variant="ghost">Open demo instead</Button>
+              </Link>
+            </div>
           </div>
         ) : null}
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 }

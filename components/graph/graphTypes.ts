@@ -17,6 +17,9 @@ export type LayoutNode = GraphNodeData & {
   radius: number;
   /** For action nodes, the pillar id they belong to. Null for goal/pillar. */
   parentId: string | null;
+  pastelColor?: string;
+  progressPercent?: number;
+  actionCount?: number;
 };
 
 export type GraphEdgeKind = "goal-pillar" | "pillar-action";
@@ -29,6 +32,7 @@ export type LayoutEdge = {
   /** The pillar this edge is rooted at (pillar of the pair). */
   parentPillarId: string;
   points: [number, number, number][];
+  progressPercent?: number;
 };
 
 export type GraphLayoutResult = {

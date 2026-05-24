@@ -12,3 +12,11 @@ Profile, plan, and opportunity writes happen through API routes so secrets stay 
 
 Without auth and RLS, this is a hackathon demo persistence layer only.
 
+## D4: Write-Through Sync
+
+planStore uses localStorage as the primary read path for speed. Writes (action state changes, task additions) are fire-and-forget synced to Supabase via the anon client. Demo and onboarding-preview plans are excluded from sync.
+
+## D5: Generate Route Persistence
+
+The POST /api/generate route now inserts both student_profiles and strategy_plans rows via the service client after plan creation. Supabase failures are caught and ignored -- localStorage is always written client-side.
+

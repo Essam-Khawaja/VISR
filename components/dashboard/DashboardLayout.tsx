@@ -5,7 +5,7 @@ import Link from "next/link";
 import { DashboardSidebar } from "@/components/layout/DashboardSidebar";
 import { Button } from "@/components/ui/Button";
 import { PlanProvider, usePlanOptional } from "./PlanProvider";
-import { GoalTreeSlot } from "./GoalTreeSlot";
+import { DashboardWorkspace } from "./DashboardWorkspace";
 import { TodayOverlay } from "./TodayOverlay";
 
 type Props = {
@@ -30,13 +30,10 @@ function DashboardShell({ planId }: { planId: string }) {
   }
 
   return (
-    <main
-      id="main"
-      className="flex h-screen overflow-hidden bg-base"
-    >
+    <main id="main" className="flex h-screen overflow-hidden bg-base">
       <DashboardSidebar planId={planId} onTodayClick={toggleToday} />
-      <div className="relative min-h-0 flex-1">
-        <GoalTreeSlot onToggleToday={toggleToday} />
+      <div className="min-w-0 flex-1 overflow-y-auto">
+        <DashboardWorkspace onToggleToday={toggleToday} />
       </div>
       <TodayOverlay open={todayOpen} onClose={() => setTodayOpen(false)} />
     </main>

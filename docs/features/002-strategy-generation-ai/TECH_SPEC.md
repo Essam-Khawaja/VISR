@@ -4,7 +4,7 @@
 
 ```text
 app/api/generate/route.ts
-lib/anthropic.ts
+lib/groq.ts
 lib/prompts/strategyPrompt.ts
 lib/validation.ts
 lib/supabase.ts
@@ -36,20 +36,20 @@ Response:
 4. Save profile to `student_profiles`.
 5. Construct a full `StudentProfile` with `id` and `createdAt`.
 6. Build prompt with `buildStrategyPrompt(profile)`.
-7. Call `callClaudeJson(prompt)`.
+7. Call `callGroqJson(system, user)`.
 8. Validate result with `StrategyPlanSchema.safeParse`.
-9. If invalid, call Claude once more with a correction prompt.
+9. If invalid, call Groq once more with a correction prompt.
 10. Save validated plan to `strategy_plans.plan`.
 11. Return `{ planId, studentId }`.
 
-## Claude Wrapper
+## Groq Wrapper
 
-`callClaudeJson(prompt: string)` should:
+`callGroqJson(system: string, user: string, opts?: GroqOptions)` should:
 
-- Require `ANTHROPIC_API_KEY`.
-- Use `process.env.ANTHROPIC_MODEL || "claude-sonnet-4-5"`.
+- Return `null` when `GROQ_API_KEY` is missing so deterministic fallback can run.
+- Use `process.env.GROQ_MODEL || "llama-3.3-70b-versatile"`.
 - Use `temperature: 0.3`.
-- Use `max_tokens` around `6000`.
+- Use `max_completion_tokens` around `6000`.
 - Strip markdown fences.
 - Parse JSON.
 - Throw useful errors.
@@ -72,9 +72,8 @@ The prompt must state:
 ```ts
 {
   error: {
-    code: "INVALID_REQUEST" | "PROFILE_SAVE_FAILED" | "CLAUDE_FAILED" | "VALIDATION_FAILED" | "PLAN_SAVE_FAILED";
+    code: "INVALID_REQUEST" | "PROFILE_SAVE_FAILED" | "GROK_FAILED" | "VALIDATION_FAILED" | "PLAN_SAVE_FAILED";
     message: string;
   }
 }
 ```
-

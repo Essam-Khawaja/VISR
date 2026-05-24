@@ -10,14 +10,19 @@ import {
   CAMERA_MIN_Z,
   CAMERA_START_Z,
   HOVER_SCALE,
+  PULSE_MAX_SCALE,
+  PULSE_MIN_SCALE,
+  PULSE_OPACITY,
+  PULSE_SPEED,
 } from "./graphAnimations";
 import { createEdgeRender, type EdgeRender } from "./graphEdges";
-import { buildGraphLayout } from "./graphLayout";
+import { buildGraphLayout, graphRadii } from "./graphLayout";
 import { createNodeMesh, haloStrength, type NodeMesh } from "./graphNodes";
 import type { GraphNodeData, GraphSelection } from "./graphTypes";
 import type { StrategicPillar } from "@/lib/types";
+import type { ActionState } from "@/lib/planStore";
 
-export type ActionState = "open" | "done" | "skipped";
+export type { ActionState };
 
 export type HoverState = {
   node: GraphNodeData;
@@ -32,10 +37,16 @@ type Props = {
   destination: string;
   mainBottleneck: string;
   actionStates?: Record<string, ActionState>;
+  isReadOnly?: boolean;
+  showAllNodes?: boolean;
+  layoutOverride?: {
+    nodes: import("./graphTypes").LayoutNode[];
+    edges: import("./graphTypes").LayoutEdge[];
+  };
 };
 
 const FOCUS_CAMERA_Z = 6.2;
-const FOCUS_CAMERA_LEAN = 0.55;
+const FOCUS_CAMERA_LEAN = 0.35;
 const LERP_FACTOR = 0.14;
 const CAM_LERP_FACTOR = 0.085;
 
@@ -50,6 +61,9 @@ export function useGraphScene({
   destination,
   mainBottleneck,
   actionStates,
+  isReadOnly = false,
+  showAllNodes = false,
+  layoutOverride,
 }: Props) {
   const [hover, setHoverState] = useState<HoverState>(null);
   const [selection, setSelectionState] = useState<GraphSelection>(null);
@@ -79,10 +93,9 @@ export function useGraphScene({
     setSelectionState({ kind: "pillar", nodeId: id });
   }, []);
 
-  // Update action node colors when actionStates change (debounced into rAF via effect)
   useEffect(() => {
-    const mutedHex = hexToThreeColor(cssVar("--muted", "#cbd5e1"));
-    const successHex = hexToThreeColor(cssVar("--success", "#059669"));
+    const mutedHex = hexToThreeColor(cssVar("--muted", "#A8A095"));
+    const successHex = hexToThreeColor(cssVar("--success", "#7D9B7A"));
     nodeMeshesRef.current.forEach((nm) => {
       if (nm.data.kind !== "action") return;
       const state = actionStatesRef.current[nm.data.id];
@@ -103,8 +116,34 @@ export function useGraphScene({
     const labelsContainer = labelsRef.current;
     if (!container) return;
 
-    const layout = buildGraphLayout(pillars, destination, mainBottleneck);
+    const layout = layoutOverride
+      ? { ...layoutOverride, destination, bottleneckPillarId: null }
+      : buildGraphLayout(pillars, destination, mainBottleneck);
     bottleneckIdRef.current = layout.bottleneckPillarId;
+
+    // Compute progress from actionStates
+    layout.nodes.forEach((n) => {
+      if (n.kind === "pillar") {
+        const pillar = pillars.find((p) => p.id === n.id);
+        if (pillar) {
+          const done = pillar.actions.filter(
+            (a) => actionStatesRef.current[a.id] === "done",
+          ).length;
+          n.progressPercent =
+            pillar.actions.length > 0 ? done / pillar.actions.length : 0;
+          n.actionCount = pillar.actions.length;
+        }
+      }
+    });
+
+    // Set edge progress from parent pillar
+    layout.edges.forEach((e) => {
+      if (e.kind === "goal-pillar") {
+        const pillarNode = layout.nodes.find((n) => n.id === e.parentPillarId);
+        e.progressPercent = pillarNode?.progressPercent ?? 0;
+      }
+    });
+
     const reduceMotion =
       typeof window !== "undefined" &&
       window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -114,7 +153,8 @@ export function useGraphScene({
     scene.add(root);
 
     const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 100);
-    camera.position.set(0, 0, CAMERA_START_Z);
+    const startZ = showAllNodes ? CAMERA_END_Z : CAMERA_START_Z;
+    camera.position.set(0, 0, startZ);
     camera.lookAt(0, 0, 0);
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
@@ -127,16 +167,44 @@ export function useGraphScene({
     canvas.style.height = "100%";
     canvas.style.touchAction = "none";
 
+    // Orbit ring
+    const orbitSegments = 128;
+    const orbitPoints: THREE.Vector3[] = [];
+    for (let i = 0; i <= orbitSegments; i++) {
+      const theta = (i / orbitSegments) * Math.PI * 2;
+      orbitPoints.push(
+        new THREE.Vector3(
+          Math.cos(theta) * graphRadii.PILLAR_RADIUS,
+          Math.sin(theta) * graphRadii.PILLAR_RADIUS,
+          0,
+        ),
+      );
+    }
+    const orbitGeo = new THREE.BufferGeometry().setFromPoints(orbitPoints);
+    const orbitMat = new THREE.LineDashedMaterial({
+      color: hexToThreeColor(cssVar("--border", "#D4CCC0")),
+      dashSize: 0.2,
+      gapSize: 0.15,
+      transparent: true,
+      opacity: 0.2,
+      depthWrite: false,
+    });
+    const orbitLine = new THREE.Line(orbitGeo, orbitMat);
+    orbitLine.computeLineDistances();
+    root.add(orbitLine);
+
     const edges: EdgeRender[] = layout.edges.map((e) => createEdgeRender(e));
-    edges.forEach((er) => root.add(er.mesh));
+    edges.forEach((er) => {
+      root.add(er.dashLine);
+      root.add(er.fillLine);
+    });
 
     const nodeMeshes: NodeMesh[] = layout.nodes.map((n) => createNodeMesh(n));
     nodeMeshes.forEach((nm) => root.add(nm.group));
     nodeMeshesRef.current = nodeMeshes;
 
-    // Apply initial action state coloring
-    const mutedHex = hexToThreeColor(cssVar("--muted", "#cbd5e1"));
-    const successHex = hexToThreeColor(cssVar("--success", "#059669"));
+    const mutedHex = hexToThreeColor(cssVar("--muted", "#A8A095"));
+    const successHex = hexToThreeColor(cssVar("--success", "#7D9B7A"));
     nodeMeshes.forEach((nm) => {
       if (nm.data.kind !== "action") return;
       const state = actionStatesRef.current[nm.data.id];
@@ -160,24 +228,49 @@ export function useGraphScene({
     if (labelsContainer) {
       labelsContainer.innerHTML = "";
       nodeMeshes.forEach((nm) => {
-        if (nm.data.kind !== "goal" && nm.data.kind !== "pillar") return;
+        const showLabel =
+          nm.data.kind === "goal" ||
+          nm.data.kind === "pillar" ||
+          (showAllNodes && nm.data.kind === "action");
+        if (!showLabel) return;
+
         const el = document.createElement("div");
-        el.className =
-          "absolute font-medium text-[11px] text-secondary whitespace-nowrap select-none transition-colors";
         el.style.willChange = "transform, opacity";
         el.style.transform = "translate(-9999px,-9999px)";
-        el.style.padding = "2px 8px";
-        el.style.borderRadius = "8px";
-        el.style.background = "rgba(255,255,255,0.85)";
-        el.style.backdropFilter = "blur(4px)";
-        el.textContent = nm.data.name;
+        el.style.position = "absolute";
+        el.style.textAlign = "center";
+        el.style.pointerEvents = "none";
+        el.style.userSelect = "none";
+
         if (nm.data.kind === "goal") {
-          el.classList.remove("text-secondary");
-          el.classList.add("text-primary");
-          el.style.fontSize = "13px";
+          el.style.color = "#FDFBF7";
+          el.style.fontSize = "14px";
           el.style.fontWeight = "600";
-          el.style.padding = "4px 12px";
+          el.style.textShadow = "0 1px 3px rgba(0,0,0,0.3)";
+          el.innerHTML = `<span>${nm.data.name}</span>
+            <div style="margin:4px auto 0;width:28px;height:3px;border-radius:2px;background:rgba(0,0,0,0.25)">
+              <div style="width:0%;height:100%;border-radius:2px;background:#C4A55A"></div>
+            </div>`;
+        } else if (nm.data.kind === "pillar") {
+          const count = nm.data.actionCount ?? 0;
+          const pct = Math.round((nm.data.progressPercent ?? 0) * 100);
+          el.style.color = "#FDFBF7";
+          el.style.fontSize = "11px";
+          el.style.fontWeight = "500";
+          el.style.textShadow = "0 1px 3px rgba(0,0,0,0.3)";
+          el.innerHTML = `${count > 0 ? `<span style="position:absolute;top:-8px;right:-8px;background:#FDFBF7;color:#2C2520;font-size:9px;font-weight:700;width:16px;height:16px;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 3px rgba(0,0,0,0.15)">${count}</span>` : ""}
+            <span>${nm.data.name}</span>
+            <div style="margin:3px auto 0;width:24px;height:3px;border-radius:2px;background:rgba(0,0,0,0.25)">
+              <div style="width:${pct}%;height:100%;border-radius:2px;background:#C4A55A;transition:width 0.3s"></div>
+            </div>`;
+        } else {
+          el.style.color = "#FDFBF7";
+          el.style.fontSize = "9px";
+          el.style.fontWeight = "500";
+          el.style.textShadow = "0 1px 2px rgba(0,0,0,0.4)";
+          el.innerHTML = `<span>${nm.data.name}</span>`;
         }
+
         labelsContainer.appendChild(el);
         labels.push({ el, node: nm });
       });
@@ -206,7 +299,7 @@ export function useGraphScene({
 
     let cameraTargetX = 0;
     let cameraTargetY = 0;
-    let cameraTargetZ = CAMERA_END_Z;
+    let cameraTargetZ = showAllNodes ? CAMERA_END_Z : CAMERA_END_Z;
     let lookAtTargetX = 0;
     let lookAtTargetY = 0;
     let currentLookX = 0;
@@ -242,8 +335,8 @@ export function useGraphScene({
       cameraTargetX = px * FOCUS_CAMERA_LEAN;
       cameraTargetY = py * FOCUS_CAMERA_LEAN;
       cameraTargetZ = FOCUS_CAMERA_Z;
-      lookAtTargetX = px * FOCUS_CAMERA_LEAN;
-      lookAtTargetY = py * FOCUS_CAMERA_LEAN;
+      lookAtTargetX = px * 0.5;
+      lookAtTargetY = py * 0.5;
       rootTargetX = 0;
       rootTargetY = 0;
     };
@@ -319,7 +412,7 @@ export function useGraphScene({
         document.body.style.cursor = "grabbing";
         return;
       }
-      updateHoverFromEvent(e);
+      if (!isReadOnly) updateHoverFromEvent(e);
     };
 
     const onPointerUp = (e: PointerEvent) => {
@@ -329,17 +422,26 @@ export function useGraphScene({
           canvas.releasePointerCapture(e.pointerId);
         } catch {}
         document.body.style.cursor = "grab";
-        if (!dragMoved) {
+        if (!dragMoved && !isReadOnly) {
           const nm = raycastNodeAt(e);
-          if (!nm || nm.data.kind === "goal") {
+          if (!nm) {
             selectionRef.current = null;
             setSelectionState(null);
-          } else if (nm.data.kind === "pillar") {
-            const next: GraphSelection = { kind: "pillar", nodeId: nm.data.id };
+          } else if (nm.data.kind === "goal" && !layoutOverride) {
+            selectionRef.current = null;
+            setSelectionState(null);
+          } else if (nm.data.kind === "goal" || nm.data.kind === "pillar") {
+            const next: GraphSelection = {
+              kind: "pillar",
+              nodeId: nm.data.id,
+            };
             selectionRef.current = next;
             setSelectionState(next);
           } else {
-            const next: GraphSelection = { kind: "action", nodeId: nm.data.id };
+            const next: GraphSelection = {
+              kind: "action",
+              nodeId: nm.data.id,
+            };
             selectionRef.current = next;
             setSelectionState(next);
           }
@@ -380,6 +482,19 @@ export function useGraphScene({
     canvas.addEventListener("wheel", onWheel, { passive: false });
 
     const computeTargets = (elapsed: number) => {
+      const introT = Math.min(1, elapsed / 800);
+
+      if (showAllNodes) {
+        nodeMeshes.forEach((nm) => {
+          nm.targetOpacity = 1 * introT;
+          nm.targetScale = 1;
+        });
+        edges.forEach((er) => {
+          er.targetOpacity = er.baseOpacity * introT;
+        });
+        return;
+      }
+
       const sel = selectionRef.current;
       const isOverview = !sel;
       const selectedPillarId =
@@ -389,7 +504,6 @@ export function useGraphScene({
             ? nodeMeshes.find((n) => n.data.id === sel.nodeId)?.parentId ?? null
             : null;
       const selectedActionId = sel?.kind === "action" ? sel.nodeId : null;
-      const introT = Math.min(1, elapsed / 800);
 
       nodeMeshes.forEach((nm) => {
         const isHovered = nm.data.id === hoveredIdRef.current;
@@ -486,7 +600,9 @@ export function useGraphScene({
         haloMat.opacity = nm.currentOpacity * haloStrength(nm, isSelected);
 
         const ringMat = nm.ring.material as THREE.MeshBasicMaterial;
-        ringMat.opacity = isSelected ? Math.min(1, nm.currentOpacity) * 0.5 : 0;
+        ringMat.opacity = isSelected
+          ? Math.min(1, nm.currentOpacity) * 0.5
+          : 0;
 
         nm.group.scale.setScalar(Math.max(0.001, nm.currentScale));
 
@@ -504,11 +620,28 @@ export function useGraphScene({
         } else {
           nm.group.position.copy(nm.basePosition);
         }
+
+        // Pulse halo animation
+        if (nm.currentOpacity > 0.1 && !reduceMotion) {
+          const p = Math.sin(
+            seconds * PULSE_SPEED * Math.PI * 2 + nm.bobPhase,
+          );
+          const s =
+            PULSE_MIN_SCALE +
+            (PULSE_MAX_SCALE - PULSE_MIN_SCALE) * (p * 0.5 + 0.5);
+          nm.pulseHalo.scale.setScalar(nm.data.radius * 9 * s);
+          (nm.pulseHalo.material as THREE.SpriteMaterial).opacity =
+            nm.currentOpacity * PULSE_OPACITY * (p * 0.5 + 0.5);
+        } else {
+          (nm.pulseHalo.material as THREE.SpriteMaterial).opacity = 0;
+        }
       });
 
       edges.forEach((er) => {
         er.currentOpacity = lerp(er.currentOpacity, er.targetOpacity, lerpT);
-        (er.mesh.material as THREE.MeshBasicMaterial).opacity =
+        (er.dashLine.material as THREE.LineDashedMaterial).opacity =
+          er.currentOpacity;
+        (er.fillLine.material as THREE.LineBasicMaterial).opacity =
           er.currentOpacity;
       });
 
@@ -533,11 +666,7 @@ export function useGraphScene({
             tmpVec.project(camera);
             const x = (tmpVec.x * 0.5 + 0.5) * w;
             const y = (1 - (tmpVec.y * 0.5 + 0.5)) * h;
-            const offset =
-              node.data.kind === "goal"
-                ? -42
-                : (node.data.radius + 0.6) * 30;
-            el.style.transform = `translate(${x}px, ${y + offset}px) translate(-50%, -50%)`;
+            el.style.transform = `translate(${x}px, ${y}px) translate(-50%, -50%)`;
             const op = Math.min(1, node.currentOpacity);
             el.style.opacity = String(op);
           });
@@ -562,21 +691,34 @@ export function useGraphScene({
       if (labelsContainer) labelsContainer.innerHTML = "";
       container.removeChild(canvas);
       renderer.dispose();
+      orbitGeo.dispose();
+      orbitMat.dispose();
       nodeMeshes.forEach((nm) => {
         nm.core.geometry.dispose();
         (nm.core.material as THREE.Material).dispose();
         nm.ring.geometry.dispose();
         (nm.ring.material as THREE.Material).dispose();
         (nm.halo.material as THREE.Material).dispose();
+        (nm.pulseHalo.material as THREE.Material).dispose();
       });
       edges.forEach((er) => {
-        er.mesh.geometry.dispose();
-        (er.mesh.material as THREE.Material).dispose();
+        er.dashLine.geometry.dispose();
+        (er.dashLine.material as THREE.Material).dispose();
+        er.fillLine.geometry.dispose();
+        (er.fillLine.material as THREE.Material).dispose();
       });
-      selectionRef.current = null;
       nodeMeshesRef.current = [];
     };
-  }, [containerRef, labelsRef, pillars, destination, mainBottleneck]);
+  }, [
+    containerRef,
+    labelsRef,
+    pillars,
+    destination,
+    mainBottleneck,
+    isReadOnly,
+    showAllNodes,
+    layoutOverride,
+  ]);
 
   return {
     hover,

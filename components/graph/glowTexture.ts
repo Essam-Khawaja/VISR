@@ -17,10 +17,10 @@ export function getGlowTexture(): THREE.CanvasTexture {
   if (!ctx) throw new Error("2d context unavailable");
   const c = size / 2;
   const gradient = ctx.createRadialGradient(c, c, 0, c, c, c);
-  gradient.addColorStop(0.0, "rgba(255,255,255,0.95)");
-  gradient.addColorStop(0.25, "rgba(255,255,255,0.45)");
-  gradient.addColorStop(0.55, "rgba(255,255,255,0.12)");
-  gradient.addColorStop(1.0, "rgba(255,255,255,0)");
+  gradient.addColorStop(0.0, "rgba(255,248,240,0.95)");
+  gradient.addColorStop(0.25, "rgba(255,248,240,0.45)");
+  gradient.addColorStop(0.55, "rgba(255,248,240,0.12)");
+  gradient.addColorStop(1.0, "rgba(255,248,240,0)");
   ctx.fillStyle = gradient;
   ctx.fillRect(0, 0, size, size);
   const tex = new THREE.CanvasTexture(canvas);
