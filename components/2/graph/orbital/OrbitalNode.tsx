@@ -12,6 +12,9 @@ type Props = {
   radius: number;
   onClick: () => void;
   isCenter?: boolean;
+  /** Smaller child star in a constellation cluster */
+  variant?: "default" | "satellite";
+  animationDelay?: number;
 };
 
 function wrapLabel(label: string, maxChars: number): string[] {
@@ -39,11 +42,15 @@ export function OrbitalNode({
   radius,
   onClick,
   isCenter = false,
+  variant = "default",
+  animationDelay = 0,
 }: Props) {
+  const isSatellite = variant === "satellite";
   const subGoalCount = node.subGoals.length;
-  const maxChars = isCenter ? 13 : 10;
-  const fontSize = isCenter ? 13 : 11;
-  const lineHeight = isCenter ? 15 : 13;
+  const maxChars = isCenter ? 13 : isSatellite ? 8 : 10;
+  const fontSize = isCenter ? 13 : isSatellite ? 9 : 11;
+  const lineHeight = isCenter ? 15 : isSatellite ? 11 : 13;
+  const showBadge = subGoalCount > 0 && !isCenter && !isSatellite;
   const lines = wrapLabel(node.label, maxChars);
   const blockHeight = lines.length * lineHeight;
   const textStartY = y - blockHeight / 2 + lineHeight / 2;
@@ -73,12 +80,12 @@ export function OrbitalNode({
       <motion.circle
         cx={x}
         cy={y}
-        r={radius + 12}
+        r={radius + (isSatellite ? 6 : 12)}
         fill={node.color}
-        opacity="0.08"
+        opacity={isSatellite ? 0.12 : 0.08}
         initial={{ scale: 0, opacity: 0 }}
-        animate={{ scale: 1, opacity: 0.08 }}
-        transition={{ duration: 0.4 }}
+        animate={{ scale: 1, opacity: isSatellite ? 0.12 : 0.08 }}
+        transition={{ duration: 0.4, delay: animationDelay }}
       />
 
       <motion.circle
@@ -87,23 +94,30 @@ export function OrbitalNode({
         r={radius}
         fill={node.color}
         stroke={node.strokeColor}
-        strokeWidth={node.strokeColor ? 2.5 : 0}
+        strokeWidth={node.strokeColor ? (isSatellite ? 2 : 2.5) : 0}
         filter={`url(#shadow-${node.id})`}
         initial={{ scale: 0 }}
         animate={{ scale: 1 }}
-        whileHover={{ scale: 1.08 }}
-        transition={{ duration: 0.3, type: "spring", stiffness: 300 }}
+        whileHover={{ scale: isSatellite ? 1.12 : 1.08 }}
+        transition={{
+          duration: 0.3,
+          delay: animationDelay,
+          type: "spring",
+          stiffness: 300,
+        }}
       />
 
-      <rect
-        x={x - radius * 0.45}
-        y={y + radius * 0.32}
-        width={radius * 0.9}
-        height={radius * 0.12}
-        fill="white"
-        opacity="0.25"
-        rx="2"
-      />
+      {!isSatellite ? (
+        <rect
+          x={x - radius * 0.45}
+          y={y + radius * 0.32}
+          width={radius * 0.9}
+          height={radius * 0.12}
+          fill="white"
+          opacity="0.25"
+          rx="2"
+        />
+      ) : null}
 
       <text
         textAnchor="middle"
@@ -123,7 +137,7 @@ export function OrbitalNode({
         ))}
       </text>
 
-      {subGoalCount > 0 && !isCenter ? (
+      {showBadge ? (
         <g>
           <circle
             cx={x + radius * 0.65}

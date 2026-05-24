@@ -148,6 +148,7 @@ export function OrbitalDashboard({ onTodayClick }: Props) {
         <div className="flex h-full w-full items-center justify-center px-4 pb-4 pt-16">
           <OrbitalMap
             centerNode={currentNode}
+            rootGoal={root}
             onNodeClick={handleNodeClick}
             onCenterClick={() => setDialogNodeId(currentNode.id)}
             currentPath={currentPath}
