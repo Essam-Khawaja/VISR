@@ -239,8 +239,8 @@ export function useGraphScene({
           el.style.fontWeight = "600";
           el.style.textShadow = "0 1px 3px rgba(0,0,0,0.3)";
           el.innerHTML = `<span>${nm.data.name}</span>
-            <div style="margin:4px auto 0;width:28px;height:3px;border-radius:2px;background:rgba(255,255,255,0.35)">
-              <div style="width:0%;height:100%;border-radius:2px;background:rgba(255,255,255,0.8)"></div>
+            <div style="margin:4px auto 0;width:28px;height:3px;border-radius:2px;background:rgba(0,0,0,0.25)">
+              <div style="width:0%;height:100%;border-radius:2px;background:#C4A55A"></div>
             </div>`;
         } else {
           const count = nm.data.actionCount ?? 0;
@@ -251,8 +251,8 @@ export function useGraphScene({
           el.style.textShadow = "0 1px 3px rgba(0,0,0,0.3)";
           el.innerHTML = `${count > 0 ? `<span style="position:absolute;top:-8px;right:-8px;background:#FDFBF7;color:#2C2520;font-size:9px;font-weight:700;width:16px;height:16px;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 3px rgba(0,0,0,0.15)">${count}</span>` : ""}
             <span>${nm.data.name}</span>
-            <div style="margin:3px auto 0;width:24px;height:3px;border-radius:2px;background:rgba(255,255,255,0.3)">
-              <div style="width:${pct}%;height:100%;border-radius:2px;background:rgba(255,255,255,0.8);transition:width 0.3s"></div>
+            <div style="margin:3px auto 0;width:24px;height:3px;border-radius:2px;background:rgba(0,0,0,0.25)">
+              <div style="width:${pct}%;height:100%;border-radius:2px;background:#C4A55A;transition:width 0.3s"></div>
             </div>`;
         }
 
@@ -677,7 +677,6 @@ export function useGraphScene({
         er.fillLine.geometry.dispose();
         (er.fillLine.material as THREE.Material).dispose();
       });
-      selectionRef.current = null;
       nodeMeshesRef.current = [];
     };
   }, [
