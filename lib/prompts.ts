@@ -111,6 +111,19 @@ export function onboardingInsightUserPrompt(
   return `Generate a sharp 1-2 sentence insight for this onboarding step.\n\n${parts.join("\n")}\n\nFor brain-dump step: also return bottleneckPreview (specific bottleneck name) and concernLabels (up to 3 keyword concerns).`;
 }
 
+export function taskGenerationSystemPrompt(): string {
+  return `You are Pathwise, a strategic academic advisor. Given a student's goal context and area of focus, generate 3-6 concrete, actionable tasks. Each task must have a "name" (short, action-oriented, max 60 chars) and a "recommendation" (1-2 sentences of practical guidance). Return ONLY a JSON object: { "tasks": [...] }. No other text.`;
+}
+
+export function taskGenerationUserPrompt(
+  parentContext: string,
+  nodeName: string,
+  nodeDescription: string,
+  userPrompt: string,
+): string {
+  return `Overall goal: ${parentContext}\nArea of focus: ${nodeName} — ${nodeDescription}\nStudent's request: ${userPrompt}\n\nGenerate concrete tasks to help with this request.`;
+}
+
 export function summarizePlan(plan: {
   destination: string;
   currentStage: string;

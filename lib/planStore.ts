@@ -179,6 +179,66 @@ export function addJournalEntry(planId: string, text: string): StoredPlan | null
   return next;
 }
 
+export function addTasksToNode(
+  planId: string,
+  parentNodeId: string,
+  tasks: Array<{ name: string; recommendation: string }>,
+): import("./types").ActionNode[] {
+  const stored = loadStoredPlan(planId);
+  if (!stored) return [];
+
+  const created: import("./types").ActionNode[] = tasks.map((t) => ({
+    id: `task-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+    name: t.name,
+    status: "On Track" as const,
+    recommendation: t.recommendation,
+  }));
+
+  let attached = false;
+  for (const pillar of stored.plan.strategicPillars) {
+    if (pillar.id === parentNodeId) {
+      pillar.actions.push(...created);
+      attached = true;
+      break;
+    }
+    if (attachToAction(pillar.actions, parentNodeId, created)) {
+      attached = true;
+      break;
+    }
+  }
+
+  if (attached) {
+    try {
+      window.localStorage.setItem(
+        `pathwise.plan.${planId}`,
+        JSON.stringify(stored),
+      );
+    } catch {}
+  }
+
+  return created;
+}
+
+function attachToAction(
+  actions: import("./types").ActionNode[],
+  parentId: string,
+  children: import("./types").ActionNode[],
+): boolean {
+  for (const action of actions) {
+    if (action.id === parentId) {
+      action.children = [...(action.children ?? []), ...children];
+      return true;
+    }
+    if (
+      action.children &&
+      attachToAction(action.children, parentId, children)
+    ) {
+      return true;
+    }
+  }
+  return false;
+}
+
 export function deletePlan(planId: string): void {
   if (!isBrowser()) return;
   try {

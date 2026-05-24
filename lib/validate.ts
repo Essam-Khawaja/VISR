@@ -13,11 +13,21 @@ export const ProfileSchema = z.object({
   brainDump: z.string().min(10).max(4000),
 });
 
-export const ActionNodeSchema = z.object({
-  id: z.string(),
-  name: z.string().max(80),
-  status: z.enum(["On Track", "Behind", "At Risk", "Deferred", "Cut"]),
-  recommendation: z.string().max(400),
+export const ActionNodeSchema: z.ZodType<import("./types").ActionNode> =
+  z.object({
+    id: z.string(),
+    name: z.string().max(80),
+    status: z.enum(["On Track", "Behind", "At Risk", "Deferred", "Cut"]),
+    recommendation: z.string().max(400),
+    children: z.lazy(() => z.array(ActionNodeSchema)).optional(),
+  });
+
+export const TaskGenerationRequestSchema = z.object({
+  nodeId: z.string(),
+  nodeName: z.string(),
+  nodeDescription: z.string(),
+  parentContext: z.string(),
+  userPrompt: z.string().min(1).max(500),
 });
 
 export const StrategicPillarSchema = z.object({

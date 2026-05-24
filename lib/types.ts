@@ -30,6 +30,7 @@ export type ActionNode = {
   name: string;
   status: NodeStatus;
   recommendation: string;
+  children?: ActionNode[];
 };
 
 export type StrategicPillar = {
