@@ -26,7 +26,7 @@ export function OnboardingMapPanel({ mapState, insight, isInsightLoading }: Prop
       className="relative h-full w-full bg-base"
       aria-label="Strategy map preview, updating as you answer"
     >
-      <div className="pointer-events-none absolute left-4 top-4 z-20 w-[min(320px,calc(100%-2rem))]">
+      <div className="pointer-events-none absolute bottom-5 left-4 z-20 w-[min(360px,calc(100%-2rem))] sm:bottom-6 sm:left-6">
         <div className="pointer-events-auto">
           <OnboardingInsightStrip insight={insight} isLoading={isInsightLoading} />
         </div>
@@ -36,8 +36,13 @@ export function OnboardingMapPanel({ mapState, insight, isInsightLoading }: Prop
         <GoalTree
           plan={plan}
           planId="onboarding-preview"
+          nodes={[]}
           actionStates={{}}
+          tasks={[]}
+          rollups={{}}
           markAction={() => {}}
+          onCreateTask={async () => {}}
+          onMarkTask={async () => {}}
           isDemo={false}
           onToggleToday={() => {}}
           displayMode="onboarding"

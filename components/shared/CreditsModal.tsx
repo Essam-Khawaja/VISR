@@ -62,8 +62,8 @@ export function CreditsModal({ open, onClose }: CreditsModalProps) {
               Built by two students
             </h2>
             <p className="mt-1 text-[12px] text-secondary">
-              Pathwise was a hackathon project on two perspectives of the same
-              student-life problem.
+              Pathwise was a hackathon project about turning scattered student
+              ambition into one connected route.
             </p>
           </div>
           <button

@@ -8,7 +8,19 @@ import { StrategyHUD } from "./StrategyHUD";
 import { buildNucleusLayout, type NucleusChild } from "./graphLayout";
 import { useGraphScene, type ActionState } from "./useGraphScene";
 import type { LayoutEdge, LayoutNode, GraphSelection } from "./graphTypes";
-import type { ActionNode, StrategyPlan } from "@/lib/2/types";
+import type {
+  ActionNode,
+  StrategyNode,
+  StrategyPlan,
+  StrategyTask,
+  StrategyTaskStatus,
+} from "@/lib/2/types";
+import { nodesForParent } from "@/lib/2/nodeStore";
+import {
+  tasksForNode,
+  type CreateStrategyTaskInput,
+  type NodeRollup,
+} from "@/lib/2/taskStore";
 
 const PILLAR_PASTELS = [
   "#933B5B", // amaranth
@@ -25,14 +37,15 @@ type FocusBreadcrumb = { id: string; name: string };
 export type GoalTreeProps = {
   plan: StrategyPlan;
   planId: string;
+  nodes: StrategyNode[];
   actionStates: Record<string, ActionState>;
+  tasks: StrategyTask[];
+  rollups: Record<string, NodeRollup>;
   markAction: (actionId: string, state: ActionState) => void;
+  onCreateTask: (input: Omit<CreateStrategyTaskInput, "planId">) => Promise<void>;
+  onMarkTask: (taskId: string, state: StrategyTaskStatus) => Promise<void>;
   isDemo: boolean;
   onToggleToday: () => void;
-  onAddTasks?: (
-    parentNodeId: string,
-    tasks: { name: string; recommendation: string }[],
-  ) => void;
   displayMode?: "onboarding" | "preview" | "full";
   layoutOverride?: { nodes: LayoutNode[]; edges: LayoutEdge[] };
 };
@@ -51,7 +64,16 @@ function findActionDeep(
   return null;
 }
 
-function findNodeName(plan: StrategyPlan, nodeId: string): string {
+function findNodeName(
+  plan: StrategyPlan,
+  tasks: StrategyTask[],
+  nodes: StrategyNode[],
+  nodeId: string,
+): string {
+  const sn = nodes.find((n) => n.id === nodeId);
+  if (sn) return sn.title;
+  const task = tasks.find((t) => t.id === nodeId || t.graphNodeId === nodeId);
+  if (task) return task.title;
   if (nodeId === "goal") return plan.destination;
   for (const p of plan.strategicPillars) {
     if (p.id === nodeId) return p.name;
@@ -61,8 +83,89 @@ function findNodeName(plan: StrategyPlan, nodeId: string): string {
   return "Unknown";
 }
 
+function taskNodeColor(task: StrategyTask): string {
+  if (task.status === "done") return "#8A9A5B";
+  if (task.priority === "High") return "#933B5B";
+  if (task.priority === "Medium") return "#C4A882";
+  return "#AABAAE";
+}
+
+function taskChildren(task: StrategyTask, tasks: StrategyTask[]): NucleusChild[] {
+  return tasksForNode(tasks, task.id).map((child, i) => ({
+    id: child.id,
+    name: child.title,
+    status: child.status,
+    recommendation: child.recommendation || `Due ${child.dueDate}`,
+    pastelColor: taskNodeColor(child),
+    childCount: tasksForNode(tasks, child.id).length,
+  }));
+}
+
+function nodeChildColor(node: StrategyNode, index: number): string {
+  if (node.kind === "course") return PILLAR_PASTELS[0];
+  if (node.kind === "club" || node.kind === "work" || node.kind === "research")
+    return PILLAR_PASTELS[1];
+  if (node.kind === "commitment" || node.kind === "project")
+    return PILLAR_PASTELS[2];
+  return PILLAR_PASTELS[index % PILLAR_PASTELS.length];
+}
+
+function resolveNucleusFromNodes(
+  allNodes: StrategyNode[],
+  tasks: StrategyTask[],
+  focusPath: FocusBreadcrumb[],
+): {
+  nucleusId: string;
+  nucleusName: string;
+  nucleusPastel: string;
+  children: NucleusChild[];
+} | null {
+  const rootNode = allNodes.find((n) => n.parentNodeId === null);
+  if (!rootNode) return null;
+
+  const targetId =
+    focusPath.length === 0
+      ? rootNode.id
+      : focusPath[focusPath.length - 1].id;
+
+  const target = allNodes.find((n) => n.id === targetId);
+  if (!target) return null;
+
+  const childNodes = nodesForParent(allNodes, targetId);
+  const childTasks = tasksForNode(tasks, targetId);
+
+  const children: NucleusChild[] = [
+    ...childNodes.map((child, i) => ({
+      id: child.id,
+      name: child.title,
+      status: child.status === "at_risk" ? "At Risk" : child.status === "done" ? "Done" : "On Track",
+      recommendation: child.subtitle || child.kind,
+      pastelColor: nodeChildColor(child, i),
+      childCount: nodesForParent(allNodes, child.id).length + tasksForNode(tasks, child.id).length,
+    })),
+    ...childTasks.map((task) => ({
+      id: task.id,
+      name: task.title,
+      status: task.status,
+      recommendation: task.recommendation || `Due ${task.dueDate}`,
+      pastelColor: taskNodeColor(task),
+      childCount: tasksForNode(tasks, task.id).length,
+    })),
+  ];
+
+  const rootIdx = allNodes.indexOf(target);
+  return {
+    nucleusId: target.id,
+    nucleusName: target.title,
+    nucleusPastel: PILLAR_PASTELS[rootIdx % PILLAR_PASTELS.length],
+    children,
+  };
+}
+
 function resolveNucleusLevel(
   plan: StrategyPlan,
+  tasks: StrategyTask[],
+  nodes: StrategyNode[],
   focusPath: FocusBreadcrumb[],
 ): {
   nucleusId: string;
@@ -70,19 +173,46 @@ function resolveNucleusLevel(
   nucleusPastel: string;
   children: NucleusChild[];
 } {
+  const hasRealNodes = nodes.some((n) => n.parentNodeId === null && n.kind !== "strategic_pillar");
+  if (hasRealNodes) {
+    const result = resolveNucleusFromNodes(nodes, tasks, focusPath);
+    if (result && result.children.length > 0) return result;
+  }
   if (focusPath.length === 0) {
     return {
       nucleusId: "goal",
       nucleusName: plan.destination,
       nucleusPastel: GOAL_PASTEL,
-      children: plan.strategicPillars.map((p, i) => ({
-        id: p.id,
-        name: p.name,
-        status: p.status,
-        recommendation: p.reason,
-        pastelColor: PILLAR_PASTELS[i % PILLAR_PASTELS.length],
-        childCount: p.actions.length,
-      })),
+      children: [
+        ...plan.strategicPillars.map((p, i) => ({
+          id: p.id,
+          name: p.name,
+          status: p.status,
+          recommendation: p.reason,
+          pastelColor: PILLAR_PASTELS[i % PILLAR_PASTELS.length],
+          childCount: p.actions.length + tasksForNode(tasks, p.id).length,
+        })),
+        ...tasksForNode(tasks, "goal").map((task) => ({
+          id: task.id,
+          name: task.title,
+          status: task.status,
+          recommendation: task.recommendation || `Due ${task.dueDate}`,
+          pastelColor: taskNodeColor(task),
+          childCount: tasksForNode(tasks, task.id).length,
+        })),
+      ],
+    };
+  }
+
+  const focusedTask = tasks.find(
+    (task) => task.id === focusPath[focusPath.length - 1]?.id,
+  );
+  if (focusedTask) {
+    return {
+      nucleusId: focusedTask.id,
+      nucleusName: focusedTask.title,
+      nucleusPastel: taskNodeColor(focusedTask),
+      children: taskChildren(focusedTask, tasks),
     };
   }
 
@@ -106,14 +236,25 @@ function resolveNucleusLevel(
       nucleusId: pillar.id,
       nucleusName: pillar.name,
       nucleusPastel: basePastel,
-      children: pillar.actions.map((a) => ({
-        id: a.id,
-        name: a.name,
-        status: a.status,
-        recommendation: a.recommendation,
-        pastelColor: basePastel,
-        childCount: a.children?.length ?? 0,
-      })),
+      children: [
+        ...pillar.actions.map((a) => ({
+          id: a.id,
+          name: a.name,
+          status: a.status,
+          recommendation: a.recommendation,
+          pastelColor: basePastel,
+          childCount:
+            (a.children?.length ?? 0) + tasksForNode(tasks, a.id).length,
+        })),
+        ...tasksForNode(tasks, pillar.id).map((task) => ({
+          id: task.id,
+          name: task.title,
+          status: task.status,
+          recommendation: task.recommendation || `Due ${task.dueDate}`,
+          pastelColor: taskNodeColor(task),
+          childCount: tasksForNode(tasks, task.id).length,
+        })),
+      ],
     };
   }
 
@@ -133,14 +274,25 @@ function resolveNucleusLevel(
         nucleusId: action.id,
         nucleusName: action.name,
         nucleusPastel: basePastel,
-        children: (action.children ?? []).map((c) => ({
-          id: c.id,
-          name: c.name,
-          status: c.status,
-          recommendation: c.recommendation,
-          pastelColor: basePastel,
-          childCount: c.children?.length ?? 0,
-        })),
+        children: [
+          ...(action.children ?? []).map((c) => ({
+            id: c.id,
+            name: c.name,
+            status: c.status,
+            recommendation: c.recommendation,
+            pastelColor: basePastel,
+            childCount:
+              (c.children?.length ?? 0) + tasksForNode(tasks, c.id).length,
+          })),
+          ...tasksForNode(tasks, action.id).map((task) => ({
+            id: task.id,
+            name: task.title,
+            status: task.status,
+            recommendation: task.recommendation || `Due ${task.dueDate}`,
+            pastelColor: taskNodeColor(task),
+            childCount: tasksForNode(tasks, task.id).length,
+          })),
+        ],
       };
     }
     actions = action.children ?? [];
@@ -157,11 +309,15 @@ function resolveNucleusLevel(
 export default function GoalTree({
   plan,
   planId,
+  nodes,
   actionStates,
+  tasks,
+  rollups,
   markAction,
+  onCreateTask,
+  onMarkTask,
   isDemo,
   onToggleToday,
-  onAddTasks,
   displayMode = "full",
   layoutOverride,
 }: GoalTreeProps) {
@@ -170,15 +326,38 @@ export default function GoalTree({
   const [dockOpen, setDockOpen] = useState(false);
   const [focusPath, setFocusPath] = useState<FocusBreadcrumb[]>([]);
   const [exploreDialogId, setExploreDialogId] = useState<string | null>(null);
+  const [didAutoFocus, setDidAutoFocus] = useState(false);
 
   const onboarding = displayMode === "onboarding";
   const preview = displayMode === "preview";
   const explore = displayMode === "full";
 
+  useEffect(() => {
+    if (!explore || didAutoFocus || nodes.length === 0) return;
+    const rootNode = nodes.find((n) => n.parentNodeId === null);
+    if (!rootNode) return;
+
+    const yearNode = nodes.find(
+      (n) => n.parentNodeId === rootNode.id && n.kind === "academic_year",
+    );
+    if (!yearNode) return;
+
+    const semesterNode = nodes.find(
+      (n) => n.parentNodeId === yearNode.id && n.kind === "semester",
+    );
+
+    const path: FocusBreadcrumb[] = [{ id: yearNode.id, name: yearNode.title }];
+    if (semesterNode) {
+      path.push({ id: semesterNode.id, name: semesterNode.title });
+    }
+    setFocusPath(path);
+    setDidAutoFocus(true);
+  }, [explore, nodes, didAutoFocus]);
+
   const nucleusLevel = useMemo(() => {
     if (!explore) return null;
-    return resolveNucleusLevel(plan, focusPath);
-  }, [explore, plan, focusPath]);
+    return resolveNucleusLevel(plan, tasks, nodes, focusPath);
+  }, [explore, plan, tasks, nodes, focusPath]);
 
   const nucleusLayout = useMemo(() => {
     if (!nucleusLevel) return undefined;
@@ -201,22 +380,13 @@ export default function GoalTree({
       destination: plan.destination,
       mainBottleneck: plan.mainBottleneck,
       actionStates,
+      rollups,
       isReadOnly: onboarding || preview,
       showAllNodes: preview,
       layoutOverride: explore ? nucleusLayout : layoutOverride,
     });
 
   const toggleDock = useCallback(() => setDockOpen((v) => !v), []);
-
-  const handleAddTasks = useCallback(
-    (
-      parentNodeId: string,
-      tasks: { name: string; recommendation: string }[],
-    ) => {
-      onAddTasks?.(parentNodeId, tasks);
-    },
-    [onAddTasks],
-  );
 
   // Handle clicks in Explore mode
   useEffect(() => {
@@ -236,11 +406,11 @@ export default function GoalTree({
     }
 
     // Clicked an orbit node — only drill in, no dialog
-    const name = findNodeName(plan, nodeId);
+    const name = findNodeName(plan, tasks, nodes, nodeId);
     setFocusPath((prev) => [...prev, { id: nodeId, name }]);
     setExploreDialogId(null);
     clearSelection();
-  }, [selection, explore, focusPath, plan, clearSelection]);
+  }, [selection, explore, focusPath, plan, tasks, nodes, clearSelection]);
 
   const closeExploreDialog = useCallback(() => {
     setExploreDialogId(null);
@@ -312,7 +482,6 @@ export default function GoalTree({
       <div
         ref={labelsRef}
         className="pointer-events-none absolute inset-0 z-10"
-        aria-hidden
       />
 
       {explore ? (
@@ -342,22 +511,20 @@ export default function GoalTree({
         <NodeTaskDialog
           plan={plan}
           selection={exploreSelection}
-          actionStates={actionStates}
-          onSelect={select}
+          tasks={tasks}
           onClose={closeExploreDialog}
-          onToggleAction={markAction}
-          onAddTasks={handleAddTasks}
+          onCreateTask={onCreateTask}
+          onMarkTask={onMarkTask}
           isDemo={isDemo}
         />
       ) : hideNonExploreChrome ? null : (
         <NodeTaskDialog
           plan={plan}
           selection={selection}
-          actionStates={actionStates}
-          onSelect={select}
+          tasks={tasks}
           onClose={clearSelection}
-          onToggleAction={markAction}
-          onAddTasks={handleAddTasks}
+          onCreateTask={onCreateTask}
+          onMarkTask={onMarkTask}
           isDemo={isDemo}
         />
       )}

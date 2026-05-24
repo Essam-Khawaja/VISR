@@ -7,28 +7,33 @@ import type {
   ActionNode,
   PillarStatus,
   NodeStatus,
+  Priority,
   StrategicPillar,
   StrategyPlan,
+  StrategyTask,
+  StrategyTaskParentKind,
+  StrategyTaskStatus,
 } from "@/lib/2/types";
-import type { ActionState } from "@/lib/2/planStore";
+import {
+  addLocalDays,
+  tasksForNode,
+  todayLocalDate,
+  type CreateStrategyTaskInput,
+} from "@/lib/2/taskStore";
 import type { GraphSelection } from "./graphTypes";
 
 type Props = {
   plan: StrategyPlan;
   selection: GraphSelection;
-  actionStates: Record<string, ActionState>;
-  onSelect: (selection: GraphSelection) => void;
+  tasks: StrategyTask[];
   onClose: () => void;
-  onToggleAction: (actionId: string, state: ActionState) => void;
-  onAddTasks: (
-    parentNodeId: string,
-    tasks: { name: string; recommendation: string }[],
-  ) => void;
+  onCreateTask: (input: Omit<CreateStrategyTaskInput, "planId">) => Promise<void>;
+  onMarkTask: (taskId: string, state: StrategyTaskStatus) => Promise<void>;
   isDemo: boolean;
 };
 
 type ResolvedNode = {
-  kind: "pillar" | "action";
+  kind: "pillar" | "action" | "task";
   pillar: StrategicPillar;
   node: { id: string; name: string; status: string; recommendation?: string; reason?: string };
   children: ActionNode[];
@@ -50,9 +55,32 @@ function findActionDeep(
 
 function resolveNode(
   plan: StrategyPlan,
+  tasks: StrategyTask[],
   selection: GraphSelection,
 ): ResolvedNode | null {
   if (!selection) return null;
+
+  const selectedTask = tasks.find((task) => task.id === selection.nodeId);
+  if (selectedTask) {
+    const syntheticPillar: StrategicPillar = {
+      id: selectedTask.parentNodeId,
+      name: "Strategy task",
+      status: "Okay",
+      reason: "A dated task connected to the current strategy.",
+      actions: [],
+    };
+    return {
+      kind: "task",
+      pillar: syntheticPillar,
+      node: {
+        id: selectedTask.id,
+        name: selectedTask.title,
+        status: selectedTask.status,
+        recommendation: selectedTask.recommendation || `Due ${selectedTask.dueDate}`,
+      },
+      children: [],
+    };
+  }
 
   if (selection.nodeId === "goal") {
     const syntheticPillar: StrategicPillar = {
@@ -106,18 +134,43 @@ function statusTone(
   return "muted";
 }
 
+function parentKindFor(resolved: ResolvedNode): StrategyTaskParentKind {
+  if (resolved.node.id === "goal") return "goal";
+  return resolved.kind === "pillar" ? "pillar" : "task";
+}
+
+function parentTaskFor(
+  resolved: ResolvedNode,
+  tasks: StrategyTask[],
+): string | null {
+  if (resolved.kind === "task") return resolved.node.id;
+  if (resolved.kind !== "action") return null;
+  const backing = tasks.find(
+    (task) =>
+      task.id === resolved.node.id || task.sourceActionId === resolved.node.id,
+  );
+  return backing?.id ?? null;
+}
+
+function isOverdue(task: StrategyTask): boolean {
+  return task.status !== "done" && task.dueDate < todayLocalDate();
+}
+
+function nextStatus(current: StrategyTaskStatus): StrategyTaskStatus {
+  return current === "done" ? "open" : "done";
+}
+
 export function NodeTaskDialog({
   plan,
   selection,
-  actionStates,
-  onSelect,
+  tasks,
   onClose,
-  onToggleAction,
-  onAddTasks,
+  onCreateTask,
+  onMarkTask,
   isDemo,
 }: Props) {
   const reduce = useReducedMotion();
-  const resolved = resolveNode(plan, selection);
+  const resolved = resolveNode(plan, tasks, selection);
 
   return (
     <AnimatePresence>
@@ -135,11 +188,10 @@ export function NodeTaskDialog({
           <DialogInner
             resolved={resolved}
             plan={plan}
-            actionStates={actionStates}
-            onSelect={onSelect}
+            tasks={tasks}
             onClose={onClose}
-            onToggleAction={onToggleAction}
-            onAddTasks={onAddTasks}
+            onCreateTask={onCreateTask}
+            onMarkTask={onMarkTask}
             isDemo={isDemo}
           />
         </motion.div>
@@ -151,23 +203,18 @@ export function NodeTaskDialog({
 function DialogInner({
   resolved,
   plan,
-  actionStates,
-  onSelect,
+  tasks,
   onClose,
-  onToggleAction,
-  onAddTasks,
+  onCreateTask,
+  onMarkTask,
   isDemo,
 }: {
   resolved: ResolvedNode;
   plan: StrategyPlan;
-  actionStates: Record<string, ActionState>;
-  onSelect: (sel: GraphSelection) => void;
+  tasks: StrategyTask[];
   onClose: () => void;
-  onToggleAction: (id: string, s: ActionState) => void;
-  onAddTasks: (
-    parentNodeId: string,
-    tasks: { name: string; recommendation: string }[],
-  ) => void;
+  onCreateTask: (input: Omit<CreateStrategyTaskInput, "planId">) => Promise<void>;
+  onMarkTask: (taskId: string, state: StrategyTaskStatus) => Promise<void>;
   isDemo: boolean;
 }) {
   const [activeTab, setActiveTab] = useState<"tasks" | "generate">("tasks");
@@ -201,7 +248,11 @@ function DialogInner({
           {resolved.node.status}
         </Badge>
         <span className="text-[11px] font-medium text-tertiary">
-          {resolved.kind === "pillar" ? "Pillar" : "Action"}
+          {resolved.kind === "pillar"
+            ? "Pillar"
+            : resolved.kind === "task"
+              ? "Task"
+              : "Action"}
         </span>
       </div>
       <h2 className="mt-2 font-display text-[20px] font-semibold leading-tight text-primary">
@@ -231,17 +282,17 @@ function DialogInner({
         {activeTab === "tasks" ? (
           <TasksTab
             resolved={resolved}
-            actionStates={actionStates}
-            onSelect={onSelect}
-            onToggleAction={onToggleAction}
-            onAddTasks={onAddTasks}
+            tasks={tasks}
+            onCreateTask={onCreateTask}
+            onMarkTask={onMarkTask}
             isDemo={isDemo}
           />
         ) : (
           <GenerateTab
             resolved={resolved}
             plan={plan}
-            onAddTasks={onAddTasks}
+            tasks={tasks}
+            onCreateTask={onCreateTask}
           />
         )}
       </div>
@@ -278,92 +329,84 @@ function TabButton({
 
 function TasksTab({
   resolved,
-  actionStates,
-  onSelect,
-  onToggleAction,
-  onAddTasks,
+  tasks,
+  onCreateTask,
+  onMarkTask,
   isDemo,
 }: {
   resolved: ResolvedNode;
-  actionStates: Record<string, ActionState>;
-  onSelect: (sel: GraphSelection) => void;
-  onToggleAction: (id: string, s: ActionState) => void;
-  onAddTasks: (
-    parentNodeId: string,
-    tasks: { name: string; recommendation: string }[],
-  ) => void;
+  tasks: StrategyTask[];
+  onCreateTask: (input: Omit<CreateStrategyTaskInput, "planId">) => Promise<void>;
+  onMarkTask: (taskId: string, state: StrategyTaskStatus) => Promise<void>;
   isDemo: boolean;
 }) {
   const [adding, setAdding] = useState(false);
   const [newName, setNewName] = useState("");
+  const [newDueDate, setNewDueDate] = useState(todayLocalDate());
+  const [newPriority, setNewPriority] = useState<Priority>("Medium");
+  const nodeTasks = tasksForNode(tasks, resolved.node.id);
 
-  const handleAdd = () => {
+  const handleAdd = async () => {
     const trimmed = newName.trim();
-    if (!trimmed) return;
-    onAddTasks(resolved.node.id, [
-      { name: trimmed, recommendation: "User-created task" },
-    ]);
+    if (!trimmed || !newDueDate) return;
+    await onCreateTask({
+      parentNodeId: resolved.node.id,
+      parentNodeKind: parentKindFor(resolved),
+      parentTaskId: parentTaskFor(resolved, tasks),
+      title: trimmed,
+      recommendation: "User-created task",
+      dueDate: newDueDate,
+      priority: newPriority,
+      source: "strategy_map",
+    });
     setNewName("");
+    setNewDueDate(todayLocalDate());
+    setNewPriority("Medium");
     setAdding(false);
   };
 
   return (
     <div>
-      {resolved.children.length === 0 && !adding ? (
+      {nodeTasks.length === 0 && !adding ? (
         <p className="py-3 text-center text-[12px] text-tertiary">
           No tasks yet. Add one below or use AI Generate.
         </p>
       ) : (
-        <ul className="flex flex-col">
-          {resolved.children.map((child) => {
-            const state = actionStates[child.id] ?? "open";
-            const done = state === "done";
+        <ul className="flex max-h-56 flex-col overflow-y-auto">
+          {nodeTasks.map((task) => {
+            const done = task.status === "done";
+            const overdue = isOverdue(task);
             return (
               <li
-                key={child.id}
-                className="group flex items-center gap-2 border-b border-border/60 py-2 last:border-b-0"
+                key={task.id}
+                className="flex items-start gap-2 border-b border-border/60 py-2 last:border-b-0"
               >
                 <CheckboxButton
                   checked={done}
-                  label={child.name}
-                  onToggle={() =>
-                    onToggleAction(child.id, done ? "open" : "done")
-                  }
+                  label={task.title}
+                  onToggle={() => void onMarkTask(task.id, nextStatus(task.status))}
                 />
-                <span
-                  className={
-                    "flex-1 truncate text-[13px] " +
-                    (done
-                      ? "text-tertiary line-through"
-                      : "text-primary")
-                  }
-                >
-                  {child.name}
-                </span>
-                <button
-                  type="button"
-                  onClick={() =>
-                    onSelect({ kind: "action", nodeId: child.id })
-                  }
-                  className="shrink-0 rounded-md p-1 text-tertiary opacity-0 transition-opacity group-hover:opacity-100 hover:text-primary"
-                  aria-label={`Expand ${child.name}`}
-                >
-                  <svg
-                    width="14"
-                    height="14"
-                    viewBox="0 0 14 14"
-                    fill="none"
-                    aria-hidden
+                <div className="min-w-0 flex-1">
+                  <p
+                    className={
+                      "text-[13px] leading-snug " +
+                      (done ? "text-tertiary line-through" : "text-primary")
+                    }
                   >
-                    <path
-                      d="M5 3l4 4-4 4"
-                      stroke="currentColor"
-                      strokeWidth="1.5"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
-                </button>
+                    {task.title}
+                  </p>
+                  <div className="mt-1 flex flex-wrap items-center gap-1.5">
+                    <Badge tone={task.priority === "High" ? "danger" : task.priority === "Medium" ? "warning" : "muted"}>
+                      {task.priority}
+                    </Badge>
+                    <Badge tone={overdue ? "danger" : done ? "success" : "muted"}>
+                      {overdue ? "Overdue" : task.status}
+                    </Badge>
+                    <span className="text-[11px] text-tertiary">
+                      Due {task.dueDate}
+                    </span>
+                  </div>
+                </div>
               </li>
             );
           })}
@@ -371,13 +414,13 @@ function TasksTab({
       )}
 
       {adding ? (
-        <div className="mt-2 flex gap-2">
+        <div className="mt-3 grid gap-2">
           <input
             type="text"
             value={newName}
             onChange={(e) => setNewName(e.target.value)}
             onKeyDown={(e) => {
-              if (e.key === "Enter") handleAdd();
+              if (e.key === "Enter") void handleAdd();
               if (e.key === "Escape") {
                 setAdding(false);
                 setNewName("");
@@ -387,14 +430,37 @@ function TasksTab({
             autoFocus
             className="flex-1 rounded-lg border border-border bg-surface px-3 py-1.5 text-[13px] text-primary placeholder:text-tertiary focus:border-accent focus:outline-none"
           />
-          <button
-            type="button"
-            onClick={handleAdd}
-            disabled={!newName.trim()}
-            className="rounded-lg bg-accent px-3 py-1.5 text-[12px] font-medium text-white transition-colors hover:bg-accent-strong disabled:opacity-40"
-          >
-            Add
-          </button>
+          <div className="grid grid-cols-[1fr_auto_auto] gap-2">
+            <input
+              type="date"
+              value={newDueDate}
+              onChange={(e) => setNewDueDate(e.target.value)}
+              className="rounded-lg border border-border bg-surface px-3 py-1.5 text-[12px] text-primary focus:border-accent focus:outline-none"
+              required
+            />
+            <select
+              value={newPriority}
+              onChange={(e) => setNewPriority(e.target.value as Priority)}
+              className="rounded-lg border border-border bg-surface px-2 py-1.5 text-[12px] text-primary focus:border-accent focus:outline-none"
+            >
+              <option>High</option>
+              <option>Medium</option>
+              <option>Low</option>
+            </select>
+            <button
+              type="button"
+              onClick={() => void handleAdd()}
+              disabled={!newName.trim() || !newDueDate}
+              className="rounded-lg bg-accent px-3 py-1.5 text-[12px] font-medium text-white transition-colors hover:bg-accent-strong disabled:opacity-40"
+            >
+              Add
+            </button>
+          </div>
+          {isDemo ? (
+            <p className="text-[11px] text-tertiary">
+              Demo tasks save locally in this browser.
+            </p>
+          ) : null}
         </div>
       ) : (
         <button
@@ -426,20 +492,25 @@ function TasksTab({
 function GenerateTab({
   resolved,
   plan,
-  onAddTasks,
+  tasks,
+  onCreateTask,
 }: {
   resolved: ResolvedNode;
   plan: StrategyPlan;
-  onAddTasks: (
-    parentNodeId: string,
-    tasks: { name: string; recommendation: string }[],
-  ) => void;
+  tasks: StrategyTask[];
+  onCreateTask: (input: Omit<CreateStrategyTaskInput, "planId">) => Promise<void>;
 }) {
   const [prompt, setPrompt] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [preview, setPreview] = useState<
-    Array<{ name: string; recommendation: string; selected: boolean }>
+    Array<{
+      name: string;
+      recommendation: string;
+      dueDate: string;
+      priority: Priority;
+      selected: boolean;
+    }>
   >([]);
 
   const handleGenerate = async () => {
@@ -466,7 +537,14 @@ function GenerateTab({
       const data = (await res.json()) as {
         tasks: Array<{ name: string; recommendation: string }>;
       };
-      setPreview(data.tasks.map((t) => ({ ...t, selected: true })));
+      setPreview(
+        data.tasks.map((t, index) => ({
+          ...t,
+          dueDate: addLocalDays(todayLocalDate(), index),
+          priority: index === 0 ? "High" : "Medium",
+          selected: true,
+        })),
+      );
     } catch {
       setError("Something went wrong. Please try again.");
     } finally {
@@ -474,12 +552,22 @@ function GenerateTab({
     }
   };
 
-  const handleConfirm = () => {
+  const handleConfirm = async () => {
     const selected = preview.filter((t) => t.selected);
     if (selected.length === 0) return;
-    onAddTasks(
-      resolved.node.id,
-      selected.map((t) => ({ name: t.name, recommendation: t.recommendation })),
+    await Promise.all(
+      selected.map((task) =>
+        onCreateTask({
+          parentNodeId: resolved.node.id,
+          parentNodeKind: parentKindFor(resolved),
+          parentTaskId: parentTaskFor(resolved, tasks),
+          title: task.name,
+          recommendation: task.recommendation,
+          dueDate: task.dueDate,
+          priority: task.priority,
+          source: "ai",
+        }),
+      ),
     );
     setPreview([]);
     setPrompt("");
@@ -515,6 +603,38 @@ function GenerateTab({
                 <p className="mt-0.5 text-[11px] leading-snug text-secondary">
                   {t.recommendation}
                 </p>
+                <div className="mt-2 grid grid-cols-[1fr_auto] gap-2">
+                  <input
+                    type="date"
+                    value={t.dueDate}
+                    onChange={(e) =>
+                      setPreview((prev) =>
+                        prev.map((p, j) =>
+                          j === i ? { ...p, dueDate: e.target.value } : p,
+                        ),
+                      )
+                    }
+                    className="rounded-lg border border-border bg-surface px-2 py-1 text-[11px] text-primary focus:border-accent focus:outline-none"
+                    required
+                  />
+                  <select
+                    value={t.priority}
+                    onChange={(e) =>
+                      setPreview((prev) =>
+                        prev.map((p, j) =>
+                          j === i
+                            ? { ...p, priority: e.target.value as Priority }
+                            : p,
+                        ),
+                      )
+                    }
+                    className="rounded-lg border border-border bg-surface px-2 py-1 text-[11px] text-primary focus:border-accent focus:outline-none"
+                  >
+                    <option>High</option>
+                    <option>Medium</option>
+                    <option>Low</option>
+                  </select>
+                </div>
               </div>
             </li>
           ))}
@@ -529,8 +649,8 @@ function GenerateTab({
           </button>
           <button
             type="button"
-            onClick={handleConfirm}
-            disabled={preview.every((t) => !t.selected)}
+            onClick={() => void handleConfirm()}
+            disabled={preview.every((t) => !t.selected || !t.dueDate)}
             className="flex-1 rounded-lg bg-accent px-3 py-1.5 text-[12px] font-medium text-white transition-colors hover:bg-accent-strong disabled:opacity-40"
           >
             Add {preview.filter((t) => t.selected).length} task

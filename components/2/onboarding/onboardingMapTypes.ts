@@ -1,3 +1,9 @@
+import type {
+  OnboardingGraphLevel,
+  StrategyNode,
+  StrategyTask,
+} from "@/lib/2/types";
+
 export type OnboardingNodeKind = "goal" | "course" | "commitment" | "concern";
 
 export type OnboardingStepId =
@@ -5,7 +11,8 @@ export type OnboardingStepId =
   | "courses"
   | "commitments"
   | "constraints"
-  | "brain-dump";
+  | "brain-dump"
+  | OnboardingGraphLevel;
 
 export type OnboardingMapState = {
   goal: { label: string } | null;
@@ -14,6 +21,10 @@ export type OnboardingMapState = {
   concerns: { id: string; label: string }[];
   bottleneckPreview: string | null;
   insights: Partial<Record<OnboardingStepId, string>>;
+  activeLevel: OnboardingGraphLevel;
+  activeNodeId: string | null;
+  nodes: StrategyNode[];
+  tasks: StrategyTask[];
 };
 
 export const emptyMapState: OnboardingMapState = {
@@ -23,4 +34,8 @@ export const emptyMapState: OnboardingMapState = {
   concerns: [],
   bottleneckPreview: null,
   insights: {},
+  activeLevel: "destination",
+  activeNodeId: null,
+  nodes: [],
+  tasks: [],
 };

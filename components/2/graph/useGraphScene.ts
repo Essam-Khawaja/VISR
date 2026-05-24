@@ -4,23 +4,24 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import { cssVar, hexToThreeColor } from "@/lib/shared/cssColor";
 import {
-  bottleneckPulse,
   CAMERA_END_Z,
   CAMERA_MAX_Z,
   CAMERA_MIN_Z,
   CAMERA_START_Z,
   HOVER_SCALE,
-  PULSE_MAX_SCALE,
-  PULSE_MIN_SCALE,
-  PULSE_OPACITY,
-  PULSE_SPEED,
 } from "./graphAnimations";
 import { createEdgeRender, type EdgeRender } from "./graphEdges";
 import { buildGraphLayout, graphRadii } from "./graphLayout";
-import { createNodeMesh, haloStrength, type NodeMesh } from "./graphNodes";
-import type { GraphNodeData, GraphSelection } from "./graphTypes";
+import { createNodeMesh, type NodeMesh } from "./graphNodes";
+import type {
+  GraphLayoutResult,
+  GraphNodeData,
+  GraphSelection,
+  LayoutNode,
+} from "./graphTypes";
 import type { StrategicPillar } from "@/lib/2/types";
 import type { ActionState } from "@/lib/2/planStore";
+import type { NodeRollup } from "@/lib/2/taskStore";
 
 export type { ActionState };
 
@@ -37,6 +38,7 @@ type Props = {
   destination: string;
   mainBottleneck: string;
   actionStates?: Record<string, ActionState>;
+  rollups?: Record<string, NodeRollup>;
   isReadOnly?: boolean;
   showAllNodes?: boolean;
   layoutOverride?: {
@@ -54,6 +56,86 @@ function lerp(a: number, b: number, t: number): number {
   return a + (b - a) * t;
 }
 
+function escapeHtml(text: string): string {
+  const div = document.createElement("div");
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+function darkenHex(hex: string, amount = 0.24): string {
+  const clean = hex.replace("#", "");
+  const full =
+    clean.length === 3
+      ? clean
+          .split("")
+          .map((c) => c + c)
+          .join("")
+      : clean;
+  const n = Number.parseInt(full, 16);
+  if (Number.isNaN(n)) return "rgba(0,0,0,0.35)";
+  const r = Math.max(0, Math.round(((n >> 16) & 255) * (1 - amount)));
+  const g = Math.max(0, Math.round(((n >> 8) & 255) * (1 - amount)));
+  const b = Math.max(0, Math.round((n & 255) * (1 - amount)));
+  return `rgb(${r}, ${g}, ${b})`;
+}
+
+function labelSize(name: string, kind: GraphNodeData["kind"]) {
+  const length = name.length;
+  if (kind === "goal") {
+    const diameter = Math.min(220, Math.max(132, length * 7));
+    return { width: diameter, height: diameter };
+  }
+  if (kind === "pillar") {
+    const diameter = Math.min(190, Math.max(114, length * 6));
+    return { width: diameter, height: diameter };
+  }
+  const diameter = Math.min(172, Math.max(94, length * 5.5));
+  return { width: diameter, height: diameter };
+}
+
+function nodeLabelHtml(node: LayoutNode): string {
+  const progress = Math.max(0, Math.min(1, node.progressPercent ?? 0));
+  const count = node.actionCount ?? 0;
+  const fill = node.pastelColor ?? node.color;
+  const ring = darkenHex(fill);
+  const { width, height } = labelSize(node.name, node.kind);
+  const fontSize = node.kind === "goal" ? 13 : node.kind === "pillar" ? 11 : 9;
+  const circumference = 2 * Math.PI * 46;
+  const countBadge =
+    count > 0
+      ? `<span style="position:absolute;top:-6px;right:-6px;background:#ffffff;color:#182235;font-size:9px;font-weight:800;min-width:17px;height:17px;padding:0 4px;border-radius:999px;display:flex;align-items:center;justify-content:center;box-shadow:0 6px 14px rgba(24,34,53,0.15)">${count}</span>`
+      : "";
+  return `
+    <span style="position:relative;width:${width}px;height:${height}px;border-radius:999px;background:${fill};box-shadow:0 18px 36px rgba(24,34,53,0.16);display:flex;align-items:center;justify-content:center;padding:14px;color:#fff;text-align:center;font-size:${fontSize}px;font-weight:800;line-height:1.15;white-space:normal;overflow-wrap:anywhere;text-shadow:0 1px 2px rgba(0,0,0,0.25)">
+      ${countBadge}
+      <svg aria-hidden="true" viewBox="0 0 100 100" style="position:absolute;inset:0;width:100%;height:100%;transform:rotate(-90deg)">
+        <circle cx="50" cy="50" r="46" fill="none" stroke="${ring}" stroke-opacity="0.18" stroke-width="7" />
+        <circle cx="50" cy="50" r="46" fill="none" stroke="${ring}" stroke-width="7" stroke-linecap="round" stroke-dasharray="${progress * circumference} ${circumference}" />
+      </svg>
+      <span style="position:relative;z-index:1;max-width:${Math.max(48, width - 36)}px">${escapeHtml(node.name)}</span>
+    </span>`;
+}
+
+function applyLabelSpacing(layout: Pick<GraphLayoutResult, "nodes" | "edges">) {
+  const byId = new Map(layout.nodes.map((node) => [node.id, node]));
+  layout.nodes.forEach((node) => {
+    if (node.kind === "goal") return;
+    const { width } = labelSize(node.name, node.kind);
+    const pressure = Math.max(0, width - (node.kind === "pillar" ? 122 : 96));
+    const scale = 1 + Math.min(0.28, pressure / 360);
+    node.position = [
+      node.position[0] * scale,
+      node.position[1] * scale,
+      node.position[2],
+    ];
+  });
+  layout.edges.forEach((edge) => {
+    const from = byId.get(edge.from);
+    const to = byId.get(edge.to);
+    if (from && to) edge.points = [from.position, to.position];
+  });
+}
+
 export function useGraphScene({
   containerRef,
   labelsRef,
@@ -61,6 +143,7 @@ export function useGraphScene({
   destination,
   mainBottleneck,
   actionStates,
+  rollups,
   isReadOnly = false,
   showAllNodes = false,
   layoutOverride,
@@ -72,9 +155,11 @@ export function useGraphScene({
   const hoveredIdRef = useRef<string | null>(null);
   const bottleneckIdRef = useRef<string | null>(null);
   const actionStatesRef = useRef<Record<string, ActionState>>({});
+  const rollupsRef = useRef<Record<string, NodeRollup>>({});
   const nodeMeshesRef = useRef<NodeMesh[]>([]);
 
   actionStatesRef.current = actionStates ?? {};
+  rollupsRef.current = rollups ?? {};
 
   const select = useCallback((sel: GraphSelection) => {
     selectionRef.current = sel;
@@ -98,7 +183,9 @@ export function useGraphScene({
     const successHex = hexToThreeColor(cssVar("--success", "#7D9B7A"));
     nodeMeshesRef.current.forEach((nm) => {
       if (nm.data.kind !== "action") return;
-      const state = actionStatesRef.current[nm.data.id];
+      const state =
+        rollupsRef.current[nm.data.id]?.derivedStatus ??
+        actionStatesRef.current[nm.data.id];
       const coreMat = nm.core.material as THREE.MeshBasicMaterial;
       const haloMat = nm.halo.material as THREE.SpriteMaterial;
       if (state === "done") {
@@ -109,7 +196,7 @@ export function useGraphScene({
         haloMat.color.setHex(mutedHex);
       }
     });
-  }, [actionStates]);
+  }, [actionStates, rollups]);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -121,8 +208,14 @@ export function useGraphScene({
       : buildGraphLayout(pillars, destination, mainBottleneck);
     bottleneckIdRef.current = layout.bottleneckPillarId;
 
-    // Compute progress from actionStates
+    // Compute progress from canonical strategy tasks first, then legacy action states.
     layout.nodes.forEach((n) => {
+      const rollup = rollupsRef.current[n.id];
+      if (rollup && rollup.childCount > 0) {
+        n.progressPercent = rollup.completionRatio;
+        n.actionCount = rollup.childCount;
+        return;
+      }
       if (n.kind === "pillar") {
         const pillar = pillars.find((p) => p.id === n.id);
         if (pillar) {
@@ -143,6 +236,7 @@ export function useGraphScene({
         e.progressPercent = pillarNode?.progressPercent ?? 0;
       }
     });
+    applyLabelSpacing(layout);
 
     const reduceMotion =
       typeof window !== "undefined" &&
@@ -207,7 +301,9 @@ export function useGraphScene({
     const successHex = hexToThreeColor(cssVar("--success", "#7D9B7A"));
     nodeMeshes.forEach((nm) => {
       if (nm.data.kind !== "action") return;
-      const state = actionStatesRef.current[nm.data.id];
+      const state =
+        rollupsRef.current[nm.data.id]?.derivedStatus ??
+        actionStatesRef.current[nm.data.id];
       const coreMat = nm.core.material as THREE.MeshBasicMaterial;
       const haloMat = nm.halo.material as THREE.SpriteMaterial;
       if (state === "done") {
@@ -223,53 +319,66 @@ export function useGraphScene({
     const raycaster = new THREE.Raycaster();
     const pointer = new THREE.Vector2();
 
-    type Label = { el: HTMLDivElement; node: NodeMesh };
+    type Label = { el: HTMLButtonElement; node: NodeMesh };
     const labels: Label[] = [];
     if (labelsContainer) {
       labelsContainer.innerHTML = "";
       nodeMeshes.forEach((nm) => {
-        const showLabel =
-          nm.data.kind === "goal" ||
-          nm.data.kind === "pillar" ||
-          (showAllNodes && nm.data.kind === "action");
-        if (!showLabel) return;
-
-        const el = document.createElement("div");
+        const el = document.createElement("button");
+        el.type = "button";
         el.style.willChange = "transform, opacity";
         el.style.transform = "translate(-9999px,-9999px)";
         el.style.position = "absolute";
         el.style.textAlign = "center";
-        el.style.pointerEvents = "none";
+        el.style.pointerEvents = isReadOnly ? "none" : "auto";
         el.style.userSelect = "none";
+        el.style.border = "0";
+        el.style.padding = "0";
+        el.style.background = "transparent";
+        el.style.cursor = isReadOnly ? "default" : "pointer";
+        el.setAttribute("aria-label", nm.data.name);
 
-        if (nm.data.kind === "goal") {
-          el.style.color = "#FDFBF7";
-          el.style.fontSize = "14px";
-          el.style.fontWeight = "600";
-          el.style.textShadow = "0 1px 3px rgba(0,0,0,0.3)";
-          el.innerHTML = `<span>${nm.data.name}</span>
-            <div style="margin:4px auto 0;width:28px;height:3px;border-radius:2px;background:rgba(0,0,0,0.25)">
-              <div style="width:0%;height:100%;border-radius:2px;background:#C4A55A"></div>
-            </div>`;
-        } else if (nm.data.kind === "pillar") {
-          const count = nm.data.actionCount ?? 0;
-          const pct = Math.round((nm.data.progressPercent ?? 0) * 100);
-          el.style.color = "#FDFBF7";
-          el.style.fontSize = "11px";
-          el.style.fontWeight = "500";
-          el.style.textShadow = "0 1px 3px rgba(0,0,0,0.3)";
-          el.innerHTML = `${count > 0 ? `<span style="position:absolute;top:-8px;right:-8px;background:#FDFBF7;color:#2C2520;font-size:9px;font-weight:700;width:16px;height:16px;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 3px rgba(0,0,0,0.15)">${count}</span>` : ""}
-            <span>${nm.data.name}</span>
-            <div style="margin:3px auto 0;width:24px;height:3px;border-radius:2px;background:rgba(0,0,0,0.25)">
-              <div style="width:${pct}%;height:100%;border-radius:2px;background:#C4A55A;transition:width 0.3s"></div>
-            </div>`;
-        } else {
-          el.style.color = "#FDFBF7";
-          el.style.fontSize = "9px";
-          el.style.fontWeight = "500";
-          el.style.textShadow = "0 1px 2px rgba(0,0,0,0.4)";
-          el.innerHTML = `<span>${nm.data.name}</span>`;
-        }
+        el.innerHTML = nodeLabelHtml(nm.data);
+        el.addEventListener("click", (event) => {
+          event.preventDefault();
+          event.stopPropagation();
+          if (isReadOnly) return;
+          if (nm.data.kind === "goal" && !layoutOverride) {
+            selectionRef.current = null;
+            setSelectionState(null);
+          } else if (nm.data.kind === "goal" || nm.data.kind === "pillar") {
+            const next: GraphSelection = {
+              kind: "pillar",
+              nodeId: nm.data.id,
+            };
+            selectionRef.current = next;
+            setSelectionState(next);
+          } else {
+            const next: GraphSelection = {
+              kind: "action",
+              nodeId: nm.data.id,
+            };
+            selectionRef.current = next;
+            setSelectionState(next);
+          }
+          updateCameraTargetFromSelection();
+        });
+        el.addEventListener("pointerenter", () => {
+          if (isReadOnly) return;
+          hoveredIdRef.current = nm.data.id;
+          const rect = el.getBoundingClientRect();
+          setHoverState({
+            node: nm.data,
+            x: rect.left + rect.width / 2,
+            y: rect.top + rect.height / 2,
+          });
+        });
+        el.addEventListener("pointerleave", () => {
+          if (hoveredIdRef.current === nm.data.id) {
+            hoveredIdRef.current = null;
+            setHoverState(null);
+          }
+        });
 
         labelsContainer.appendChild(el);
         labels.push({ el, node: nm });
@@ -591,18 +700,12 @@ export function useGraphScene({
         nm.currentScale = lerp(nm.currentScale, nm.targetScale, lerpT);
 
         const coreMat = nm.core.material as THREE.MeshBasicMaterial;
-        coreMat.opacity = Math.min(1, nm.currentOpacity);
+        coreMat.opacity = 0;
         const haloMat = nm.halo.material as THREE.SpriteMaterial;
-        const isSelected =
-          selectionRef.current?.nodeId === nm.data.id &&
-          (selectionRef.current?.kind === "pillar" ||
-            selectionRef.current?.kind === "action");
-        haloMat.opacity = nm.currentOpacity * haloStrength(nm, isSelected);
+        haloMat.opacity = 0;
 
         const ringMat = nm.ring.material as THREE.MeshBasicMaterial;
-        ringMat.opacity = isSelected
-          ? Math.min(1, nm.currentOpacity) * 0.5
-          : 0;
+        ringMat.opacity = 0;
 
         nm.group.scale.setScalar(Math.max(0.001, nm.currentScale));
 
@@ -621,20 +724,7 @@ export function useGraphScene({
           nm.group.position.copy(nm.basePosition);
         }
 
-        // Pulse halo animation
-        if (nm.currentOpacity > 0.1 && !reduceMotion) {
-          const p = Math.sin(
-            seconds * PULSE_SPEED * Math.PI * 2 + nm.bobPhase,
-          );
-          const s =
-            PULSE_MIN_SCALE +
-            (PULSE_MAX_SCALE - PULSE_MIN_SCALE) * (p * 0.5 + 0.5);
-          nm.pulseHalo.scale.setScalar(nm.data.radius * 9 * s);
-          (nm.pulseHalo.material as THREE.SpriteMaterial).opacity =
-            nm.currentOpacity * PULSE_OPACITY * (p * 0.5 + 0.5);
-        } else {
-          (nm.pulseHalo.material as THREE.SpriteMaterial).opacity = 0;
-        }
+        (nm.pulseHalo.material as THREE.SpriteMaterial).opacity = 0;
       });
 
       edges.forEach((er) => {
@@ -645,16 +735,9 @@ export function useGraphScene({
           er.currentOpacity;
       });
 
-      const pulseT = seconds;
       bottleneckMeshes.forEach((nm) => {
-        if (nm.currentOpacity < 0.1) return;
-        const mat = nm.halo.material as THREE.SpriteMaterial;
-        const base = haloStrength(
-          nm,
-          selectionRef.current?.nodeId === nm.data.id,
-        );
-        mat.opacity =
-          nm.currentOpacity * (base * 0.7 + bottleneckPulse(pulseT) * 0.35);
+        (nm.halo.material as THREE.SpriteMaterial).opacity = 0;
+        (nm.pulseHalo.material as THREE.SpriteMaterial).opacity = 0;
       });
 
       if (labelsContainer) {
@@ -715,6 +798,7 @@ export function useGraphScene({
     pillars,
     destination,
     mainBottleneck,
+    rollups,
     isReadOnly,
     showAllNodes,
     layoutOverride,

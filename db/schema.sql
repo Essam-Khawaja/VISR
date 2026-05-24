@@ -256,19 +256,86 @@ create table if not exists opportunity_checks (
   created_at timestamptz not null default now()
 );
 
+create table if not exists strategy_nodes (
+  id uuid primary key default gen_random_uuid(),
+  plan_id uuid not null references strategy_plans(id) on delete cascade,
+  parent_node_id uuid references strategy_nodes(id) on delete cascade,
+  kind text not null
+    check (kind in (
+      'university_outcome', 'academic_year', 'semester', 'course',
+      'club', 'work', 'project', 'research', 'strategic_pillar',
+      'commitment', 'task'
+    )),
+  title text not null,
+  subtitle text,
+  status text not null default 'open'
+    check (status in ('open', 'doing', 'done', 'skipped', 'at_risk')),
+  scope text not null
+    check (scope in ('university', 'year', 'semester', 'focus')),
+  year_index integer,
+  term text check (term is null or term in ('Fall', 'Winter', 'Spring', 'Summer')),
+  start_date date,
+  end_date date,
+  sort_order integer not null default 0,
+  metadata jsonb not null default '{}'::jsonb,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create table if not exists strategy_tasks (
+  id uuid primary key default gen_random_uuid(),
+  plan_id uuid not null references strategy_plans(id) on delete cascade,
+  student_id uuid references student_profiles(id) on delete set null,
+  parent_node_id text not null,
+  parent_node_kind text not null default 'pillar'
+    check (parent_node_kind in ('goal', 'pillar', 'task')),
+  parent_task_id uuid references strategy_tasks(id) on delete cascade,
+  title text not null,
+  recommendation text not null default '',
+  notes text not null default '',
+  priority text not null default 'Medium'
+    check (priority in ('High', 'Medium', 'Low')),
+  status text not null default 'open'
+    check (status in ('open', 'doing', 'done', 'skipped')),
+  due_date date not null,
+  completed_at timestamptz,
+  source text not null default 'strategy_map'
+    check (source in ('strategy_map', 'daily', 'week', 'ai', 'opportunity', 'generated_plan')),
+  source_action_id text,
+  graph_node_id uuid references strategy_nodes(id) on delete set null,
+  sort_order integer not null default 0,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
 create index if not exists idx_strategy_plans_student on strategy_plans(student_id);
 create index if not exists idx_opportunity_checks_plan on opportunity_checks(plan_id);
+create index if not exists idx_strategy_nodes_plan on strategy_nodes(plan_id);
+create index if not exists idx_strategy_nodes_parent on strategy_nodes(parent_node_id);
+create index if not exists idx_strategy_nodes_scope on strategy_nodes(scope);
+create index if not exists idx_strategy_nodes_kind on strategy_nodes(kind);
+create index if not exists idx_strategy_nodes_plan_parent_sort
+  on strategy_nodes(plan_id, parent_node_id, sort_order);
+create index if not exists idx_strategy_tasks_plan on strategy_tasks(plan_id);
+create index if not exists idx_strategy_tasks_due_date on strategy_tasks(due_date);
+create index if not exists idx_strategy_tasks_parent_node on strategy_tasks(plan_id, parent_node_id);
+create index if not exists idx_strategy_tasks_parent_task on strategy_tasks(parent_task_id);
+create index if not exists idx_strategy_tasks_status on strategy_tasks(status);
+create index if not exists idx_strategy_tasks_graph_node on strategy_tasks(graph_node_id);
 
 alter table student_profiles enable row level security;
 alter table strategy_plans enable row level security;
 alter table opportunity_checks enable row level security;
+alter table strategy_nodes enable row level security;
+alter table strategy_tasks enable row level security;
 
 do $$
 declare
   t text;
 begin
   for t in select unnest(array[
-    'student_profiles', 'strategy_plans', 'opportunity_checks'
+    'student_profiles', 'strategy_plans', 'opportunity_checks',
+    'strategy_nodes', 'strategy_tasks'
   ]) loop
     if not exists (
       select 1 from pg_policies

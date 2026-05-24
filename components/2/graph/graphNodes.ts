@@ -123,11 +123,3 @@ export function createNodeMesh(node: LayoutNode): NodeMesh {
   };
 }
 
-/** Halo opacity for the node's current role/state. */
-export function haloStrength(node: NodeMesh, isSelected: boolean): number {
-  if (node.data.kind === "goal") return 0.45;
-  if (isSelected) return 0.5;
-  if (node.data.isBottleneck) return 0.4;
-  if (node.data.kind === "pillar") return 0.28;
-  return 0.2;
-}
