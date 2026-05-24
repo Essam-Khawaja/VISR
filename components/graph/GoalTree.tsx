@@ -6,6 +6,7 @@ import { NodePopover } from "./NodePopover";
 import { SelectionCard } from "./SelectionCard";
 import { StrategyHUD } from "./StrategyHUD";
 import { useGraphScene, type ActionState } from "./useGraphScene";
+import type { LayoutEdge, LayoutNode } from "./graphTypes";
 import type { StrategyPlan } from "@/lib/types";
 
 export type GoalTreeProps = {
@@ -15,7 +16,8 @@ export type GoalTreeProps = {
   markAction: (actionId: string, state: ActionState) => void;
   isDemo: boolean;
   onToggleToday: () => void;
-  displayMode?: "preview" | "full";
+  displayMode?: "onboarding" | "preview" | "full";
+  layoutOverride?: { nodes: LayoutNode[]; edges: LayoutEdge[] };
 };
 
 export default function GoalTree({
@@ -26,10 +28,12 @@ export default function GoalTree({
   isDemo,
   onToggleToday,
   displayMode = "full",
+  layoutOverride,
 }: GoalTreeProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const labelsRef = useRef<HTMLDivElement>(null);
   const [dockOpen, setDockOpen] = useState(false);
+  const onboarding = displayMode === "onboarding";
 
   const { hover, selection, select, clearSelection, selectBottleneck } =
     useGraphScene({
@@ -39,6 +43,8 @@ export default function GoalTree({
       destination: plan.destination,
       mainBottleneck: plan.mainBottleneck,
       actionStates,
+      isReadOnly: onboarding,
+      layoutOverride,
     });
 
   const toggleDock = useCallback(() => setDockOpen((v) => !v), []);
@@ -73,13 +79,14 @@ export default function GoalTree({
     (p) => p.status === "Weak" || p.status === "Missing",
   );
   const preview = displayMode === "preview";
+  const hideChrome = preview || onboarding;
 
   return (
     <div className="relative h-full w-full min-h-0 overflow-hidden bg-base">
       <div
         ref={containerRef}
         className="absolute inset-0"
-        aria-label="Goal tree visualization"
+        aria-label={onboarding ? "Strategy map preview, updating as you answer" : "Goal tree visualization"}
       />
       <div
         ref={labelsRef}
@@ -87,7 +94,7 @@ export default function GoalTree({
         aria-hidden
       />
 
-      {preview ? null : (
+      {hideChrome ? null : (
         <StrategyHUD
           plan={plan}
           planId={planId}
@@ -97,9 +104,9 @@ export default function GoalTree({
         />
       )}
 
-      {selection ? null : <NodePopover hover={hover} />}
+      {selection || onboarding ? null : <NodePopover hover={hover} />}
 
-      {preview ? null : (
+      {hideChrome ? null : (
         <SelectionCard
           plan={plan}
           selection={selection}
@@ -111,7 +118,7 @@ export default function GoalTree({
         />
       )}
 
-      {preview ? null : (
+      {hideChrome ? null : (
         <IntelligenceDock
           plan={plan}
           actionStates={actionStates}
@@ -122,7 +129,7 @@ export default function GoalTree({
         />
       )}
 
-      {preview ? null : (
+      {hideChrome ? null : (
         <div className="pointer-events-none absolute bottom-4 left-1/2 z-20 -translate-x-1/2 text-[11px] text-tertiary md:bottom-6">
           {selection
             ? "Click goal or press Esc to return"

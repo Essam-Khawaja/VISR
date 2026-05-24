@@ -32,6 +32,11 @@ type Props = {
   destination: string;
   mainBottleneck: string;
   actionStates?: Record<string, ActionState>;
+  isReadOnly?: boolean;
+  layoutOverride?: {
+    nodes: import("./graphTypes").LayoutNode[];
+    edges: import("./graphTypes").LayoutEdge[];
+  };
 };
 
 const FOCUS_CAMERA_Z = 6.2;
@@ -50,6 +55,8 @@ export function useGraphScene({
   destination,
   mainBottleneck,
   actionStates,
+  isReadOnly = false,
+  layoutOverride,
 }: Props) {
   const [hover, setHoverState] = useState<HoverState>(null);
   const [selection, setSelectionState] = useState<GraphSelection>(null);
@@ -103,7 +110,9 @@ export function useGraphScene({
     const labelsContainer = labelsRef.current;
     if (!container) return;
 
-    const layout = buildGraphLayout(pillars, destination, mainBottleneck);
+    const layout = layoutOverride
+      ? { ...layoutOverride, destination, bottleneckPillarId: null }
+      : buildGraphLayout(pillars, destination, mainBottleneck);
     bottleneckIdRef.current = layout.bottleneckPillarId;
     const reduceMotion =
       typeof window !== "undefined" &&
@@ -320,7 +329,7 @@ export function useGraphScene({
         document.body.style.cursor = "grabbing";
         return;
       }
-      updateHoverFromEvent(e);
+      if (!isReadOnly) updateHoverFromEvent(e);
     };
 
     const onPointerUp = (e: PointerEvent) => {
@@ -330,7 +339,7 @@ export function useGraphScene({
           canvas.releasePointerCapture(e.pointerId);
         } catch {}
         document.body.style.cursor = "grab";
-        if (!dragMoved) {
+        if (!dragMoved && !isReadOnly) {
           const nm = raycastNodeAt(e);
           if (!nm || nm.data.kind === "goal") {
             selectionRef.current = null;
@@ -577,7 +586,7 @@ export function useGraphScene({
       selectionRef.current = null;
       nodeMeshesRef.current = [];
     };
-  }, [containerRef, labelsRef, pillars, destination, mainBottleneck]);
+  }, [containerRef, labelsRef, pillars, destination, mainBottleneck, isReadOnly, layoutOverride]);
 
   return {
     hover,
