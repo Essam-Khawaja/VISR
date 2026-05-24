@@ -141,3 +141,74 @@ export const graphRadii = {
   PILLAR_RADIUS,
   ACTION_RADIUS,
 };
+
+export type NucleusChild = {
+  id: string;
+  name: string;
+  status: string;
+  recommendation: string;
+  pastelColor: string;
+  childCount: number;
+};
+
+export function buildNucleusLayout(
+  nucleus: { id: string; name: string; pastelColor: string; childCount: number },
+  children: NucleusChild[],
+): { nodes: LayoutNode[]; edges: LayoutEdge[] } {
+  const nodes: LayoutNode[] = [];
+  const edges: LayoutEdge[] = [];
+  const nucleusPos: [number, number, number] = [0, 0, 0];
+
+  nodes.push({
+    id: nucleus.id,
+    kind: "goal",
+    name: nucleus.name,
+    status: "Goal",
+    recommendation: "",
+    color: "var(--accent)",
+    isBottleneck: false,
+    position: nucleusPos,
+    radius: GOAL_NODE_RADIUS,
+    parentId: null,
+    pastelColor: nucleus.pastelColor,
+    progressPercent: 0,
+    actionCount: nucleus.childCount,
+  });
+
+  const total = children.length || 1;
+  children.forEach((child, i) => {
+    const angle = (i / total) * Math.PI * 2 - Math.PI / 2;
+    const pos: [number, number, number] = [
+      Math.cos(angle) * PILLAR_RADIUS,
+      Math.sin(angle) * PILLAR_RADIUS,
+      0,
+    ];
+
+    nodes.push({
+      id: child.id,
+      kind: "pillar",
+      name: child.name,
+      status: child.status as LayoutNode["status"],
+      recommendation: child.recommendation,
+      color: child.pastelColor,
+      isBottleneck: false,
+      position: pos,
+      radius: PILLAR_NODE_RADIUS,
+      parentId: null,
+      pastelColor: child.pastelColor,
+      progressPercent: 0,
+      actionCount: child.childCount,
+    });
+
+    edges.push({
+      id: `edge-${nucleus.id}-${child.id}`,
+      from: nucleus.id,
+      to: child.id,
+      kind: "goal-pillar",
+      parentPillarId: child.id,
+      points: [nucleusPos, pos],
+    });
+  });
+
+  return { nodes, edges };
+}
