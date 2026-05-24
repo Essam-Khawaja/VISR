@@ -30,6 +30,7 @@ Each feature must explain both product behavior and technical implementation arc
 | 9 | [009-pastel-theme-overhaul](009-pastel-theme-overhaul/) | Pastel Theme Overhaul | Sitewide warm pastel palette replacing cool blue/slate tokens |
 | 10 | [010-graph-visual-redesign](010-graph-visual-redesign/) | Graph Visual Redesign | Per-pillar pastel nodes, pulse animation, dashed edges with progress, zoom fix |
 | 11 | [011-node-task-dialog](011-node-task-dialog/) | Node Task Dialog and AI Generator | Tabbed dialog with task list, manual add, AI task generation, recursive expansion |
+| 12 | [012-project-sidebar](012-project-sidebar/) | Project Sidebar | Collapsible sidebar with pillar-based projects, task checkboxes, inline add |
 
 ---
 
