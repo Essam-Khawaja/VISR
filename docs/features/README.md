@@ -31,6 +31,7 @@ Each feature must explain both product behavior and technical implementation arc
 | 10 | [010-graph-visual-redesign](010-graph-visual-redesign/) | Graph Visual Redesign | Per-pillar pastel nodes, pulse animation, dashed edges with progress, zoom fix |
 | 11 | [011-node-task-dialog](011-node-task-dialog/) | Node Task Dialog and AI Generator | Tabbed dialog with task list, manual add, AI task generation, recursive expansion |
 | 12 | [012-project-sidebar](012-project-sidebar/) | Project Sidebar | Collapsible sidebar with pillar-based projects, task checkboxes, inline add |
+| 13 | [013-kanban-dashboard](013-kanban-dashboard/) | Kanban Dashboard | Tabbed Map/Insights workspace, per-pillar Kanban boards, navbar dropdown |
 
 ---
 
