@@ -31,6 +31,7 @@ export type CreateStrategyTaskInput = {
   dueDate: string;
   source?: StrategyTaskSource;
   sourceActionId?: string | null;
+  graphNodeId?: string | null;
   sortOrder?: number;
 };
 
@@ -38,6 +39,7 @@ export type UpdateStrategyTaskInput = Partial<
   Pick<
     StrategyTask,
     "title" | "recommendation" | "notes" | "priority" | "status" | "dueDate"
+    | "graphNodeId"
   >
 >;
 
@@ -156,6 +158,7 @@ export async function createStrategyTask(
     completedAt: null,
     source: input.source ?? "strategy_map",
     sourceActionId: input.sourceActionId ?? null,
+    graphNodeId: input.graphNodeId ?? null,
     sortOrder: input.sortOrder ?? 0,
     createdAt: now,
     updatedAt: now,
@@ -448,6 +451,7 @@ export function taskToRow(task: StrategyTask) {
     completed_at: task.completedAt ?? null,
     source: task.source,
     source_action_id: task.sourceActionId ?? null,
+    graph_node_id: task.graphNodeId ?? null,
     sort_order: task.sortOrder,
     created_at: task.createdAt,
     updated_at: task.updatedAt,
@@ -472,6 +476,7 @@ export function rowToTask(row: Record<string, unknown>): StrategyTask | null {
     completedAt: row.completed_at ? String(row.completed_at) : null,
     source: String(row.source ?? "strategy_map") as StrategyTaskSource,
     sourceActionId: row.source_action_id ? String(row.source_action_id) : null,
+    graphNodeId: row.graph_node_id ? String(row.graph_node_id) : null,
     sortOrder: Number(row.sort_order ?? 0),
     createdAt: String(row.created_at ?? nowIso()),
     updatedAt: String(row.updated_at ?? nowIso()),
