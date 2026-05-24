@@ -1,15 +1,8 @@
 "use client";
 
 import { Input } from "@/components/ui/Input";
-import { Textarea } from "@/components/ui/Textarea";
+import { ChipInput } from "./ChipInput";
 import type { StepProps } from "./onboardingTypes";
-
-function toList(s: string): string[] {
-  return s
-    .split(/[,\n]/g)
-    .map((x) => x.trim())
-    .filter(Boolean);
-}
 
 export function StepAcademic({ value, onChange, errors }: StepProps) {
   return (
@@ -24,15 +17,15 @@ export function StepAcademic({ value, onChange, errors }: StepProps) {
         </p>
       </div>
 
-      <Textarea
+      <ChipInput
         name="currentCourses"
         label="Current courses"
-        placeholder={"Algorithms, Databases, Operating Systems, Linear Algebra"}
-        rows={3}
-        value={value.currentCourses.join(", ")}
-        onChange={(e) => onChange({ currentCourses: toList(e.target.value) })}
+        placeholder="Algorithms, Databases, Operating Systems, Linear Algebra"
+        value={value.currentCourses}
+        onChange={(items) => onChange({ currentCourses: items })}
         error={errors.currentCourses}
-        hint="Separate with commas or new lines."
+        hint="Press Enter or comma to add. Backspace to remove."
+        maxChips={15}
       />
 
       <Input

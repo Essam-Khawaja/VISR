@@ -1,14 +1,7 @@
 "use client";
 
-import { Textarea } from "@/components/ui/Textarea";
+import { ChipInput } from "./ChipInput";
 import type { StepProps } from "./onboardingTypes";
-
-function toList(s: string): string[] {
-  return s
-    .split(/[,\n]/g)
-    .map((x) => x.trim())
-    .filter(Boolean);
-}
 
 export function StepCommitments({ value, onChange, errors }: StepProps) {
   return (
@@ -23,30 +16,26 @@ export function StepCommitments({ value, onChange, errors }: StepProps) {
         </p>
       </div>
 
-      <Textarea
+      <ChipInput
         name="commitments"
         label="Current commitments"
-        placeholder={
-          "Student club lead, two side projects, networking events, considering research..."
-        }
-        rows={4}
-        value={value.commitments.join("\n")}
-        onChange={(e) => onChange({ commitments: toList(e.target.value) })}
+        placeholder="Student club lead, two side projects, networking events"
+        value={value.commitments}
+        onChange={(items) => onChange({ commitments: items })}
         error={errors.commitments}
-        hint="One per line, or comma-separated."
+        hint="Press Enter or comma to add. Backspace to remove."
+        maxChips={20}
       />
 
-      <Textarea
+      <ChipInput
         name="constraints"
         label="Constraints"
-        placeholder={
-          "Can't work weekends, no car, family obligations Tuesdays..."
-        }
-        rows={3}
-        value={value.constraints.join("\n")}
-        onChange={(e) => onChange({ constraints: toList(e.target.value) })}
+        placeholder="Can't work weekends, no car, family obligations Tuesdays"
+        value={value.constraints}
+        onChange={(items) => onChange({ constraints: items })}
         error={errors.constraints}
         hint="Optional — anything that blocks certain activities."
+        maxChips={10}
       />
     </div>
   );
