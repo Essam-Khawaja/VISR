@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { Badge } from "@/components/2/ui/Badge";
@@ -113,7 +113,7 @@ export function IntelligenceDock({
 
               <p className="mt-3 text-[11px] text-tertiary">
                 {isDemo
-                  ? "Demo plan — progress is in-session only."
+                  ? "Demo plan - progress is in-session only."
                   : "Saved locally on this device."}
               </p>
             </div>

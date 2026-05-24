@@ -1,4 +1,4 @@
-@import "./tokens.css";
+﻿@import "./tokens.css";
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -150,7 +150,7 @@
   }
 
   /* ---------------------------------------------------------- */
-  /* Surface utilities — calmer, whiter, less boxy              */
+  /* Surface utilities - calmer, whiter, less boxy              */
   /* ---------------------------------------------------------- */
   .glass-card {
     background: rgba(255, 255, 255, 0.72);
@@ -194,7 +194,7 @@
 }
 
 /* ----------------------------------------------------------------- */
-/* Buttons — pill-first, never boxy                                  */
+/* Buttons - pill-first, never boxy                                  */
 /* ----------------------------------------------------------------- */
 .btn-primary {
   background: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%);

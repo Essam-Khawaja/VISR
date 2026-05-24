@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
@@ -87,7 +87,7 @@ function resolveNode(
       id: "goal",
       name: plan.destination,
       status: "Strong",
-      reason: "Your destination — everything routes through here.",
+      reason: "Your destination - everything routes through here.",
       actions: [],
     };
     return {
@@ -97,7 +97,7 @@ function resolveNode(
         id: "goal",
         name: plan.destination,
         status: "Goal",
-        recommendation: "Your destination — everything routes through here.",
+        recommendation: "Your destination - everything routes through here.",
       },
       children: plan.strategicPillars.flatMap((p) => p.actions),
     };
@@ -577,7 +577,7 @@ function GenerateTab({
     return (
       <div>
         <p className="text-[11px] font-medium text-tertiary">
-          Generated tasks — uncheck any you don&apos;t want
+          Generated tasks - uncheck any you don&apos;t want
         </p>
         <ul className="mt-2 flex flex-col gap-1">
           {preview.map((t, i) => (

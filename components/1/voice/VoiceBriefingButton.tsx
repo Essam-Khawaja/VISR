@@ -9,6 +9,7 @@ import {
   ManualChecklistItem,
   PersonalTimeBlock,
 } from "@/lib/1/types";
+import type { StrategyTask } from "@/lib/2/types";
 import {
   sortEventsByTime,
   formatTime,
@@ -25,6 +26,7 @@ type VoiceBriefingButtonProps = {
   items: ChecklistItem[];
   manualItems: ManualChecklistItem[];
   personalTimeBlocks: PersonalTimeBlock[];
+  strategyTasks?: StrategyTask[];
   forDate: string;
   weather?: WeatherData | null;
 };
@@ -107,6 +109,7 @@ function buildScript(
   manualItems: ManualChecklistItem[],
   personalTimeBlocks: PersonalTimeBlock[],
   routines: Routine[],
+  strategyTasks: StrategyTask[],
   forDate: string,
   weather?: WeatherData | null
 ): string {
@@ -197,6 +200,20 @@ function buildScript(
     script += `You may have missed packing: ${joinList(names)}. `;
   }
 
+  const openTasks = strategyTasks.filter((t) => t.status !== "done");
+  if (openTasks.length > 0 && !past) {
+    const taskWord = openTasks.length === 1 ? "strategy task" : "strategy tasks";
+    script += `${openTasks.length} ${taskWord} due today. `;
+    const highPriority = openTasks.filter((t) => t.priority === "High");
+    if (highPriority.length > 0) {
+      script += `High priority: ${joinList(highPriority.map((t) => t.title))}. `;
+    }
+    const others = openTasks.filter((t) => t.priority !== "High");
+    if (others.length > 0) {
+      script += joinList(others.map((t) => t.title)) + ". ";
+    }
+  }
+
   script += past ? "Hope it went well." : "You've got this.";
   return script;
 }
@@ -246,6 +263,7 @@ export default function VoiceBriefingButton({
   items,
   manualItems,
   personalTimeBlocks,
+  strategyTasks = [],
   forDate,
   weather,
 }: VoiceBriefingButtonProps) {
@@ -297,6 +315,7 @@ export default function VoiceBriefingButton({
       manualItems,
       personalTimeBlocks,
       routines,
+      strategyTasks,
       forDate,
       weather
     );

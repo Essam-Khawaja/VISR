@@ -1,4 +1,4 @@
-import type { Metadata, Viewport } from "next";
+﻿import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
 import "@/styles/globals.css";
 import { LiquidCursor } from "@/components/shared/LiquidCursor";
@@ -73,7 +73,7 @@ const display = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "Pathwise — Student Strategy Dashboard",
+  title: "Pathwise - Student Strategy Dashboard",
   description:
     "Pathwise connects the student strategy map to the day and week execution views, so goals, cuts, and dated tasks stay in sync.",
 };

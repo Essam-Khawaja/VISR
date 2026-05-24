@@ -1,4 +1,4 @@
-:root {
+﻿:root {
   /* ------------------------------------------------------------ */
   /* Warm palette (source of truth)                               */
   /* RGB triplets so opacity modifiers work in Tailwind            */
@@ -20,18 +20,18 @@
   --sage: rgb(var(--sage-rgb));
 
   /* ------------------------------------------------------------ */
-  /* Surfaces — lifted to whiter / lighter for an airier feel      */
+  /* Surfaces - lifted to whiter / lighter for an airier feel      */
   /* ------------------------------------------------------------ */
   --bg-base: #FBF8F2;
   --bg-surface: #FFFFFF;
   --bg-elevated: #F4EFE5;
   --bg-card: #FFFFFF;
 
-  /* Borders — feather-light hairlines                             */
+  /* Borders - feather-light hairlines                             */
   --border: rgba(57, 38, 30, 0.06);
   --border-strong: rgba(57, 38, 30, 0.10);
 
-  /* Text — gentler hierarchy                                      */
+  /* Text - gentler hierarchy                                      */
   --text-primary: #2A241F;
   --text-secondary: #6A5F55;
   --text-tertiary: #9B8E80;
@@ -60,7 +60,7 @@
   --muted-soft: #EFEADB;
 
   /* ------------------------------------------------------------ */
-  /* Radii — pill-first, no boxy corners                           */
+  /* Radii - pill-first, no boxy corners                           */
   /* ------------------------------------------------------------ */
   --radius-sm: 10px;
   --radius-md: 14px;
@@ -69,7 +69,7 @@
   --radius-pill: 9999px;
 
   /* ------------------------------------------------------------ */
-  /* Shadows — barely there, just enough depth                     */
+  /* Shadows - barely there, just enough depth                     */
   /* ------------------------------------------------------------ */
   --shadow-sm: 0 1px 2px rgba(57, 38, 30, 0.04);
   --shadow-md: 0 4px 18px rgba(57, 38, 30, 0.05);

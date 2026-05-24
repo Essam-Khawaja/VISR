@@ -1,4 +1,4 @@
-import { nodeStatusColor, pillarStatusColor } from "@/lib/2/statusColors";
+﻿import { nodeStatusColor, pillarStatusColor } from "@/lib/2/statusColors";
 import type { StrategicPillar } from "@/lib/2/types";
 import type {
   GraphLayoutResult,
@@ -56,7 +56,7 @@ export function buildGraphLayout(
     kind: "goal",
     name: destination,
     status: "Goal",
-    recommendation: "Your destination — everything routes through here.",
+    recommendation: "Your destination - everything routes through here.",
     color: "var(--accent)",
     isBottleneck: false,
     position: goalPos,

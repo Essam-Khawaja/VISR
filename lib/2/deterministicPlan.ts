@@ -1,4 +1,4 @@
-import type { z } from "zod";
+﻿import type { z } from "zod";
 import type { ProfileSchema } from "./validate";
 import type {
   ActionNode,
@@ -140,7 +140,7 @@ const TRACK_PILLARS: Record<Track, PillarTemplate[]> = {
       name: "Academics",
       status: "Strong",
       reason:
-        "Your GPA is not the bottleneck. Maintain — do not over-invest above what gets you the cs job.",
+        "Your GPA is not the bottleneck. Maintain - do not over-invest above what gets you the cs job.",
       actions: [
         {
           idSlug: "relevant-courses",
@@ -646,9 +646,9 @@ function detectBottleneck(profile: Profile, track: Track): string {
   const dump = profile.brainDump.toLowerCase();
   if (track === "software") {
     if (/empty github|no project|nothing shipped|haven'?t shipped/.test(dump))
-      return "No shipped project — GitHub is empty";
+      return "No shipped project - GitHub is empty";
     if (/leetcode|interview/.test(dump))
-      return "Coding interviews — DSA practice debt";
+      return "Coding interviews - DSA practice debt";
     if (/applications|applying|recruit/.test(dump))
       return "Application volume too low for the season";
   }
@@ -662,7 +662,7 @@ function detectBottleneck(profile: Profile, track: Track): string {
   if (track === "startup") return "No shipped MVP yet";
   if (/scattered|too many|burnout|overcommit/.test(dump))
     return "Too many parallel commitments";
-  return "Strategy is unclear — too many parallel commitments";
+  return "Strategy is unclear - too many parallel commitments";
 }
 
 function detectStage(profile: Profile, track: Track): string {

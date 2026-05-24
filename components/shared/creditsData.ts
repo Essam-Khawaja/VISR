@@ -1,18 +1,28 @@
 export type CreditPerson = {
   name: string;
-  id: string;
+  email: string;
   avatarUrl?: string;
 };
 
 export const creditsPeople: CreditPerson[] = [
   {
     name: "Syed Essam Uddin Khawaja",
-    id: "30242943",
+    email: "syedessamuddin.khawa@ucalgary.ca",
     avatarUrl: "/essam.png",
   },
   {
     name: "Muhammad Ahmad",
-    id: "30239993",
+    email: "muham.ahmad@ucalgary.ca",
     avatarUrl: "/ahmad.png",
+  },
+  {
+    name: "Hamnah Suleman",
+    email: "hamnah.suleman@ucalgary.ca",
+    avatarUrl: "/hamnah.jpg",
+  },
+  {
+    name: "Khuzaymah Bin Haris",
+    email: "khuzaymah.haris@ucalgary.ca",
+    avatarUrl: "/khuzaymah.jpg",
   },
 ];

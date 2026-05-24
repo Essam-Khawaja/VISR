@@ -18,6 +18,7 @@ import {
   addLocalDays,
   todayLocalDate,
 } from "@/lib/2/taskStore";
+import DatePicker from "@/components/1/ui/DatePicker";
 import {
   buildCurrentSemesterNodes,
   buildSemesterNodes,
@@ -630,13 +631,10 @@ function TaskSeedStep({
         placeholder="Push project skeleton to GitHub"
       />
       <div className="grid grid-cols-[1fr_auto] gap-2">
-        <input
-          type="date"
+        <DatePicker
           value={taskDraft.dueDate}
-          onChange={(e) =>
-            setTaskDraft({ ...taskDraft, dueDate: e.target.value })
-          }
-          className="rounded-xl border border-border bg-white/80 px-3 py-2 text-sm text-primary outline-none focus:border-accent"
+          onChange={(val) => setTaskDraft({ ...taskDraft, dueDate: val })}
+          placeholder="Due date"
         />
         <select
           value={taskDraft.priority}

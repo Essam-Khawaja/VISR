@@ -1,4 +1,4 @@
-import type { OpportunityCheck, StrategyPlan } from "./types";
+﻿import type { OpportunityCheck, StrategyPlan } from "./types";
 import { DEMO_PLAN_ID } from "@/lib/shared/env";
 
 export { DEMO_PLAN_ID };
@@ -8,7 +8,7 @@ export const fixturePlan: StrategyPlan = {
   studentId: "demo-student-001",
   destination: "Software Engineering Internship",
   currentStage: "Skill Signal",
-  mainBottleneck: "No shipped project — GitHub is empty",
+  mainBottleneck: "No shipped project - GitHub is empty",
   routeStatus: "Scattered",
   alignmentScore: 64,
   strategicPillars: [
@@ -199,7 +199,7 @@ export const fixturePlan: StrategyPlan = {
     },
     {
       id: "day-4",
-      title: "Complete 6 LeetCode easy problems — build the habit",
+      title: "Complete 6 LeetCode easy problems - build the habit",
       category: "Interview Readiness",
       priority: "High",
     },

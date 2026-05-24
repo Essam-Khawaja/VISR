@@ -1,4 +1,4 @@
-import type { OnboardingStepId } from "@/components/2/onboarding/onboardingMapTypes";
+﻿import type { OnboardingStepId } from "@/components/2/onboarding/onboardingMapTypes";
 
 type InsightProfile = {
   targetGoal?: string;
@@ -16,12 +16,12 @@ type InsightResult = {
 };
 
 const BOTTLENECK_KEYWORDS: Array<{ re: RegExp; bottleneck: string; concern: string }> = [
-  { re: /\b(github|portfolio|project|ship)\b/i, bottleneck: "No shipped project — GitHub is empty", concern: "Empty portfolio" },
+  { re: /\b(github|portfolio|project|ship)\b/i, bottleneck: "No shipped project - GitHub is empty", concern: "Empty portfolio" },
   { re: /\b(leetcode|interview|mock|dsa|algorithm)\b/i, bottleneck: "Interview prep not started", concern: "Interview readiness" },
   { re: /\b(resume|cv|application)\b/i, bottleneck: "Resume needs work before applications", concern: "Resume gaps" },
   { re: /\b(network|connect|mentor|referral)\b/i, bottleneck: "No professional network built yet", concern: "Networking" },
   { re: /\b(scatter|focus|overwhelm|busy|spread thin)\b/i, bottleneck: "Spread too thin across too many things", concern: "Over-committed" },
-  { re: /\b(procrastinat|lazy|behind|late|deadline)\b/i, bottleneck: "Execution gap — plans exist but nothing ships", concern: "Execution gap" },
+  { re: /\b(procrastinat|lazy|behind|late|deadline)\b/i, bottleneck: "Execution gap - plans exist but nothing ships", concern: "Execution gap" },
   { re: /\b(gpa|grade|fail|academic)\b/i, bottleneck: "Academic performance at risk", concern: "GPA concerns" },
   { re: /\b(money|financial|afford|pay|debt)\b/i, bottleneck: "Financial constraints limiting options", concern: "Financial pressure" },
 ];
@@ -42,15 +42,15 @@ export function buildDeterministicOnboardingInsight(
         return { insight: "No courses added yet. Each class becomes a fixed node on your map." };
       }
       const loadNote = count >= 5
-        ? "That's a heavy course load — it'll constrain how much else you can take on."
-        : "These are your fixed academic load — they constrain how much else you can take on.";
+        ? "That's a heavy course load - it'll constrain how much else you can take on."
+        : "These are your fixed academic load - they constrain how much else you can take on.";
       return { insight: `${count} course${count === 1 ? "" : "s"} on your map. ${loadNote}` };
     }
 
     case "commitments": {
       const count = profile.commitments?.length ?? 0;
       if (count === 0) {
-        return { insight: "No extra commitments — that's a clean slate. Your time goes straight to the goal." };
+        return { insight: "No extra commitments - that's a clean slate. Your time goes straight to the goal." };
       }
       return {
         insight: `${count} commitment${count === 1 ? "" : "s"} competing for the same hours as your goal. Pathwise will score them against your route.`,

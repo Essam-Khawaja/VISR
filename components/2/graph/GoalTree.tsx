@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { IntelligenceDock } from "@/components/2/dashboard/IntelligenceDock";
@@ -399,13 +399,13 @@ export default function GoalTree({
         : focusPath[focusPath.length - 1].id;
 
     if (nodeId === currentNucleusId) {
-      // Clicked the nucleus — show task dialog
+      // Clicked the nucleus - show task dialog
       setExploreDialogId(nodeId);
       clearSelection();
       return;
     }
 
-    // Clicked an orbit node — only drill in, no dialog
+    // Clicked an orbit node - only drill in, no dialog
     const name = findNodeName(plan, tasks, nodes, nodeId);
     setFocusPath((prev) => [...prev, { id: nodeId, name }]);
     setExploreDialogId(null);
