@@ -16,7 +16,7 @@ import {
 } from "@/lib/1/personal-time";
 import { getCategoryStyles, getCategoryIcon } from "@/lib/1/category-colors";
 import ScrollingText from "@/components/1/ui/ScrollingText";
-import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, Loader2, Target } from "lucide-react";
 import Link from "next/link";
 import { demoPlanId } from "@/lib/shared/env";
 import { fixturePlan } from "@/lib/2/fixture";
@@ -237,16 +237,19 @@ export default function WeekPage() {
                           <div
                             key={task.id}
                             className={
-                              "rounded-lg border px-1.5 py-1 " +
+                              "flex items-start gap-1.5 rounded-lg border px-1.5 py-1 " +
                               strategyTaskClass(task)
                             }
                           >
-                            <p className="line-clamp-2 text-[11px] font-semibold leading-tight">
-                              {task.title}
-                            </p>
-                            <p className="mt-0.5 text-[10px] font-medium leading-tight opacity-70">
-                              {task.priority} · Strategy
-                            </p>
+                            <Target
+                              className="mt-0.5 h-3 w-3 shrink-0 opacity-70"
+                              strokeWidth={2.5}
+                            />
+                            <div className="min-w-0 flex-1">
+                              <p className="line-clamp-2 text-[11px] font-semibold leading-tight">
+                                {task.title}
+                              </p>
+                            </div>
                           </div>
                         ))}
                       </>

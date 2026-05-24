@@ -1,4 +1,4 @@
-import type {
+﻿import type {
   OpportunityCheck,
   Recommendation,
   StrategyPlan,
@@ -103,7 +103,7 @@ export function buildDeterministicOpportunity(
     tradeoffs.push("Manageable on top of your current load.");
   }
   if (plan.routeStatus === "Scattered") {
-    tradeoffs.push("You're already scattered — adding more without a hard cap will hurt.");
+    tradeoffs.push("You're already scattered - adding more without a hard cap will hurt.");
   }
 
   if (recommendation === "Say Yes With Conditions" || recommendation === "Defer") {
@@ -129,7 +129,7 @@ export function buildDeterministicOpportunity(
         ? `Worth taking only with discipline. Your current bottleneck is ${plan.mainBottleneck.toLowerCase()}, and an uncapped commitment here will delay it. Cap it.`
         : recommendation === "Defer"
           ? `Strong move, wrong timing. Your current bottleneck is ${plan.mainBottleneck.toLowerCase()}. Come back to this once it's unstuck.`
-          : `This pulls you away from the bottleneck. ${plan.mainBottleneck} is what matters this term — keep the focus.`;
+          : `This pulls you away from the bottleneck. ${plan.mainBottleneck} is what matters this term - keep the focus.`;
 
   return {
     id,

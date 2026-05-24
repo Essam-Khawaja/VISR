@@ -33,7 +33,7 @@ import RoutinesPanel from "@/components/1/routines/RoutinesPanel";
 import VoiceBriefingButton from "@/components/1/voice/VoiceBriefingButton";
 import ICSImportButton from "@/components/1/import/ICSImportButton";
 import WeekChart from "@/components/1/week-chart/WeekChart";
-import { Plus, Loader2, Settings as SettingsIcon } from "lucide-react";
+import { Plus, Loader2, Settings as SettingsIcon, Target } from "lucide-react";
 import Link from "next/link";
 import { demoPlanId } from "@/lib/shared/env";
 import { fixturePlan } from "@/lib/2/fixture";
@@ -83,6 +83,18 @@ function StrategyTasksPanel({
           <p className="mt-0.5 text-[11px] text-tertiary">
             From your strategy map · due {selectedDate}
           </p>
+        <div className="flex items-center gap-2.5">
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-violet-400 to-purple-500 shadow-soft">
+            <Target className="h-4 w-4 text-white" strokeWidth={1.9} />
+          </div>
+          <div>
+            <h2 className="text-sm font-semibold text-primary">
+              Strategy Tasks
+            </h2>
+            <p className="mt-0.5 text-[11px] text-tertiary">
+              Synced from your strategy map for {selectedDate}
+            </p>
+          </div>
         </div>
         <Link
           href={`/2/dashboard/${planId}`}
@@ -113,7 +125,7 @@ function StrategyTasksPanel({
                     "mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-md border transition-colors " +
                     (done
                       ? "border-success bg-success text-white"
-                      : "border-border-strong bg-white text-transparent hover:border-accent")
+                      : "border-stone-400 bg-white text-transparent hover:border-accent hover:bg-accent/5")
                   }
                 >
                   <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
@@ -136,9 +148,6 @@ function StrategyTasksPanel({
                     {task.title}
                   </p>
                   <div className="mt-1 flex flex-wrap items-center gap-1.5 text-[11px]">
-                    <span className="rounded-full bg-slate-100 px-2 py-0.5 font-medium text-slate-600">
-                      {task.parentNodeKind}
-                    </span>
                     <span className={priorityClass(task.priority)}>
                       {task.priority}
                     </span>
@@ -835,6 +844,7 @@ function DashboardInner() {
             items={checklistItems}
             manualItems={manualItems}
             personalTimeBlocks={personalTimeBlocks}
+            strategyTasks={strategyTasks}
             forDate={selectedDate}
             weather={weather}
           />
@@ -910,6 +920,12 @@ function DashboardInner() {
         />
 
         <RoutinesPanel forDate={selectedDate} />
+
+        <StrategyTasksPanel
+          tasks={strategyTasks}
+          selectedDate={selectedDate}
+          onToggle={toggleStrategyTask}
+        />
 
         {isToday && (
           <EndOfDayReschedule

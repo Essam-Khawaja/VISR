@@ -1,10 +1,10 @@
-import * as THREE from "three";
+﻿import * as THREE from "three";
 
 let cached: THREE.CanvasTexture | null = null;
 
 /**
  * Soft radial-gradient texture used as a glow halo behind nodes.
- * Designed for normal-blending on a light background — the center is opaque
+ * Designed for normal-blending on a light background - the center is opaque
  * white/colored (driven by sprite color) and the edge fades fully to transparent.
  */
 export function getGlowTexture(): THREE.CanvasTexture {

@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { TimelineEvent, NoteStatus } from "@/lib/1/types";
 import { X, Trash2, Loader2, StickyNote } from "lucide-react";
 
@@ -48,6 +49,9 @@ export default function NoteEditor({ event, onSave, onClose }: NoteEditorProps) 
   const [status, setStatus] = useState<NoteStatus>(event.note_status ?? null);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => setMounted(true), []);
 
   const isNew = !event.notes;
 
@@ -73,11 +77,15 @@ export default function NoteEditor({ event, onSave, onClose }: NoteEditorProps) 
     }
   }
 
-  return (
+  const modal = (
     <div
-      className="fixed inset-0 z-50 bg-stone-900/30 backdrop-blur-sm flex items-center justify-center p-3 sm:p-6"
+      className="fixed inset-0 z-[200] flex items-center justify-center p-3 sm:p-6"
       onClick={onClose}
     >
+      <div
+        className="absolute inset-0"
+        aria-hidden="true"
+      />
       <div
         className="relative w-full sm:max-w-md bg-white rounded-3xl shadow-2xl border border-stone-200 max-h-[90dvh] sm:max-h-[92dvh] flex flex-col"
         onClick={(e) => e.stopPropagation()}
@@ -191,4 +199,7 @@ export default function NoteEditor({ event, onSave, onClose }: NoteEditorProps) 
       </div>
     </div>
   );
+
+  if (!mounted) return null;
+  return createPortal(modal, document.body);
 }

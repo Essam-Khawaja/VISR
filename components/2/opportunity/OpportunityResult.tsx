@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { motion } from "framer-motion";
 import Link from "next/link";
@@ -83,7 +83,7 @@ export function OpportunityResult({
               <p className="text-[13px] text-secondary">
                 {isDemo
                   ? "On the demo plan this is in-session only. On your own plan it persists."
-                  : "Apply this verdict to your plan — adds cuts + conditions and stores it locally."}
+                  : "Apply this verdict to your plan - adds cuts + conditions and stores it locally."}
               </p>
               <Button size="sm" onClick={onApply}>
                 Apply to my plan

@@ -1,4 +1,4 @@
-import { EventCategory } from "@/lib/1/types";
+﻿import { EventCategory } from "@/lib/1/types";
 
 export type CategoryStyles = {
   label: string;
@@ -13,7 +13,7 @@ export type CategoryStyles = {
 
 // All categories live inside the Pathwise warm palette
 // (amaranth / thulian / sage / brook / pomelo / chalk). The result is
-// distinguishable but harmonious — nothing screams "Bootstrap blue" at
+// distinguishable but harmonious - nothing screams "Bootstrap blue" at
 // 8am anymore.
 export const CATEGORY_CONFIG: Record<EventCategory, CategoryStyles> = {
   // study / learning -> sage

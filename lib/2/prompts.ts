@@ -1,14 +1,16 @@
-import type { z } from "zod";
+﻿import type { z } from "zod";
 import type { ProfileSchema } from "./validate";
 
 type Profile = z.infer<typeof ProfileSchema>;
 
 export function strategySystemPrompt(): string {
-  return `You are Pathwise, an opinionated personal strategist for university students. You produce a structured strategy plan in JSON only — no prose, no markdown, no explanation outside the JSON.
+  return `You are Pathwise, an opinionated personal strategist for university students. You produce a structured strategy plan in JSON only - no prose, no markdown, no explanation outside the JSON.
 
 Your voice: direct, opinionated, no hedging. Name the single biggest bottleneck. Tell the user what to cut, defer, keep, or double down on. Strategy, not a to-do list.
 
-Return ONLY a single JSON object matching the StrategyPlan schema. Do not include backticks or any non-JSON characters.`;
+Return ONLY a single JSON object matching the StrategyPlan schema. Do not include backticks or any non-JSON characters.
+
+IMPORTANT: Never use em dashes (the - character typed as a long dash). Use a regular hyphen (-), colon (:), semicolon (;), or comma (,) instead.`;
 }
 
 export function strategyUserPrompt(profile: Profile, planId: string): string {
@@ -28,11 +30,11 @@ brainDump: """${profile.brainDump}"""
 
 Rules:
 - 3 to 5 strategic pillars, each with 1 to 4 actions.
-- mainBottleneck must be specific (e.g. "No shipped project — GitHub is empty"), not vague.
+- mainBottleneck must be specific (e.g. "No shipped project - GitHub is empty"), not vague.
 - nextSevenDays: 4 to 6 concrete items the user can do in the next week.
 - cutList: 4 to 6 items with explicit Cut / Defer / Keep / Double Down recommendations.
 - risks: 3 items, with severity.
-- alignmentScore: 0–100, based on how aligned current commitments are with the targetGoal.
+- alignmentScore: 0-100, based on how aligned current commitments are with the targetGoal.
 - routeStatus: one of "On Track" | "At Risk" | "Scattered" | "Needs Focus".
 - ids must be strings; use "${planId}-pillar-N" / "${planId}-action-N-M" / "cut-..." / "n7-..." / "risk-..." patterns.
 
@@ -55,9 +57,11 @@ Return JSON only:
 }
 
 export function opportunitySystemPrompt(): string {
-  return `You are Pathwise. You evaluate one opportunity against the user's current strategy plan and return a single JSON OpportunityCheck — no prose, no markdown.
+  return `You are Pathwise. You evaluate one opportunity against the user's current strategy plan and return a single JSON OpportunityCheck - no prose, no markdown.
 
-Be opinionated. Name explicit tradeoffs, conditions, and what the user must cut to fit this in. Recommendations: "Say Yes" | "Say Yes With Conditions" | "Defer" | "Say No".`;
+Be opinionated. Name explicit tradeoffs, conditions, and what the user must cut to fit this in. Recommendations: "Say Yes" | "Say Yes With Conditions" | "Defer" | "Say No".
+
+IMPORTANT: Never use em dashes. Use a regular hyphen (-), colon (:), semicolon (;), or comma (,) instead.`;
 }
 
 export function opportunityUserPrompt(
@@ -121,7 +125,7 @@ export function taskGenerationUserPrompt(
   nodeDescription: string,
   userPrompt: string,
 ): string {
-  return `Overall goal: ${parentContext}\nArea of focus: ${nodeName} — ${nodeDescription}\nStudent's request: ${userPrompt}\n\nGenerate concrete tasks to help with this request.`;
+  return `Overall goal: ${parentContext}\nArea of focus: ${nodeName} - ${nodeDescription}\nStudent's request: ${userPrompt}\n\nGenerate concrete tasks to help with this request.`;
 }
 
 export function summarizePlan(plan: {

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useRef, useState } from "react";
 import { cn } from "@/lib/shared/cn";
@@ -76,7 +76,7 @@ export function ChipInput({
         )}
         onClick={() => inputRef.current?.focus()}
         role="group"
-        aria-label={label ? `${label} — ${value.length} added` : undefined}
+        aria-label={label ? `${label} - ${value.length} added` : undefined}
       >
         {value.map((chip) => (
           <span

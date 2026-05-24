@@ -43,7 +43,7 @@ export function Sidebar() {
       items: [
         {
           href: "/1",
-          label: "Today",
+          label: "Flowgram",
           icon: <Sparkles className="size-[15px]" strokeWidth={1.7} />,
           exact: true,
         },

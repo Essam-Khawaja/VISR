@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { Badge } from "@/components/2/ui/Badge";
@@ -348,7 +348,7 @@ function ActionCard({
           </span>
           <span className="text-[11px] text-tertiary">
             {isDemo
-              ? "Demo plan — progress is in-session only"
+              ? "Demo plan - progress is in-session only"
               : "Stored locally on this device"}
           </span>
         </div>

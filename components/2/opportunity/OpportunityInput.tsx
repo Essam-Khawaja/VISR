@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 import { Button } from "@/components/2/ui/Button";
@@ -23,7 +23,7 @@ export function OpportunityInput({ onEvaluate, busy }: Props) {
   const onSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (text.trim().length < 10) {
-      setError("Tell us a bit more — at least 10 characters.");
+      setError("Tell us a bit more - at least 10 characters.");
       return;
     }
     setError(undefined);

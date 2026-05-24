@@ -4,9 +4,9 @@
 -- Safe to run on an EMPTY database or a populated one.
 -- Wipes app data tables (TRUNCATE ... CASCADE) and repopulates
 -- with a demo-ready, feature-complete dataset:
---   * Past dummy   : May 16 - May 22
---   * Today        : May 23 (sample showcase day)
---   * Showcase week: May 24 - May 29 (every feature lit up)
+--   * Past dummy   : May 16 - May 23
+--   * Today        : May 24 (packed showcase day - all warnings fire)
+--   * Showcase week: May 25 - May 29 (every feature lit up)
 --   * Future dummy : May 30 - Jun 12 (two weeks)
 --
 -- Demonstrates every shipped feature:
@@ -198,7 +198,7 @@ insert into events
   ('Movie night with roommates',  'Dune Part 3',                     'social',     '2026-05-22 20:00-06', '2026-05-22 22:30-06', 'Home',              null,                                                                false, 'Trailer: youtube.com/watch?v=demo', 'completed', true);
 
 -- -------------------------------------------------------------
--- TODAY: Sat May 23 (showcase day)
+-- PAST: Sat May 23 (previous day events)
 -- -------------------------------------------------------------
 insert into events
   (title, description, category, start_time, end_time, location, location_id, auto_transit, notes, note_status, completed) values
@@ -234,19 +234,44 @@ insert into events
   ('Transit to University of Calgary', 'auto-transit for Late debug session',     'transit', '2026-05-23 22:00-06', '2026-05-23 22:30-06', 'University of Calgary',     null, false, null, null, false);
 
 -- -------------------------------------------------------------
--- SHOWCASE: Sun May 24 (calm day + family dinner phantom)
+-- TODAY: Sun May 24 (packed day - every warning fires)
+-- Demonstrates: transit warning, long stretch / no lunch break,
+--   big commitment overlap, late-night transit, custom category,
+--   important note, follow-up note, weather item (sunscreen)
+-- Personal time block: Yoga focus block 08:00-09:00 (already seeded)
+-- Family dinner phantom: 18:00-20:00 (already seeded via weekday=0)
 -- -------------------------------------------------------------
 insert into events
   (title, description, category, start_time, end_time, location, location_id, auto_transit, notes, note_status, completed) values
-  ('Long run at the park',        'Easy 5k',                         'gym',        '2026-05-24 09:30-06', '2026-05-24 10:30-06', 'Prince''s Island Park', null,                                                            false, 'Route: strava.com/routes/12345', null, false),
-  ('Brunch with roommates',       null,                              'social',     '2026-05-24 11:00-06', '2026-05-24 12:30-06', 'Home',              null,                                                                false, null, null, false),
-  ('Volunteer shift at library',  'Reading hour for kids',           'volunteering','2026-05-24 13:30-06', '2026-05-24 15:00-06', 'Memorial Park Library', null,                                                            false, 'Book list: calgarylibrary.ca/childrens', 'follow_up', false),
-  ('Reading: ML papers',          'Transformers deep-dive',          'assignment', '2026-05-24 15:30-06', '2026-05-24 17:30-06', 'Home',              null,                                                                false, 'arxiv.org/abs/1706.03762', null, false);
+
+  -- Already happened
+  ('Morning yoga',                'Slow flow',                       'personal',   '2026-05-24 07:00-06', '2026-05-24 07:30-06', 'Living room',       null,                                                                false, null, null, true),
+  ('Breakfast',                   null,                              'personal',   '2026-05-24 07:45-06', '2026-05-24 08:15-06', 'Home',              null,                                                                false, null, null, true),
+
+  -- Long stretch with no real lunch gap (triggers pack-lunch warning)
+  ('Data Structures Lecture',     'AVL Trees + exam review',         'class',      '2026-05-24 09:00-06', '2026-05-24 10:15-06', 'MS 217',            (select id from saved_locations where name='University of Calgary'),  true,  null, null, false),
+  ('Linear Algebra Lecture',      'Eigenvalues + midterm Q&A',       'class',      '2026-05-24 10:30-06', '2026-05-24 11:45-06', 'MS 211',            (select id from saved_locations where name='University of Calgary'),  false, null, null, false),
+  -- No lunch break - straight into lab (triggers long-stretch warning)
+  ('Data Structures Lab',         'Implement red-black tree',        'class',      '2026-05-24 12:00-06', '2026-05-24 14:00-06', 'ICT 122',           (select id from saved_locations where name='University of Calgary'),  false, 'Submit on D2L by end of lab: d2l.ucalgary.ca', 'unresolved', false),
+  ('Club exec meeting',           'Sponsorship budget review',       'club',       '2026-05-24 14:15-06', '2026-05-24 15:15-06', 'TFDL 5th floor',    (select id from saved_locations where name='University of Calgary'),  false, 'Bring lab equipment proposal. Doc: docs.google.com/d/abc', 'important', false),
+
+  -- Volunteer shift - custom category, no break since morning
+  ('Volunteer shift at library',  'Reading hour for kids',           'volunteering','2026-05-24 15:30-06', '2026-05-24 17:00-06', 'Memorial Park Library', null,                                                            false, 'Book list: calgarylibrary.ca/childrens', 'follow_up', false),
+
+  -- Grocery run right before family dinner phantom kicks in
+  ('Grocery run',                 'Restock for the week - pick up pack lunch supplies', 'grocery', '2026-05-24 17:15-06', '2026-05-24 18:15-06', null, (select id from saved_locations where name='T&T Supermarket'),         false, 'Need produce, eggs, rice, tofu. No break today so grab something for tomorrow too', 'unresolved', false),
+
+  -- Late-night study session - triggers Calgary late-transit warning
+  ('Hackathon prep coding',       'Pathwise demo polish - crunch night', 'project', '2026-05-24 21:00-06', '2026-05-24 23:00-06', 'ENF 145',          (select id from saved_locations where name='University of Calgary'),  true,  'Slides: docs.google.com/d/hackathon-slides', 'important', false);
 
 -- Transit blocks May 24
 insert into events
-  (title, description, category, start_time, end_time, location, location_id, auto_transit) values
-  ('Transit to Memorial Park Library', 'auto-transit', 'transit', '2026-05-24 13:15-06', '2026-05-24 13:30-06', 'Memorial Park Library', null, false);
+  (title, description, category, start_time, end_time, location, location_id, auto_transit, notes, note_status, completed) values
+  ('Transit to University of Calgary', 'auto-transit for Data Structures Lecture', 'transit', '2026-05-24 08:30-06', '2026-05-24 09:00-06', 'University of Calgary', null, false, null, null, false),
+  ('Transit to Memorial Park Library', 'auto-transit for Volunteer shift',         'transit', '2026-05-24 15:10-06', '2026-05-24 15:30-06', 'Memorial Park Library', null, false, null, null, false),
+  ('Transit from Memorial Park Library','auto-transit for Volunteer shift',        'transit', '2026-05-24 17:00-06', '2026-05-24 17:20-06', 'Memorial Park Library', null, false, null, null, false),
+  ('Transit to University of Calgary', 'auto-transit for Hackathon prep coding',   'transit', '2026-05-24 20:30-06', '2026-05-24 21:00-06', 'University of Calgary', null, false, null, null, false),
+  ('Transit from University of Calgary','auto-transit for Hackathon prep coding',  'transit', '2026-05-24 23:00-06', '2026-05-24 23:30-06', 'University of Calgary', null, false, null, null, false);
 
 -- -------------------------------------------------------------
 -- SHOWCASE: Mon May 25 (busy school day)
@@ -417,6 +442,20 @@ insert into event_items (event_id, item_id, is_one_time)
   select e.id, i.id, true
   from events e cross join items i
   where e.title = 'Data Structures Lab'
+    and e.start_time::date = date '2026-05-24'
+    and i.name in ('Arduino kit', 'USB drive');
+
+insert into event_items (event_id, item_id, is_one_time)
+  select e.id, i.id, true
+  from events e cross join items i
+  where e.title = 'Hackathon prep coding'
+    and e.start_time::date = date '2026-05-24'
+    and i.name in ('USB drive', 'Charger');
+
+insert into event_items (event_id, item_id, is_one_time)
+  select e.id, i.id, true
+  from events e cross join items i
+  where e.title = 'Data Structures Lab'
     and e.start_time::date = date '2026-05-25'
     and i.name = 'Arduino kit';
 
@@ -462,7 +501,7 @@ insert into manual_checklist_items (item_name, for_date, checked) values
   ('Pick up dry cleaning', '2026-05-21', true),
   ('Mail rent cheque',     '2026-05-22', true),
   ('House keys',           '2026-05-23', false),
-  ('Library book',         '2026-05-24', false),
+  ('Pack lunch - no break between 9am and 3pm', '2026-05-24', false),
   ('Birthday card',        '2026-05-25', false),
   ('Lab report draft',     '2026-05-26', false),
   ('Resume hard copy',     '2026-05-27', false),
