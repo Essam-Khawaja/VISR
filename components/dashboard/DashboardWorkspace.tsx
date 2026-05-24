@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -22,7 +21,7 @@ type Props = {
   onToggleToday: () => void;
 };
 
-type Tab = "map" | "insights";
+type Tab = "overview" | "explore" | "insights";
 
 const routeTone: Record<RouteStatus, "success" | "warning" | "danger"> = {
   "On Track": "success",
@@ -55,29 +54,33 @@ const cutOrder: CutRecommendation[] = ["Cut", "Defer", "Keep", "Double Down"];
 export function DashboardWorkspace({ onToggleToday }: Props) {
   const ctx = usePlan();
   const { plan, planId, stored, markAction, isDemo } = ctx;
-  const [tab, setTab] = useState<Tab>("map");
-  const router = useRouter();
-
-  const handleNodeClick = (pillarId: string) => {
-    router.push(`/dashboard/${planId}/pillar/${pillarId}`);
-  };
+  const [tab, setTab] = useState<Tab>("overview");
 
   return (
     <div className="flex h-full flex-col">
       <div className="flex shrink-0 items-center gap-1 border-b border-border bg-surface px-4">
-        <TabButton active={tab === "map"} onClick={() => setTab("map")}>
-          Map
+        <TabButton active={tab === "overview"} onClick={() => setTab("overview")}>
+          Overview
+        </TabButton>
+        <TabButton active={tab === "explore"} onClick={() => setTab("explore")}>
+          Explore
         </TabButton>
         <TabButton active={tab === "insights"} onClick={() => setTab("insights")}>
           Insights
         </TabButton>
       </div>
 
-      {tab === "map" ? (
+      {tab === "overview" ? (
         <div className="min-h-0 flex-1">
           <GoalTreeSlot
             onToggleToday={onToggleToday}
-            onNodeClick={handleNodeClick}
+            displayMode="preview"
+          />
+        </div>
+      ) : tab === "explore" ? (
+        <div className="min-h-0 flex-1">
+          <GoalTreeSlot
+            onToggleToday={onToggleToday}
             displayMode="full"
           />
         </div>
