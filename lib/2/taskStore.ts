@@ -2,6 +2,7 @@ import { createSupabaseAnonClient } from "@/lib/shared/supabase";
 import type {
   ActionItem,
   Priority,
+  StrategyNode,
   StrategyPlan,
   StrategyTask,
   StrategyTaskParentKind,
@@ -101,6 +102,13 @@ export function saveTasks(planId: string, tasks: StrategyTask[]): void {
   if (!isBrowser()) return;
   try {
     window.localStorage.setItem(taskKey(planId), JSON.stringify(tasks));
+  } catch {}
+}
+
+export function clearTasksLocal(planId: string): void {
+  if (!isBrowser()) return;
+  try {
+    window.localStorage.removeItem(taskKey(planId));
   } catch {}
 }
 
@@ -226,12 +234,115 @@ export function tasksForRange(
   return tasks.filter((task) => task.dueDate >= dateFrom && task.dueDate <= dateTo);
 }
 
+export function excludeLegacyGeneratedTasks(tasks: StrategyTask[]): StrategyTask[] {
+  const hasMapTasks = tasks.some(
+    (task) => task.source === "strategy_map" || task.source === "daily",
+  );
+  if (!hasMapTasks) return tasks;
+  return tasks.filter((task) => task.source !== "generated_plan");
+}
+
+export function tasksDueNextDays(
+  tasks: StrategyTask[],
+  days = 7,
+  baseDate = todayLocalDate(),
+): StrategyTask[] {
+  const end = addLocalDays(baseDate, days - 1);
+  return tasksForRange(excludeLegacyGeneratedTasks(tasks), baseDate, end);
+}
+
+export function resolveSemesterNodeId(nodes: StrategyNode[]): string | null {
+  const root = nodes.find((node) => node.parentNodeId === null);
+  if (!root) return null;
+
+  const yearNode =
+    nodes.find(
+      (node) =>
+        node.parentNodeId === root.id &&
+        node.kind === "academic_year" &&
+        node.status === "doing",
+    ) ??
+    nodes.find(
+      (node) => node.parentNodeId === root.id && node.kind === "academic_year",
+    );
+  if (!yearNode) return null;
+
+  const semesterNode =
+    nodes.find(
+      (node) =>
+        node.parentNodeId === yearNode.id &&
+        node.kind === "semester" &&
+        node.status === "doing",
+    ) ??
+    nodes.find(
+      (node) => node.parentNodeId === yearNode.id && node.kind === "semester",
+    ) ??
+    nodes
+      .filter(
+        (node) => node.parentNodeId === yearNode.id && node.kind === "semester",
+      )
+      .sort(
+        (a, b) =>
+          a.sortOrder - b.sortOrder || a.createdAt.localeCompare(b.createdAt),
+      )[0];
+
+  return semesterNode?.id ?? null;
+}
+
+export function tasksForSemester(
+  nodes: StrategyNode[],
+  tasks: StrategyTask[],
+): StrategyTask[] {
+  const filtered = excludeLegacyGeneratedTasks(tasks);
+  const semesterId = resolveSemesterNodeId(nodes);
+  if (semesterId) return tasksForNucleus(nodes, filtered, semesterId);
+  return filtered;
+}
+
+export type SemesterProgress = {
+  done: number;
+  total: number;
+  open: number;
+  deferred: number;
+  percent: number;
+};
+
+export function computeSemesterProgress(
+  nodes: StrategyNode[],
+  tasks: StrategyTask[],
+): SemesterProgress {
+  const scoped = tasksForSemester(nodes, tasks);
+  const total = scoped.length;
+  const done = scoped.filter((task) => task.status === "done").length;
+  const deferred = scoped.filter((task) => task.status === "skipped").length;
+  const open = total - done - deferred;
+  const percent = total === 0 ? 0 : Math.round((done / total) * 100);
+  return { done, total, open, deferred, percent };
+}
+
 export function tasksForNode(
   tasks: StrategyTask[],
   nodeId: string,
 ): StrategyTask[] {
   return tasks.filter(
     (task) => task.parentNodeId === nodeId || task.parentTaskId === nodeId,
+  );
+}
+
+/** Tasks on a nucleus and its direct child graph nodes (semester + courses/clubs). */
+export function tasksForNucleus(
+  nodes: StrategyNode[],
+  tasks: StrategyTask[],
+  nucleusId: string,
+): StrategyTask[] {
+  const childIds = new Set(
+    nodes
+      .filter((node) => node.parentNodeId === nucleusId)
+      .map((node) => node.id),
+  );
+  return tasks.filter(
+    (task) =>
+      task.parentNodeId === nucleusId || childIds.has(task.parentNodeId),
   );
 }
 
@@ -345,13 +456,13 @@ export function migrateActionStatesToTasks(
   return next;
 }
 
-function mergeTasks(
-  existing: StrategyTask[],
-  incoming: StrategyTask[],
+export function mergeTasks(
+  ...lists: StrategyTask[][]
 ): StrategyTask[] {
   const map = new Map<string, StrategyTask>();
-  for (const task of existing) map.set(task.id, task);
-  for (const task of incoming) map.set(task.id, task);
+  for (const list of lists) {
+    for (const task of list) map.set(task.id, task);
+  }
   return [...map.values()].sort(
     (a, b) =>
       a.dueDate.localeCompare(b.dueDate) ||

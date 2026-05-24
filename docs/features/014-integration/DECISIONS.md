@@ -60,11 +60,25 @@
 
 **Reason:** The canonical `strategy_tasks` table, indexes, and MVP policies now live beside the rest of the database schema. Keeping one SQL entry point reduces setup drift during the hackathon.
 
-## D11: MVP Sync Uses The Demo Strategy Plan As The Shared Daily Context
+## D11: MVP Sync Uses The Active Strategy Plan
 
-**Decision:** Today and Week read strategy tasks from the demo strategy plan ID for this integration slice.
+**Decision:** Today and Week read strategy tasks from `getActivePlanId()` with demo fallback.
 
-**Reason:** This keeps the screenshot/demo path reliable without adding an account-level active-plan selector. A later persistence pass can let generated onboarding plans become the active daily/week strategy context.
+**Reason:** After integration, daily views should follow the user's onboarding plan when one exists, not always the hardcoded demo plan ID.
+
+**Supersedes:** D11 (2026-05-23) which pinned Today/Week to demo plan only.
+
+## D13: StrategyTask Is Canonical For All Task UI
+
+**Decision:** All task lists (dashboard Next 7 days, Today, Week, intelligence dock) read from `StrategyTask[]` in the task store. `plan.nextSevenDays` is insight-only / legacy demo seed.
+
+**Reason:** AI-generated weekly lists duplicated and contradicted real tasks created on the strategy map, wasting tokens and breaking sync.
+
+## D14: Semester Progress Replaces Alignment Score
+
+**Decision:** Dashboard top-band dial shows semester-scoped task completion % (`done / total` for current semester subtree) instead of `plan.alignmentScore`.
+
+**Reason:** Progress should reflect actual work completed on the map, not an opaque AI score.
 
 ## D12: Week Task Chips Link Through The Day Cell
 

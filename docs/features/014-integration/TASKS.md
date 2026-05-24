@@ -61,13 +61,22 @@
 
 ## 8. Daily / Week Sync
 
-- [ ] Add Strategy Tasks section to Today view.
-- [ ] Fetch tasks by selected date.
-- [ ] Mark done/reopen from Today.
-- [ ] Add strategy task chips to Week view day cells.
-- [ ] Fetch tasks by week range.
+- [x] Add Strategy Tasks section to Today view.
+- [x] Fetch tasks by selected date from active plan (not AI `nextSevenDays`).
+- [x] Mark done/reopen from Today.
+- [x] Add strategy task chips to Week view day cells.
+- [x] Fetch tasks by week range from active plan.
 - [ ] Clicking a strategy task opens task detail or Strategy Map context.
 - [ ] Confirm date mapping avoids timezone off-by-one errors.
+
+## 9. Task Source Unification (Dashboard)
+
+- [x] Dashboard Next 7 days reads real `StrategyTask[]` due in next 7 days.
+- [x] Semester progress replaces alignment score on dashboard.
+- [x] Open today focus navigates to `/1` (not overlay).
+- [x] Remove Opportunities from sidebar (embedded on dashboard).
+- [x] Stop materializing AI `nextSevenDays` for real plans.
+- [x] Intelligence dock uses real strategy tasks.
 
 ## 9. Verification
 

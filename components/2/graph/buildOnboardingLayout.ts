@@ -252,6 +252,15 @@ function radialLayout(
   children: StrategyNode[],
   tasks: StrategyTask[],
 ): { nodes: LayoutNode[]; edges: LayoutEdge[] } {
+  return buildRadialLayoutFromCenter(center, children, tasks);
+}
+
+/** Shared semester/year radial layout (onboarding + dashboard preview). */
+export function buildRadialLayoutFromCenter(
+  center: StrategyNode,
+  children: StrategyNode[],
+  tasks: StrategyTask[],
+): { nodes: LayoutNode[]; edges: LayoutEdge[] } {
   const centerPos: [number, number, number] = [0, 0, 0];
   const nodes: LayoutNode[] = [nodeToLayout(center, centerPos, 0, true)];
   const edges: LayoutEdge[] = [];

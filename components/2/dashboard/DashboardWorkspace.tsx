@@ -1,25 +1,26 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import Link from "next/link";
 import { Badge } from "@/components/2/ui/Badge";
 import { Button } from "@/components/2/ui/Button";
 import { Card } from "@/components/2/ui/Card";
 import { NumberDial } from "@/components/2/ui/NumberDial";
 import { EmbeddedOpportunityChecker } from "./EmbeddedOpportunityChecker";
 import { GoalTreeSlot } from "./GoalTreeSlot";
+import { DemoReplayStrip } from "./ReplayOnboardingButton";
 import { usePlan } from "./PlanProvider";
-import type { ActionState } from "@/lib/2/planStore";
+import { getRootNode } from "@/components/2/graph/universityGraphLayout";
+import type { SemesterProgress } from "@/lib/2/taskStore";
 import type {
   CutRecommendation,
   Priority,
   RouteStatus,
   Severity,
   StrategyPlan,
+  StrategyTask,
+  StrategyTaskStatus,
 } from "@/lib/2/types";
-
-type Props = {
-  onToggleToday: () => void;
-};
 
 const routeTone: Record<RouteStatus, "success" | "warning" | "danger"> = {
   "On Track": "success",
@@ -49,9 +50,20 @@ const severityTone: Record<Severity, "danger" | "warning" | "muted"> = {
 
 const cutOrder: CutRecommendation[] = ["Cut", "Defer", "Keep", "Double Down"];
 
-export function DashboardWorkspace({ onToggleToday }: Props) {
+export function DashboardWorkspace() {
   const ctx = usePlan();
-  const { plan, planId, stored, markAction, isDemo } = ctx;
+  const {
+    plan,
+    isDemo,
+    nodes,
+    hasUniversityGraph,
+    nextSevenDayTasks,
+    semesterProgress,
+    markTask,
+  } = ctx;
+  const rootNode = getRootNode(nodes);
+  const displayDestination =
+    hasUniversityGraph && rootNode ? rootNode.title : plan.destination;
   const [exploreOpen, setExploreOpen] = useState(false);
 
   const openExplore = useCallback(() => setExploreOpen(true), []);
@@ -71,32 +83,32 @@ export function DashboardWorkspace({ onToggleToday }: Props) {
   if (exploreOpen) {
     return (
       <div className="flex h-full flex-col">
-        <div className="flex shrink-0 items-center gap-2 border-b border-border bg-surface px-4 py-2">
-          <button
-            type="button"
-            onClick={closeExplore}
-            className="flex h-7 items-center gap-1.5 rounded-lg border border-border bg-elevated px-2.5 text-[12px] font-medium text-secondary transition-colors hover:text-primary"
-          >
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-              <path
-                d="M9 3L5 7l4 4"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-            Dashboard
-          </button>
-          <span className="text-[13px] font-semibold text-primary">
-            Explore Map
-          </span>
+        <div className="flex shrink-0 flex-col gap-2 border-b border-border bg-surface px-4 py-2">
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={closeExplore}
+              className="flex h-7 items-center gap-1.5 rounded-lg border border-border bg-elevated px-2.5 text-[12px] font-medium text-secondary transition-colors hover:text-primary"
+            >
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                <path
+                  d="M9 3L5 7l4 4"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+              Dashboard
+            </button>
+            <span className="text-[13px] font-semibold text-primary">
+              Explore Map
+            </span>
+          </div>
+          <DemoReplayStrip />
         </div>
         <div className="min-h-0 flex-1">
-          <GoalTreeSlot
-            onToggleToday={onToggleToday}
-            displayMode="full"
-          />
+          <GoalTreeSlot displayMode="full" />
         </div>
       </div>
     );
@@ -106,19 +118,16 @@ export function DashboardWorkspace({ onToggleToday }: Props) {
     <div className="flex-1 overflow-y-auto">
       <div className="mx-auto flex w-full max-w-[1500px] flex-col gap-5 px-4 py-5 sm:px-6 lg:px-8 lg:py-7">
         {/* Overview map card */}
-        <button
-          type="button"
-          onClick={openExplore}
-          className="group relative w-full overflow-hidden rounded-2xl border border-border bg-base shadow-card transition-shadow hover:shadow-lift"
-        >
-          <div className="h-[800px]">
-            <GoalTreeSlot
-              onToggleToday={onToggleToday}
-              displayMode="preview"
-            />
+        <div className="group relative w-full overflow-hidden rounded-2xl border border-border bg-base shadow-card transition-shadow hover:shadow-lift">
+          <div className="pointer-events-none relative z-0 h-[800px]">
+            <GoalTreeSlot displayMode="preview" />
           </div>
-          <div className="absolute inset-0 flex items-end justify-center bg-gradient-to-t from-base/80 via-transparent to-transparent pb-5 opacity-0 transition-opacity group-hover:opacity-100">
-            <span className="flex items-center gap-2 rounded-full border border-border bg-surface/95 px-4 py-2 text-[13px] font-medium text-primary shadow-soft backdrop-blur-sm">
+          <button
+            type="button"
+            onClick={openExplore}
+            className="absolute inset-x-0 bottom-0 z-20 flex items-end justify-center bg-gradient-to-t from-base via-base/90 to-transparent pb-5 pt-20 pointer-events-auto"
+          >
+            <span className="flex items-center gap-2 rounded-full border border-border bg-surface/95 px-4 py-2 text-[13px] font-medium text-primary shadow-soft backdrop-blur-sm transition-shadow group-hover:shadow-lift">
               Click to explore map
               <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
                 <path
@@ -130,15 +139,18 @@ export function DashboardWorkspace({ onToggleToday }: Props) {
                 />
               </svg>
             </span>
-          </div>
-        </button>
+          </button>
+        </div>
+
+        <DemoReplayStrip />
 
         <InsightsContent
           plan={plan}
+          displayDestination={displayDestination}
           isDemo={isDemo}
-          actionStates={stored.actionStates}
-          markAction={markAction}
-          onToggleToday={onToggleToday}
+          nextSevenDayTasks={nextSevenDayTasks}
+          semesterProgress={semesterProgress}
+          markTask={markTask}
         />
       </div>
     </div>
@@ -147,35 +159,31 @@ export function DashboardWorkspace({ onToggleToday }: Props) {
 
 function InsightsContent({
   plan,
+  displayDestination,
   isDemo,
-  actionStates,
-  markAction,
-  onToggleToday,
+  nextSevenDayTasks,
+  semesterProgress,
+  markTask,
 }: {
   plan: StrategyPlan;
+  displayDestination: string;
   isDemo: boolean;
-  actionStates: Record<string, ActionState>;
-  markAction: (actionId: string, state: ActionState) => void;
-  onToggleToday: () => void;
+  nextSevenDayTasks: StrategyTask[];
+  semesterProgress: SemesterProgress;
+  markTask: (taskId: string, state: StrategyTaskStatus) => Promise<void>;
 }) {
-  const stats = getRouteStats(plan, actionStates);
-
   return (
     <div className="mx-auto flex w-full max-w-[1500px] flex-col gap-5 px-4 py-5 sm:px-6 lg:px-8 lg:py-7">
       <TopBand
         plan={plan}
+        displayDestination={displayDestination}
         isDemo={isDemo}
-        stats={stats}
-        onToggleToday={onToggleToday}
+        semesterProgress={semesterProgress}
       />
 
       <section className="grid grid-cols-1 gap-5 xl:grid-cols-12">
         <div className="xl:col-span-7">
-          <NextSevenDaysPanel
-            plan={plan}
-            actionStates={actionStates}
-            markAction={markAction}
-          />
+          <NextSevenDaysPanel tasks={nextSevenDayTasks} markTask={markTask} />
         </div>
         <div className="xl:col-span-5">
           <EmbeddedOpportunityChecker />
@@ -200,14 +208,14 @@ function InsightsContent({
 
 function TopBand({
   plan,
+  displayDestination,
   isDemo,
-  stats,
-  onToggleToday,
+  semesterProgress,
 }: {
   plan: StrategyPlan;
+  displayDestination: string;
   isDemo: boolean;
-  stats: RouteStats;
-  onToggleToday: () => void;
+  semesterProgress: SemesterProgress;
 }) {
   return (
     <Card noHover className="overflow-hidden p-0">
@@ -227,7 +235,7 @@ function TopBand({
                 Destination
               </p>
               <h1 className="mt-2 font-display text-[34px] font-semibold leading-[0.98] text-primary sm:text-[44px]">
-                {plan.destination}
+                {displayDestination}
               </h1>
             </div>
             <div className="rounded-[14px] border border-danger/25 bg-danger-soft p-4">
@@ -244,36 +252,36 @@ function TopBand({
         <div className="border-t border-border bg-elevated/70 p-5 lg:border-l lg:border-t-0 lg:p-6">
           <div className="flex items-baseline gap-1">
             <NumberDial
-              to={plan.alignmentScore}
+              to={semesterProgress.percent}
               className="font-display text-[64px] font-semibold leading-none text-primary"
             />
-            <span className="font-display text-[18px] text-tertiary">/100</span>
+            <span className="font-display text-[18px] text-tertiary">%</span>
           </div>
           <p className="mt-1 text-[11px] font-semibold uppercase tracking-widest text-tertiary">
-            Alignment score
+            Semester progress
           </p>
-          <RouteProgress stats={stats} />
-          <Button
-            size="sm"
-            variant="secondary"
-            className="mt-4 w-full"
-            onClick={onToggleToday}
-          >
-            Open today focus
-          </Button>
+          <SemesterProgressBar stats={semesterProgress} />
+          <Link href="/1" className="mt-4 block">
+            <Button size="sm" variant="secondary" className="w-full">
+              Open today focus
+            </Button>
+          </Link>
         </div>
       </div>
     </Card>
   );
 }
 
-function RouteProgress({ stats }: { stats: RouteStats }) {
-  const width = stats.total === 0 ? 0 : Math.round((stats.done / stats.total) * 100);
+function SemesterProgressBar({ stats }: { stats: SemesterProgress }) {
+  const width =
+    stats.total === 0 ? 0 : Math.round((stats.done / stats.total) * 100);
   return (
     <div className="mt-5">
       <div className="flex items-center justify-between text-[12px]">
-        <span className="font-medium text-primary">7-day progress</span>
-        <span className="tabular text-tertiary">{stats.done}/{stats.total}</span>
+        <span className="font-medium text-primary">Tasks completed</span>
+        <span className="tabular text-tertiary">
+          {stats.done}/{stats.total}
+        </span>
       </div>
       <div className="mt-2 h-2 overflow-hidden rounded-full bg-surface">
         <div
@@ -290,70 +298,85 @@ function RouteProgress({ stats }: { stats: RouteStats }) {
 }
 
 function NextSevenDaysPanel({
-  plan,
-  actionStates,
-  markAction,
+  tasks,
+  markTask,
 }: {
-  plan: StrategyPlan;
-  actionStates: Record<string, ActionState>;
-  markAction: (actionId: string, state: ActionState) => void;
+  tasks: StrategyTask[];
+  markTask: (taskId: string, state: StrategyTaskStatus) => Promise<void>;
 }) {
   return (
     <Card noHover>
       <PanelTitle
         eyebrow="Action route"
         title="Next 7 days"
-        detail={`${plan.nextSevenDays.length} moves`}
+        detail={`${tasks.length} tasks`}
       />
-      <div className="mt-4 grid gap-3 md:grid-cols-2">
-        {plan.nextSevenDays.map((action, index) => {
-          const actionId = resolveActionId(plan, action.title, action.id);
-          const state = actionStates[actionId] ?? "open";
-          const done = state === "done";
-          const deferred = state === "skipped";
-          return (
-            <article
-              key={action.id}
-              className="rounded-[14px] border border-border bg-surface p-4 shadow-soft"
-            >
-              <div className="flex items-start gap-3">
-                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-accent-soft text-[12px] font-semibold text-accent">
-                  {index + 1}
-                </span>
-                <div className="min-w-0 flex-1">
-                  <p
-                    className={
-                      "text-[15px] font-semibold leading-snug " +
-                      (done
-                        ? "text-tertiary line-through"
-                        : deferred
-                          ? "text-secondary"
-                          : "text-primary")
-                    }
-                  >
-                    {action.title}
-                  </p>
-                  <div className="mt-2 flex flex-wrap items-center gap-2">
-                    <Badge tone={priorityTone[action.priority]}>{action.priority}</Badge>
-                    <span className="text-[11px] text-tertiary">{action.category}</span>
+      {tasks.length === 0 ? (
+        <p className="mt-4 rounded-[14px] border border-dashed border-border px-4 py-6 text-center text-[13px] text-tertiary">
+          No strategy tasks due in the next 7 days — add tasks on the map.
+        </p>
+      ) : (
+        <div className="mt-4 grid gap-3 md:grid-cols-2">
+          {tasks.map((task, index) => {
+            const done = task.status === "done";
+            const deferred = task.status === "skipped";
+            return (
+              <article
+                key={task.id}
+                className="rounded-[14px] border border-border bg-surface p-4 shadow-soft"
+              >
+                <div className="flex items-start gap-3">
+                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-accent-soft text-[12px] font-semibold text-accent">
+                    {index + 1}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p
+                      className={
+                        "text-[15px] font-semibold leading-snug " +
+                        (done
+                          ? "text-tertiary line-through"
+                          : deferred
+                            ? "text-secondary"
+                            : "text-primary")
+                      }
+                    >
+                      {task.title}
+                    </p>
+                    <div className="mt-2 flex flex-wrap items-center gap-2">
+                      <Badge tone={priorityTone[task.priority]}>
+                        {task.priority}
+                      </Badge>
+                      <span className="text-[11px] text-tertiary">
+                        Due {task.dueDate}
+                      </span>
+                    </div>
                   </div>
                 </div>
-              </div>
-              <div className="mt-4 flex flex-wrap gap-2">
-                <StateButton active={state === "open"} onClick={() => markAction(actionId, "open")}>
-                  Open
-                </StateButton>
-                <StateButton active={done} onClick={() => markAction(actionId, "done")}>
-                  Done
-                </StateButton>
-                <StateButton active={deferred} onClick={() => markAction(actionId, "skipped")}>
-                  Defer
-                </StateButton>
-              </div>
-            </article>
-          );
-        })}
-      </div>
+                <div className="mt-4 flex flex-wrap gap-2">
+                  <StateButton
+                    active={task.status === "open"}
+                    onClick={() => void markTask(task.id, "open")}
+                  >
+                    Open
+                  </StateButton>
+                  <StateButton
+                    active={done}
+                    onClick={() => void markTask(task.id, "done")}
+                  >
+                    Done
+                  </StateButton>
+                  <StateButton
+                    active={deferred}
+                    onClick={() => void markTask(task.id, "skipped")}
+                  >
+                    Defer
+                  </StateButton>
+                </div>
+              </article>
+            );
+          })}
+        </div>
+      )}
     </Card>
   );
 }
@@ -477,40 +500,4 @@ function StateButton({
       {children}
     </button>
   );
-}
-
-type RouteStats = {
-  total: number;
-  done: number;
-  deferred: number;
-  open: number;
-};
-
-function getRouteStats(
-  plan: StrategyPlan,
-  actionStates: Record<string, ActionState>,
-): RouteStats {
-  return plan.nextSevenDays.reduce<RouteStats>(
-    (stats, action) => {
-      const actionId = resolveActionId(plan, action.title, action.id);
-      const state = actionStates[actionId] ?? "open";
-      if (state === "done") stats.done += 1;
-      else if (state === "skipped") stats.deferred += 1;
-      else stats.open += 1;
-      return stats;
-    },
-    { total: plan.nextSevenDays.length, done: 0, deferred: 0, open: 0 },
-  );
-}
-
-function resolveActionId(
-  plan: StrategyPlan,
-  title: string,
-  fallbackId: string,
-): string {
-  const normalized = title.trim().toLowerCase();
-  const match = plan.strategicPillars
-    .flatMap((pillar) => pillar.actions)
-    .find((action) => action.name.trim().toLowerCase() === normalized);
-  return match?.id ?? fallbackId;
 }

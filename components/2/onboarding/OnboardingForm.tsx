@@ -13,8 +13,12 @@ import type {
   StepErrors,
 } from "./onboardingTypes";
 import type { OnboardingMapState } from "./onboardingMapTypes";
-import type { AcademicTerm, SemesterCommitment, StrategyNode, StrategyTask, UniversityOnboardingProfile } from "@/lib/2/types";
+import type { AcademicTerm } from "@/lib/2/types";
+import { addLocalDays, todayLocalDate } from "@/lib/2/taskStore";
 import {
+  applyMapDelta,
+  currentSemesterId,
+} from "./applyMapDelta";
   addLocalDays,
   todayLocalDate,
 } from "@/lib/2/taskStore";
@@ -36,183 +40,6 @@ const STEPS = [
 ];
 
 const TERMS: AcademicTerm[] = ["Fall", "Winter", "Spring", "Summer"];
-const PLAN_ID = "onboarding-preview";
-
-function nowIso(): string {
-  return new Date().toISOString();
-}
-
-function makeNode(input: Omit<StrategyNode, "planId" | "status" | "sortOrder" | "metadata" | "createdAt" | "updatedAt"> & Partial<Pick<StrategyNode, "status" | "sortOrder" | "metadata">>): StrategyNode {
-  const now = nowIso();
-  return {
-    ...input,
-    planId: PLAN_ID,
-    status: input.status ?? "open",
-    sortOrder: input.sortOrder ?? 0,
-    metadata: input.metadata ?? {},
-    createdAt: now,
-    updatedAt: now,
-  };
-}
-
-function rootNode(profile: OnboardingFormData): StrategyNode {
-  return makeNode({
-    id: "onboarding-outcome",
-    parentNodeId: null,
-    kind: "university_outcome",
-    title: profile.endOfUniversityGoal || profile.targetGoal || "End of university",
-    subtitle: profile.degree || "Long-range outcome",
-    scope: "university",
-  });
-}
-
-function currentYearId(profile: OnboardingFormData): string {
-  return `onboarding-year-${profile.currentYearIndex || 1}`;
-}
-
-function currentSemesterId(profile: OnboardingFormData): string {
-  return `onboarding-semester-${profile.currentSemester.toLowerCase()}`;
-}
-
-function recurringCommitments(value: OnboardingFormData): SemesterCommitment[] {
-  if (value.recurringCommitments.length > 0) return value.recurringCommitments;
-  return value.commitments.map((title, i) => ({
-    id: `commitment-${i}`,
-    title,
-    kind: "other" as const,
-    semesters: [value.currentSemester],
-  }));
-}
-
-function commitmentNodes(profile: OnboardingFormData): StrategyNode[] {
-  return recurringCommitments(profile).flatMap((commitment, i) =>
-    commitment.semesters.map((term, termIndex) =>
-      makeNode({
-        id: `onboarding-commitment-${commitment.id}-${term.toLowerCase()}`,
-        parentNodeId: `onboarding-semester-${term.toLowerCase()}`,
-        kind:
-          commitment.kind === "club" ||
-          commitment.kind === "work" ||
-          commitment.kind === "research" ||
-          commitment.kind === "project"
-            ? commitment.kind
-            : "commitment",
-        title: commitment.title,
-        subtitle: commitment.hoursPerWeek
-          ? `${commitment.hoursPerWeek} hours/week`
-          : "Recurring commitment",
-        scope: "year",
-        sortOrder: 20 + i + termIndex,
-      }),
-    ),
-  );
-}
-
-function taskSeedsToTasks(profile: OnboardingFormData): StrategyTask[] {
-  return profile.taskSeeds.map((seed, i) => {
-    const now = nowIso();
-    return {
-      id: seed.id,
-      planId: PLAN_ID,
-      studentId: null,
-      parentNodeId: seed.parentNodeId,
-      parentNodeKind: seed.parentNodeId === "onboarding-outcome" ? "goal" : "pillar",
-      parentTaskId: null,
-      title: seed.title,
-      recommendation: "User-seeded onboarding task",
-      notes: "",
-      priority: seed.priority,
-      status: "open",
-      dueDate: seed.dueDate,
-      completedAt: null,
-      source: "strategy_map",
-      sortOrder: i,
-      createdAt: now,
-      updatedAt: now,
-    };
-  });
-}
-
-function applyMapDelta(
-  step: number,
-  profile: OnboardingFormData,
-  prev: OnboardingMapState,
-): OnboardingMapState {
-  const root = rootNode(profile);
-  const compatProfile: Partial<UniversityOnboardingProfile> = {
-    ...profile,
-    expectedGraduationYear: profile.expectedGraduationYear ?? undefined,
-    constraints: Array.isArray(profile.constraints)
-      ? profile.constraints.join(", ")
-      : profile.constraints,
-    recurringCommitments: recurringCommitments(profile),
-  };
-  const yearNodes = buildYearNodes(compatProfile);
-  const semesterNodes = buildSemesterNodes(compatProfile, currentYearId(profile));
-  const semesterDetailNodes = buildCurrentSemesterNodes(
-    compatProfile,
-    currentSemesterId(profile),
-  );
-  const tasks = taskSeedsToTasks(profile);
-
-  if (step === 0) {
-    return {
-      ...prev,
-      goal: { label: root.title },
-      activeLevel: "destination",
-      activeNodeId: root.id,
-      nodes: [root],
-      tasks: [],
-    };
-  }
-  if (step === 1) {
-    return {
-      ...prev,
-      activeLevel: "university_timeline",
-      activeNodeId: root.id,
-      nodes: [root, ...yearNodes],
-      tasks: [],
-    };
-  }
-  if (step === 2) {
-    return {
-      ...prev,
-      activeLevel: "current_year",
-      activeNodeId: currentYearId(profile),
-      nodes: [root, ...yearNodes, ...semesterNodes, ...commitmentNodes(profile)],
-      tasks: [],
-    };
-  }
-  if (step === 3 || step === 4) {
-    return {
-      ...prev,
-      activeLevel: step === 4 ? "task_seed" : "current_semester",
-      activeNodeId: currentSemesterId(profile),
-      nodes: [
-        root,
-        ...yearNodes,
-        ...semesterNodes,
-        ...commitmentNodes(profile),
-        ...semesterDetailNodes,
-      ],
-      tasks,
-    };
-  }
-  return {
-    ...prev,
-    activeLevel: "handoff",
-    activeNodeId: currentSemesterId(profile),
-    bottleneckPreview: profile.bottleneckConcern || prev.bottleneckPreview,
-    nodes: [
-      root,
-      ...yearNodes,
-      ...semesterNodes,
-      ...commitmentNodes(profile),
-      ...semesterDetailNodes,
-    ],
-    tasks,
-  };
-}
 
 function validate(step: number, value: OnboardingFormData): StepErrors {
   const errors: StepErrors = {};
@@ -276,17 +103,11 @@ export function OnboardingForm({
     [mapState.nodes],
   );
 
-  const persistStep = (step: number) => {
-    const updatedMap = applyMapDelta(step, profile, mapState);
-    onMapStateChange(updatedMap);
-    onInsightFetch(Math.min(step, 4));
-  };
-
   const tryNext = () => {
     const next = validate(currentStep, profile);
     setErrors(next);
     if (Object.keys(next).length > 0) return;
-    persistStep(currentStep);
+    onInsightFetch(Math.min(currentStep, 4));
     onStepChange(Math.min(STEPS.length - 1, currentStep + 1));
   };
 
@@ -309,11 +130,6 @@ export function OnboardingForm({
     onProfileChange({
       taskSeeds: [...profile.taskSeeds, { ...taskDraft, title }],
     });
-    const nextProfile = {
-      ...profile,
-      taskSeeds: [...profile.taskSeeds, { ...taskDraft, title }],
-    };
-    onMapStateChange(applyMapDelta(4, nextProfile, mapState));
     setTaskDraft({
       id: `seed-${Date.now()}`,
       parentNodeId: currentSemesterId(profile),

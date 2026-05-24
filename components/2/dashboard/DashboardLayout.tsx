@@ -1,11 +1,9 @@
 "use client";
 
-import { useCallback, useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/2/ui/Button";
 import { PlanProvider, usePlanOptional } from "./PlanProvider";
 import { DashboardWorkspace } from "./DashboardWorkspace";
-import { TodayOverlay } from "./TodayOverlay";
 
 type Props = {
   planId: string;
@@ -21,8 +19,6 @@ export function DashboardLayout({ planId }: Props) {
 
 function DashboardShell() {
   const ctx = usePlanOptional();
-  const [todayOpen, setTodayOpen] = useState(false);
-  const toggleToday = useCallback(() => setTodayOpen((v) => !v), []);
 
   if (!ctx) {
     return <DashboardEmpty />;
@@ -31,9 +27,8 @@ function DashboardShell() {
   return (
     <div id="main" className="flex h-full min-h-screen flex-col bg-base">
       <div className="min-w-0 flex-1 overflow-y-auto">
-        <DashboardWorkspace onToggleToday={toggleToday} />
+        <DashboardWorkspace />
       </div>
-      <TodayOverlay open={todayOpen} onClose={() => setTodayOpen(false)} />
     </div>
   );
 }

@@ -1,6 +1,5 @@
 "use client";
 
-import { useCallback, useState } from "react";
 import Link from "next/link";
 import { KanbanBoard } from "@/components/2/dashboard/KanbanBoard";
 import { Button } from "@/components/2/ui/Button";
@@ -8,7 +7,6 @@ import {
   PlanProvider,
   usePlanOptional,
 } from "@/components/2/dashboard/PlanProvider";
-import { TodayOverlay } from "@/components/2/dashboard/TodayOverlay";
 
 export const dynamic = "force-dynamic";
 
@@ -31,8 +29,6 @@ function PillarShell({
   pillarId: string;
 }) {
   const ctx = usePlanOptional();
-  const [todayOpen, setTodayOpen] = useState(false);
-  const toggleToday = useCallback(() => setTodayOpen((v) => !v), []);
 
   if (!ctx) {
     return (
@@ -92,7 +88,6 @@ function PillarShell({
           addTasks={addTasks}
         />
       </div>
-      <TodayOverlay open={todayOpen} onClose={() => setTodayOpen(false)} />
     </div>
   );
 }

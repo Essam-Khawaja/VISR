@@ -1,7 +1,10 @@
 "use client";
 
+import { useCallback } from "react";
 import dynamic from "next/dynamic";
 import { GoalTreeLoading } from "@/components/2/graph/GoalTreeLoading";
+import type { NodeRollup } from "@/lib/2/taskStore";
+import type { ActionState } from "@/lib/2/planStore";
 import { useOnboardingMap } from "./useOnboardingMap";
 import { OnboardingInsightStrip } from "./OnboardingInsightStrip";
 import type { OnboardingMapState } from "./onboardingMapTypes";
@@ -10,6 +13,9 @@ const GoalTree = dynamic(() => import("@/components/2/graph/GoalTree"), {
   ssr: false,
   loading: () => <GoalTreeLoading />,
 });
+
+const EMPTY_ROLLUPS: Record<string, NodeRollup> = {};
+const EMPTY_ACTION_STATES: Record<string, ActionState> = {};
 
 type Props = {
   mapState: OnboardingMapState;
@@ -20,6 +26,9 @@ type Props = {
 export function OnboardingMapPanel({ mapState, insight, isInsightLoading }: Props) {
   const { plan, layoutOverride } = useOnboardingMap(mapState);
   const hasContent = mapState.goal !== null;
+
+  const noop = useCallback(() => {}, []);
+  const noopAsync = useCallback(async () => {}, []);
 
   return (
     <div
@@ -37,14 +46,13 @@ export function OnboardingMapPanel({ mapState, insight, isInsightLoading }: Prop
           plan={plan}
           planId="onboarding-preview"
           nodes={[]}
-          actionStates={{}}
+          actionStates={EMPTY_ACTION_STATES}
           tasks={[]}
-          rollups={{}}
-          markAction={() => {}}
-          onCreateTask={async () => {}}
-          onMarkTask={async () => {}}
+          rollups={EMPTY_ROLLUPS}
+          markAction={noop}
+          onCreateTask={noopAsync}
+          onMarkTask={noopAsync}
           isDemo={false}
-          onToggleToday={() => {}}
           displayMode="onboarding"
           layoutOverride={layoutOverride}
         />

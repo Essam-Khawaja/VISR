@@ -37,9 +37,14 @@ import { Plus, Loader2, Settings as SettingsIcon, Target } from "lucide-react";
 import Link from "next/link";
 import { demoPlanId } from "@/lib/shared/env";
 import { fixturePlan } from "@/lib/2/fixture";
+import { getActivePlanId } from "@/lib/2/planStore";
 import {
   ensureMaterializedTasks,
+  excludeLegacyGeneratedTasks,
   fetchTasksFromSupabase,
+  loadTasks,
+  mergeTasks,
+  tasksForDate,
   updateStrategyTask,
 } from "@/lib/2/taskStore";
 import type { StrategyTask } from "@/lib/2/types";
@@ -57,10 +62,12 @@ type LinkedItem = {
 function StrategyTasksPanel({
   tasks,
   selectedDate,
+  planId,
   onToggle,
 }: {
   tasks: StrategyTask[];
   selectedDate: string;
+  planId: string;
   onToggle: (task: StrategyTask) => void;
 }) {
   const openCount = tasks.filter((task) => task.status !== "done").length;
@@ -69,6 +76,13 @@ function StrategyTasksPanel({
   return (
     <section className="glass-card p-4">
       <div className="flex items-start justify-between gap-3">
+        <div>
+          <h2 className="text-sm font-semibold text-primary">
+            Strategy tasks
+          </h2>
+          <p className="mt-0.5 text-[11px] text-tertiary">
+            From your strategy map · due {selectedDate}
+          </p>
         <div className="flex items-center gap-2.5">
           <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-violet-400 to-purple-500 shadow-soft">
             <Target className="h-4 w-4 text-white" strokeWidth={1.9} />
@@ -83,7 +97,7 @@ function StrategyTasksPanel({
           </div>
         </div>
         <Link
-          href={`/2/dashboard/${demoPlanId}`}
+          href={`/2/dashboard/${planId}`}
           className="rounded-full border border-border px-3 py-1 text-[11px] font-semibold text-secondary transition-colors hover:border-accent hover:text-accent"
         >
           Open map
@@ -92,7 +106,7 @@ function StrategyTasksPanel({
 
       {tasks.length === 0 ? (
         <p className="mt-4 rounded-xl border border-dashed border-border px-3 py-4 text-center text-xs text-tertiary">
-          No strategy tasks due today.
+          No strategy tasks due on this day.
         </p>
       ) : (
         <div className="mt-3 space-y-2">
@@ -167,6 +181,7 @@ function priorityClass(priority: StrategyTask["priority"]): string {
 
 function DashboardInner() {
   const [selectedDate, setSelectedDate] = useSelectedDate();
+  const [planId] = useState(() => getActivePlanId() ?? demoPlanId);
   const [events, setEvents] = useState<TimelineEvent[]>([]);
   const [eventsLoading, setEventsLoading] = useState(true);
   const [eventItems, setEventItems] = useState<Record<string, Item[]>>({});
@@ -297,10 +312,15 @@ function DashboardInner() {
   }, []);
 
   const loadStrategyTasks = useCallback(async (date: string) => {
-    ensureMaterializedTasks({ ...fixturePlan, id: demoPlanId });
-    const tasks = await fetchTasksFromSupabase({ planId: demoPlanId, date });
-    setStrategyTasks(tasks);
-  }, []);
+    if (loadTasks(planId).length === 0 && planId === demoPlanId) {
+      ensureMaterializedTasks({ ...fixturePlan, id: demoPlanId });
+    }
+    const fromRemote = await fetchTasksFromSupabase({ planId });
+    const merged = excludeLegacyGeneratedTasks(
+      mergeTasks(loadTasks(planId), fromRemote),
+    );
+    setStrategyTasks(tasksForDate(merged, date));
+  }, [planId]);
 
   const loadWeather = useCallback(
     async (s: UserSettings | null, date: string) => {
@@ -619,7 +639,7 @@ function DashboardInner() {
         item.id === task.id ? { ...item, status: nextStatus } : item,
       ),
     );
-    await updateStrategyTask(demoPlanId, task.id, { status: nextStatus });
+    await updateStrategyTask(planId, task.id, { status: nextStatus });
     await loadStrategyTasks(selectedDate);
   }
 
@@ -810,6 +830,13 @@ function DashboardInner() {
             onToggleManual={toggleManualItem}
           />
         )}
+
+        <StrategyTasksPanel
+          tasks={strategyTasks}
+          selectedDate={selectedDate}
+          planId={planId}
+          onToggle={toggleStrategyTask}
+        />
 
         {events.length > 0 && (
           <VoiceBriefingButton

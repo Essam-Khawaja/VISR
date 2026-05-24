@@ -1,6 +1,7 @@
 ﻿"use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { IntelligenceDock } from "@/components/2/dashboard/IntelligenceDock";
 import { NodePopover } from "./NodePopover";
 import { NodeTaskDialog } from "./NodeTaskDialog";
@@ -15,12 +16,20 @@ import type {
   StrategyTask,
   StrategyTaskStatus,
 } from "@/lib/2/types";
-import { nodesForParent } from "@/lib/2/nodeStore";
 import {
   tasksForNode,
   type CreateStrategyTaskInput,
   type NodeRollup,
 } from "@/lib/2/taskStore";
+import {
+  buildSemesterFocusPath,
+  buildScopedNucleusLayout,
+  getRootNode,
+  getRootNodeId,
+  hasUniversityNodes,
+  resolveNucleusFromNodes,
+  type FocusBreadcrumb,
+} from "./universityGraphLayout";
 
 const PILLAR_PASTELS = [
   "#933B5B", // amaranth
@@ -32,20 +41,18 @@ const PILLAR_PASTELS = [
 ];
 const GOAL_PASTEL = "#AABAAE"; // brook green
 
-type FocusBreadcrumb = { id: string; name: string };
-
 export type GoalTreeProps = {
   plan: StrategyPlan;
   planId: string;
   nodes: StrategyNode[];
   actionStates: Record<string, ActionState>;
   tasks: StrategyTask[];
+  nextSevenDayTasks?: StrategyTask[];
   rollups: Record<string, NodeRollup>;
   markAction: (actionId: string, state: ActionState) => void;
   onCreateTask: (input: Omit<CreateStrategyTaskInput, "planId">) => Promise<void>;
   onMarkTask: (taskId: string, state: StrategyTaskStatus) => Promise<void>;
   isDemo: boolean;
-  onToggleToday: () => void;
   displayMode?: "onboarding" | "preview" | "full";
   layoutOverride?: { nodes: LayoutNode[]; edges: LayoutEdge[] };
 };
@@ -101,67 +108,6 @@ function taskChildren(task: StrategyTask, tasks: StrategyTask[]): NucleusChild[]
   }));
 }
 
-function nodeChildColor(node: StrategyNode, index: number): string {
-  if (node.kind === "course") return PILLAR_PASTELS[0];
-  if (node.kind === "club" || node.kind === "work" || node.kind === "research")
-    return PILLAR_PASTELS[1];
-  if (node.kind === "commitment" || node.kind === "project")
-    return PILLAR_PASTELS[2];
-  return PILLAR_PASTELS[index % PILLAR_PASTELS.length];
-}
-
-function resolveNucleusFromNodes(
-  allNodes: StrategyNode[],
-  tasks: StrategyTask[],
-  focusPath: FocusBreadcrumb[],
-): {
-  nucleusId: string;
-  nucleusName: string;
-  nucleusPastel: string;
-  children: NucleusChild[];
-} | null {
-  const rootNode = allNodes.find((n) => n.parentNodeId === null);
-  if (!rootNode) return null;
-
-  const targetId =
-    focusPath.length === 0
-      ? rootNode.id
-      : focusPath[focusPath.length - 1].id;
-
-  const target = allNodes.find((n) => n.id === targetId);
-  if (!target) return null;
-
-  const childNodes = nodesForParent(allNodes, targetId);
-  const childTasks = tasksForNode(tasks, targetId);
-
-  const children: NucleusChild[] = [
-    ...childNodes.map((child, i) => ({
-      id: child.id,
-      name: child.title,
-      status: child.status === "at_risk" ? "At Risk" : child.status === "done" ? "Done" : "On Track",
-      recommendation: child.subtitle || child.kind,
-      pastelColor: nodeChildColor(child, i),
-      childCount: nodesForParent(allNodes, child.id).length + tasksForNode(tasks, child.id).length,
-    })),
-    ...childTasks.map((task) => ({
-      id: task.id,
-      name: task.title,
-      status: task.status,
-      recommendation: task.recommendation || `Due ${task.dueDate}`,
-      pastelColor: taskNodeColor(task),
-      childCount: tasksForNode(tasks, task.id).length,
-    })),
-  ];
-
-  const rootIdx = allNodes.indexOf(target);
-  return {
-    nucleusId: target.id,
-    nucleusName: target.title,
-    nucleusPastel: PILLAR_PASTELS[rootIdx % PILLAR_PASTELS.length],
-    children,
-  };
-}
-
 function resolveNucleusLevel(
   plan: StrategyPlan,
   tasks: StrategyTask[],
@@ -173,10 +119,9 @@ function resolveNucleusLevel(
   nucleusPastel: string;
   children: NucleusChild[];
 } {
-  const hasRealNodes = nodes.some((n) => n.parentNodeId === null && n.kind !== "strategic_pillar");
-  if (hasRealNodes) {
+  if (hasUniversityNodes(nodes)) {
     const result = resolveNucleusFromNodes(nodes, tasks, focusPath);
-    if (result && result.children.length > 0) return result;
+    if (result) return result;
   }
   if (focusPath.length === 0) {
     return {
@@ -312,15 +257,16 @@ export default function GoalTree({
   nodes,
   actionStates,
   tasks,
+  nextSevenDayTasks = [],
   rollups,
   markAction,
   onCreateTask,
   onMarkTask,
   isDemo,
-  onToggleToday,
   displayMode = "full",
   layoutOverride,
 }: GoalTreeProps) {
+  const router = useRouter();
   const containerRef = useRef<HTMLDivElement>(null);
   const labelsRef = useRef<HTMLDivElement>(null);
   const [dockOpen, setDockOpen] = useState(false);
@@ -328,31 +274,30 @@ export default function GoalTree({
   const [exploreDialogId, setExploreDialogId] = useState<string | null>(null);
   const [didAutoFocus, setDidAutoFocus] = useState(false);
 
+  useEffect(() => {
+    setDidAutoFocus(false);
+  }, [planId]);
+
   const onboarding = displayMode === "onboarding";
   const preview = displayMode === "preview";
   const explore = displayMode === "full";
+  const universityMode = hasUniversityNodes(nodes);
+
+  const rootNodeTitle =
+    getRootNode(nodes)?.title ?? plan.destination;
 
   useEffect(() => {
-    if (!explore || didAutoFocus || nodes.length === 0) return;
-    const rootNode = nodes.find((n) => n.parentNodeId === null);
-    if (!rootNode) return;
-
-    const yearNode = nodes.find(
-      (n) => n.parentNodeId === rootNode.id && n.kind === "academic_year",
-    );
-    if (!yearNode) return;
-
-    const semesterNode = nodes.find(
-      (n) => n.parentNodeId === yearNode.id && n.kind === "semester",
-    );
-
-    const path: FocusBreadcrumb[] = [{ id: yearNode.id, name: yearNode.title }];
-    if (semesterNode) {
-      path.push({ id: semesterNode.id, name: semesterNode.title });
+    if (!explore || didAutoFocus || nodes.length === 0 || !universityMode) {
+      return;
     }
-    setFocusPath(path);
+    setFocusPath(buildSemesterFocusPath(nodes));
     setDidAutoFocus(true);
-  }, [explore, nodes, didAutoFocus]);
+  }, [explore, nodes, didAutoFocus, universityMode]);
+
+  const previewFocusPath = useMemo(() => {
+    if (!preview || !universityMode) return [];
+    return buildSemesterFocusPath(nodes);
+  }, [preview, universityMode, nodes]);
 
   const nucleusLevel = useMemo(() => {
     if (!explore) return null;
@@ -372,6 +317,17 @@ export default function GoalTree({
     );
   }, [nucleusLevel]);
 
+  const previewLayout = useMemo(() => {
+    if (!preview || !universityMode) return undefined;
+    return buildScopedNucleusLayout(nodes, tasks, previewFocusPath);
+  }, [preview, universityMode, nodes, tasks, previewFocusPath]);
+
+  const activeLayoutOverride = explore
+    ? nucleusLayout
+    : preview
+      ? previewLayout
+      : layoutOverride;
+
   const { hover, selection, select, clearSelection, selectBottleneck } =
     useGraphScene({
       containerRef,
@@ -382,17 +338,18 @@ export default function GoalTree({
       actionStates,
       rollups,
       isReadOnly: onboarding || preview,
-      showAllNodes: preview,
-      layoutOverride: explore ? nucleusLayout : layoutOverride,
+      showAllNodes: preview && !universityMode,
+      layoutOverride: activeLayoutOverride,
     });
 
   const toggleDock = useCallback(() => setDockOpen((v) => !v), []);
 
   // Handle clicks in Explore mode
   useEffect(() => {
-    if (!explore || !selection) return;
+    if (!explore || !selection || !nucleusLevel) return;
     const nodeId = selection.nodeId;
 
+    if (nodeId === nucleusLevel.nucleusId) {
     const currentNucleusId =
       focusPath.length === 0
         ? "goal"
@@ -410,7 +367,7 @@ export default function GoalTree({
     setFocusPath((prev) => [...prev, { id: nodeId, name }]);
     setExploreDialogId(null);
     clearSelection();
-  }, [selection, explore, focusPath, plan, tasks, nodes, clearSelection]);
+  }, [selection, explore, nucleusLevel, plan, tasks, nodes, clearSelection]);
 
   const closeExploreDialog = useCallback(() => {
     setExploreDialogId(null);
@@ -456,12 +413,12 @@ export default function GoalTree({
           return;
         }
         e.preventDefault();
-        onToggleToday();
+        router.push("/1");
       }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [clearSelection, onToggleToday, explore, focusPath, exploreDialogId]);
+  }, [clearSelection, router, explore, focusPath, exploreDialogId]);
 
   const hasBottleneck = plan.strategicPillars.some(
     (p) => p.status === "Weak" || p.status === "Missing",
@@ -486,7 +443,7 @@ export default function GoalTree({
 
       {explore ? (
         <ExploreBreadcrumb
-          destination={plan.destination}
+          rootLabel={rootNodeTitle}
           focusPath={focusPath}
           onNavigate={navigateToLevel}
         />
@@ -512,6 +469,7 @@ export default function GoalTree({
           plan={plan}
           selection={exploreSelection}
           tasks={tasks}
+          nodes={nodes}
           onClose={closeExploreDialog}
           onCreateTask={onCreateTask}
           onMarkTask={onMarkTask}
@@ -522,6 +480,7 @@ export default function GoalTree({
           plan={plan}
           selection={selection}
           tasks={tasks}
+          nodes={nodes}
           onClose={clearSelection}
           onCreateTask={onCreateTask}
           onMarkTask={onMarkTask}
@@ -531,9 +490,8 @@ export default function GoalTree({
 
       {hideNonExploreChrome ? null : (
         <IntelligenceDock
-          plan={plan}
-          actionStates={actionStates}
-          onToggleAction={markAction}
+          tasks={nextSevenDayTasks}
+          onMarkTask={onMarkTask}
           open={dockOpen}
           onToggle={toggleDock}
           isDemo={isDemo}
@@ -541,8 +499,9 @@ export default function GoalTree({
       )}
 
       {explore ? (
-        <div className="pointer-events-none absolute bottom-4 left-1/2 z-20 -translate-x-1/2 text-[11px] text-tertiary md:bottom-6">
-          Click a node to add tasks · Esc to go back
+        <div className="pointer-events-none absolute bottom-4 left-1/2 z-20 max-w-[min(100%,28rem)] -translate-x-1/2 px-4 text-center text-[11px] text-tertiary md:bottom-6">
+          Click center node to add tasks · Click orbit to drill in · Esc to go
+          back
         </div>
       ) : hideNonExploreChrome ? null : (
         <div className="pointer-events-none absolute bottom-4 left-1/2 z-20 -translate-x-1/2 text-[11px] text-tertiary md:bottom-6">
@@ -556,11 +515,11 @@ export default function GoalTree({
 }
 
 function ExploreBreadcrumb({
-  destination,
+  rootLabel,
   focusPath,
   onNavigate,
 }: {
-  destination: string;
+  rootLabel: string;
   focusPath: FocusBreadcrumb[];
   onNavigate: (index: number) => void;
 }) {
@@ -596,7 +555,7 @@ function ExploreBreadcrumb({
               : "text-tertiary hover:text-primary")
           }
         >
-          {destination}
+          {rootLabel}
         </button>
         {focusPath.map((entry, i) => (
           <span key={entry.id} className="flex items-center gap-1">

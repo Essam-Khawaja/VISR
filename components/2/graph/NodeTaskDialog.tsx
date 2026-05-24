@@ -9,6 +9,7 @@ import type {
   NodeStatus,
   Priority,
   StrategicPillar,
+  StrategyNode,
   StrategyPlan,
   StrategyTask,
   StrategyTaskParentKind,
@@ -17,6 +18,7 @@ import type {
 import {
   addLocalDays,
   tasksForNode,
+  tasksForNucleus,
   todayLocalDate,
   type CreateStrategyTaskInput,
 } from "@/lib/2/taskStore";
@@ -26,6 +28,7 @@ type Props = {
   plan: StrategyPlan;
   selection: GraphSelection;
   tasks: StrategyTask[];
+  nodes?: StrategyNode[];
   onClose: () => void;
   onCreateTask: (input: Omit<CreateStrategyTaskInput, "planId">) => Promise<void>;
   onMarkTask: (taskId: string, state: StrategyTaskStatus) => Promise<void>;
@@ -53,10 +56,18 @@ function findActionDeep(
   return null;
 }
 
+function strategyNodeStatusLabel(status: StrategyNode["status"]): string {
+  if (status === "doing") return "On Track";
+  if (status === "at_risk") return "At Risk";
+  if (status === "done") return "Done";
+  return "Open";
+}
+
 function resolveNode(
   plan: StrategyPlan,
   tasks: StrategyTask[],
   selection: GraphSelection,
+  nodes?: StrategyNode[],
 ): ResolvedNode | null {
   if (!selection) return null;
 
@@ -122,6 +133,30 @@ function resolveNode(
       };
     }
   }
+
+  const strategyNode = nodes?.find((node) => node.id === selection.nodeId);
+  if (strategyNode) {
+    const syntheticPillar: StrategicPillar = {
+      id: strategyNode.id,
+      name: strategyNode.title,
+      status: "Okay",
+      reason: strategyNode.subtitle || "Strategy map node",
+      actions: [],
+    };
+    return {
+      kind: "pillar",
+      pillar: syntheticPillar,
+      node: {
+        id: strategyNode.id,
+        name: strategyNode.title,
+        status: strategyNodeStatusLabel(strategyNode.status),
+        recommendation:
+          strategyNode.subtitle || "Add tasks attached to this node.",
+      },
+      children: [],
+    };
+  }
+
   return null;
 }
 
@@ -134,8 +169,15 @@ function statusTone(
   return "muted";
 }
 
-function parentKindFor(resolved: ResolvedNode): StrategyTaskParentKind {
+function parentKindFor(
+  resolved: ResolvedNode,
+  nodes?: StrategyNode[],
+): StrategyTaskParentKind {
   if (resolved.node.id === "goal") return "goal";
+  const strategyNode = nodes?.find((node) => node.id === resolved.node.id);
+  if (strategyNode) {
+    return strategyNode.parentNodeId === null ? "goal" : "pillar";
+  }
   return resolved.kind === "pillar" ? "pillar" : "task";
 }
 
@@ -164,13 +206,14 @@ export function NodeTaskDialog({
   plan,
   selection,
   tasks,
+  nodes,
   onClose,
   onCreateTask,
   onMarkTask,
   isDemo,
 }: Props) {
   const reduce = useReducedMotion();
-  const resolved = resolveNode(plan, tasks, selection);
+  const resolved = resolveNode(plan, tasks, selection, nodes);
 
   return (
     <AnimatePresence>
@@ -189,6 +232,7 @@ export function NodeTaskDialog({
             resolved={resolved}
             plan={plan}
             tasks={tasks}
+            nodes={nodes}
             onClose={onClose}
             onCreateTask={onCreateTask}
             onMarkTask={onMarkTask}
@@ -204,6 +248,7 @@ function DialogInner({
   resolved,
   plan,
   tasks,
+  nodes,
   onClose,
   onCreateTask,
   onMarkTask,
@@ -212,6 +257,7 @@ function DialogInner({
   resolved: ResolvedNode;
   plan: StrategyPlan;
   tasks: StrategyTask[];
+  nodes?: StrategyNode[];
   onClose: () => void;
   onCreateTask: (input: Omit<CreateStrategyTaskInput, "planId">) => Promise<void>;
   onMarkTask: (taskId: string, state: StrategyTaskStatus) => Promise<void>;
@@ -283,6 +329,7 @@ function DialogInner({
           <TasksTab
             resolved={resolved}
             tasks={tasks}
+            nodes={nodes}
             onCreateTask={onCreateTask}
             onMarkTask={onMarkTask}
             isDemo={isDemo}
@@ -330,12 +377,14 @@ function TabButton({
 function TasksTab({
   resolved,
   tasks,
+  nodes,
   onCreateTask,
   onMarkTask,
   isDemo,
 }: {
   resolved: ResolvedNode;
   tasks: StrategyTask[];
+  nodes?: StrategyNode[];
   onCreateTask: (input: Omit<CreateStrategyTaskInput, "planId">) => Promise<void>;
   onMarkTask: (taskId: string, state: StrategyTaskStatus) => Promise<void>;
   isDemo: boolean;
@@ -344,14 +393,17 @@ function TasksTab({
   const [newName, setNewName] = useState("");
   const [newDueDate, setNewDueDate] = useState(todayLocalDate());
   const [newPriority, setNewPriority] = useState<Priority>("Medium");
-  const nodeTasks = tasksForNode(tasks, resolved.node.id);
+  const nodeTasks =
+    nodes && nodes.length > 0
+      ? tasksForNucleus(nodes, tasks, resolved.node.id)
+      : tasksForNode(tasks, resolved.node.id);
 
   const handleAdd = async () => {
     const trimmed = newName.trim();
     if (!trimmed || !newDueDate) return;
     await onCreateTask({
       parentNodeId: resolved.node.id,
-      parentNodeKind: parentKindFor(resolved),
+      parentNodeKind: parentKindFor(resolved, nodes),
       parentTaskId: parentTaskFor(resolved, tasks),
       title: trimmed,
       recommendation: "User-created task",

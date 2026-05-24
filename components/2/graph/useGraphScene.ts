@@ -203,6 +203,11 @@ export function useGraphScene({
     const labelsContainer = labelsRef.current;
     if (!container) return;
 
+    const isNucleusLayout = !!layoutOverride;
+    if (isNucleusLayout || isReadOnly) {
+      selectionRef.current = null;
+      setSelectionState(null);
+    }
     const layout = layoutOverride
       ? { ...layoutOverride, destination, bottleneckPillarId: null }
       : buildGraphLayout(pillars, destination, mainBottleneck);
@@ -236,7 +241,9 @@ export function useGraphScene({
         e.progressPercent = pillarNode?.progressPercent ?? 0;
       }
     });
-    applyLabelSpacing(layout);
+    if (!isNucleusLayout) {
+      applyLabelSpacing(layout);
+    }
 
     const reduceMotion =
       typeof window !== "undefined" &&
@@ -244,12 +251,15 @@ export function useGraphScene({
 
     const scene = new THREE.Scene();
     const root = new THREE.Group();
+    root.position.set(0, 0, 0);
     scene.add(root);
 
     const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 100);
     const startZ = showAllNodes ? CAMERA_END_Z : CAMERA_START_Z;
     camera.position.set(0, 0, startZ);
     camera.lookAt(0, 0, 0);
+
+    const lockCameraCenter = isNucleusLayout || isReadOnly;
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -260,6 +270,7 @@ export function useGraphScene({
     canvas.style.width = "100%";
     canvas.style.height = "100%";
     canvas.style.touchAction = "none";
+    canvas.style.pointerEvents = isReadOnly ? "none" : "auto";
 
     // Orbit ring
     const orbitSegments = 128;
@@ -421,6 +432,16 @@ export function useGraphScene({
       Math.max(container.clientHeight, 1);
 
     const updateCameraTargetFromSelection = () => {
+      if (layoutOverride) {
+        cameraTargetX = 0;
+        cameraTargetY = 0;
+        cameraTargetZ = CAMERA_END_Z;
+        lookAtTargetX = 0;
+        lookAtTargetY = 0;
+        rootTargetX = 0;
+        rootTargetY = 0;
+        return;
+      }
       const sel = selectionRef.current;
       if (!sel) {
         cameraTargetX = 0;
@@ -456,7 +477,7 @@ export function useGraphScene({
         .map((n) => n.core);
 
     const onPointerDown = (e: PointerEvent) => {
-      if (e.button !== 0) return;
+      if (isReadOnly || e.button !== 0) return;
       isDragging = true;
       dragMoved = false;
       dragStartX = e.clientX;
@@ -505,6 +526,7 @@ export function useGraphScene({
     };
 
     const onPointerMove = (e: PointerEvent) => {
+      if (isReadOnly) return;
       if (isDragging) {
         const dx = e.clientX - dragStartX;
         const dy = e.clientY - dragStartY;
@@ -574,6 +596,7 @@ export function useGraphScene({
     };
 
     const onWheel = (e: WheelEvent) => {
+      if (isReadOnly) return;
       e.preventDefault();
       const factor = e.deltaY > 0 ? 1.08 : 0.93;
       cameraTargetZ = THREE.MathUtils.clamp(
@@ -582,6 +605,17 @@ export function useGraphScene({
         CAMERA_MAX_Z,
       );
     };
+
+    if (lockCameraCenter) {
+      cameraTargetX = 0;
+      cameraTargetY = 0;
+      lookAtTargetX = 0;
+      lookAtTargetY = 0;
+      rootTargetX = 0;
+      rootTargetY = 0;
+      currentLookX = 0;
+      currentLookY = 0;
+    }
 
     canvas.addEventListener("pointerdown", onPointerDown);
     canvas.addEventListener("pointermove", onPointerMove);
@@ -593,10 +627,11 @@ export function useGraphScene({
     const computeTargets = (elapsed: number) => {
       const introT = Math.min(1, elapsed / 800);
 
-      if (showAllNodes) {
+      if (showAllNodes || isNucleusLayout) {
         nodeMeshes.forEach((nm) => {
+          const isHovered = nm.data.id === hoveredIdRef.current;
           nm.targetOpacity = 1 * introT;
-          nm.targetScale = 1;
+          nm.targetScale = isHovered ? HOVER_SCALE : 1;
         });
         edges.forEach((er) => {
           er.targetOpacity = er.baseOpacity * introT;

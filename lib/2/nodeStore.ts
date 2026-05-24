@@ -87,6 +87,13 @@ export function saveNodes(planId: string, nodes: StrategyNode[]): void {
   } catch {}
 }
 
+export function clearNodesLocal(planId: string): void {
+  if (!isBrowser()) return;
+  try {
+    window.localStorage.removeItem(nodeKey(planId));
+  } catch {}
+}
+
 export async function fetchNodesFromSupabase(
   planId: string,
 ): Promise<StrategyNode[]> {
