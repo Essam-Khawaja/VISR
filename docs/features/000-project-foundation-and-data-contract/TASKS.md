@@ -2,7 +2,7 @@
 
 ## Dependencies
 
-- [ ] Use direct HTTP to xAI chat completions
+- [ ] Use direct HTTP to Groq chat completions
 - [ ] Add `@supabase/supabase-js`
 - [ ] Add `uuid`
 - [ ] Add `@types/uuid`
@@ -12,7 +12,7 @@
 
 - [ ] Add `.env.example` or setup docs with required environment variables
 - [ ] Confirm no server secrets are referenced in client components
-- [ ] Set default Grok model string to `grok-4-1-fast-non-reasoning`
+- [ ] Set default Groq model string to `llama-3.3-70b-versatile`
 
 ## Types
 
@@ -46,7 +46,7 @@
 ## Status Colors
 
 - [ ] Confirm `lib/statusColors.ts` maps all status enums
-- [ ] Use dark MVP token values
+- [ ] Use light MVP token values
 - [ ] Ensure labels still show status text and do not rely only on color
 
 ## Supabase
@@ -58,11 +58,11 @@
 - [ ] Use JSONB schema from this feature spec
 - [ ] Document hackathon RLS posture
 
-## Grok
+## Groq
 
-- [ ] Create `lib/grok.ts`
-- [ ] Use direct HTTP to `https://api.x.ai/v1/chat/completions`
-- [ ] Export `callGrokJson(system: string, user: string, opts?: GrokOptions)`
+- [ ] Create `lib/groq.ts`
+- [ ] Use direct HTTP to `https://api.groq.com/openai/v1/chat/completions`
+- [ ] Export `callGroqJson(system: string, user: string, opts?: GroqOptions)`
 - [ ] Strip markdown code fences
 - [ ] Throw useful errors
 - [ ] Stop using OpenAI-specific `lib/aiClient.ts`

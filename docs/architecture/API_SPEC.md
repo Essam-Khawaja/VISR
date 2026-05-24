@@ -2,43 +2,44 @@
 
 ## API Principles
 
-- All Grok calls happen server-side.
-- Grok responses must be JSON only.
-- Every Grok response is parsed and validated with Zod before use.
+- All Groq calls happen server-side.
+- Groq responses must be JSON only.
+- Every Groq response is parsed and validated with Zod before use.
 - API errors are structured and safe to show in the UI.
 - The demo plan can be served without live AI or Supabase.
 
 ---
 
-## Grok Wrapper
+## Groq Wrapper
 
-File: `lib/grok.ts`
+File: `lib/groq.ts`
 
 Responsibilities:
 
-- Call xAI chat completions using `process.env.XAI_API_KEY`.
-- Export `callGrokJson(system: string, user: string, opts?: GrokOptions)`.
-- Use model `grok-4-1-fast-non-reasoning` by default.
+- Call Groq chat completions using `process.env.GROQ_API_KEY`.
+- Export `callGroqJson(system: string, user: string, opts?: GroqOptions)`.
+- Use model `llama-3.3-70b-versatile` by default.
 - Keep the model string easy to change.
-- Use `max_tokens` high enough for the strategy plan.
+- Use `max_completion_tokens` high enough for the strategy plan.
 - Use `temperature` around `0.3`.
 - Demand JSON only in prompts.
-- Strip markdown code fences if Grok returns them.
+- Strip markdown code fences if Groq returns them.
 - Throw useful errors for missing API key, empty response, non-text response, and JSON parse failure.
+- Groq docs source: https://console.groq.com/docs/api-reference and https://console.groq.com/docs/models.
 
 Reference shape:
 
 ```ts
-const MODEL = process.env.XAI_MODEL || "grok-4-1-fast-non-reasoning";
+const MODEL = process.env.GROQ_MODEL || "llama-3.3-70b-versatile";
 
-export async function callGrokJson(
+export async function callGroqJson(
   system: string,
   user: string
 ): Promise<string | null> {
-  const apiKey = process.env.XAI_API_KEY;
+  const apiKey = process.env.GROQ_API_KEY;
   if (!apiKey) return null;
 
-  const response = await fetch("https://api.x.ai/v1/chat/completions", {
+  const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -46,7 +47,7 @@ export async function callGrokJson(
     },
     body: JSON.stringify({
       model: MODEL,
-      max_tokens: 6000,
+      max_completion_tokens: 6000,
       temperature: 0.3,
       response_format: { type: "json_object" },
       messages: [
@@ -74,7 +75,7 @@ export async function callGrokJson(
 
 ## POST /api/generate
 
-Purpose: accept a `StudentProfile` from onboarding, call Grok, validate the result, save it to Supabase, and return the `planId`.
+Purpose: accept a `StudentProfile` from onboarding, call Groq, validate the result, save it to Supabase, and return the `planId`.
 
 Request body:
 
@@ -100,7 +101,7 @@ Internal flow:
 3. Generate UUID for student profile.
 4. Save profile to Supabase table `student_profiles`.
 5. Build strategy prompt using `buildStrategyPrompt(profile)`.
-6. Call `callGrokJson(system, user)`.
+6. Call `callGroqJson(system, user)`.
 7. Validate parsed response using `StrategyPlanSchema`.
 8. If validation fails, retry once with a correction prompt that includes the validation error and asks for corrected JSON only.
 9. Generate UUID for strategy plan.
@@ -123,7 +124,7 @@ Error response:
 
 ## POST /api/opportunity
 
-Purpose: accept an opportunity string and `planId`, fetch the existing `StrategyPlan`, call Grok, validate the opportunity analysis, save it, and return the structured result.
+Purpose: accept an opportunity string and `planId`, fetch the existing `StrategyPlan`, call Groq, validate the opportunity analysis, save it, and return the structured result.
 
 Request body:
 
@@ -148,7 +149,7 @@ Internal flow:
 2. If `planId` is `demo-cs-student-001`, load demo plan from `lib/demoData.ts`.
 3. Otherwise fetch strategy plan from Supabase by `planId`.
 4. Build opportunity prompt using `buildOpportunityPrompt(plan, opportunityText)`.
-5. Call `callGrokJson(system, user)`.
+5. Call `callGroqJson(system, user)`.
 6. Validate parsed response using `OpportunityCheckSchema`.
 7. Save validated result to `opportunity_checks.check` as JSONB.
 8. Return `{ check }`.
@@ -224,7 +225,7 @@ Prompt requirements:
 - Job: identify destination, current stage, main bottleneck, priorities, cut list, risks, and next 7 days.
 - Output strict JSON matching `StrategyPlan`.
 
-Grok must:
+Groq must:
 
 - Identify one specific main bottleneck.
 - Avoid generic advice.
@@ -275,7 +276,7 @@ The response must include:
 - `conditions`
 - `cutsRequired`
 
-Grok must:
+Groq must:
 
 - Be willing to say no.
 - If it says yes, explain what the student should cut or cap.

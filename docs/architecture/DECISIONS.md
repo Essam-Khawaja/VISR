@@ -52,9 +52,9 @@ Architectural and product decisions for the 24-hour MVP.
 
 ---
 
-## D5: Grok for Structured Strategy Output
+## D5: Groq for Structured Strategy Output
 
-**Decision:** Use xAI Grok API via direct HTTP, default model `grok-4-1-fast-non-reasoning`.
+**Decision:** Use Groq API via direct HTTP, default model `llama-3.3-70b-versatile`.
 
 **Reason:** Structured JSON reliability matters more than marginal cost for the MVP.
 
@@ -66,7 +66,7 @@ Architectural and product decisions for the 24-hour MVP.
 
 ## D6: Validate Every AI Response with Zod
 
-**Decision:** Grok output is never trusted until it passes `StrategyPlanSchema` or `OpportunityCheckSchema`.
+**Decision:** Groq output is never trusted until it passes `StrategyPlanSchema` or `OpportunityCheckSchema`.
 
 **Reason:** Invalid JSON or invalid enum values would break the dashboard.
 

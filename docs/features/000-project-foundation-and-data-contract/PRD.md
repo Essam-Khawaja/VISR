@@ -45,4 +45,4 @@ As the builder, I need one reliable foundation so I can implement the MVP withou
   - `currentCourses` -> `courses`
   - `secondaryGoals` removed
   - `constraints: string[]` -> `constraints: string`
-  - OpenAI wrapper replaced by Grok wrapper
+  - OpenAI wrapper replaced by Groq wrapper

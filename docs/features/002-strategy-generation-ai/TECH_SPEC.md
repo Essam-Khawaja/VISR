@@ -4,7 +4,7 @@
 
 ```text
 app/api/generate/route.ts
-lib/grok.ts
+lib/groq.ts
 lib/prompts/strategyPrompt.ts
 lib/validation.ts
 lib/supabase.ts
@@ -36,20 +36,20 @@ Response:
 4. Save profile to `student_profiles`.
 5. Construct a full `StudentProfile` with `id` and `createdAt`.
 6. Build prompt with `buildStrategyPrompt(profile)`.
-7. Call `callGrokJson(system, user)`.
+7. Call `callGroqJson(system, user)`.
 8. Validate result with `StrategyPlanSchema.safeParse`.
-9. If invalid, call Grok once more with a correction prompt.
+9. If invalid, call Groq once more with a correction prompt.
 10. Save validated plan to `strategy_plans.plan`.
 11. Return `{ planId, studentId }`.
 
-## Grok Wrapper
+## Groq Wrapper
 
-`callGrokJson(system: string, user: string, opts?: GrokOptions)` should:
+`callGroqJson(system: string, user: string, opts?: GroqOptions)` should:
 
-- Return `null` when `XAI_API_KEY` is missing so deterministic fallback can run.
-- Use `process.env.XAI_MODEL || "grok-4-1-fast-non-reasoning"`.
+- Return `null` when `GROQ_API_KEY` is missing so deterministic fallback can run.
+- Use `process.env.GROQ_MODEL || "llama-3.3-70b-versatile"`.
 - Use `temperature: 0.3`.
-- Use `max_tokens` around `6000`.
+- Use `max_completion_tokens` around `6000`.
 - Strip markdown fences.
 - Parse JSON.
 - Throw useful errors.

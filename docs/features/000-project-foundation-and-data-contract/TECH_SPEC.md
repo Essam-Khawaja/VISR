@@ -28,22 +28,22 @@ Current repo note:
 
 - `framer-motion`, `next`, `react`, `three`, and `zod` already exist.
 - Add `@supabase/supabase-js`, `uuid`, and `@types/uuid`.
-- Use direct HTTP to xAI chat completions; no Grok SDK is required.
-- Remove or stop using the OpenAI-specific wrapper after `lib/grok.ts` is added.
+- Use direct HTTP to Groq chat completions; no Groq SDK is required.
+- Remove or stop using the OpenAI-specific wrapper after `lib/groq.ts` is added.
 
 ## Environment Variables
 
 ```bash
-XAI_API_KEY=
+GROQ_API_KEY=
 NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
 SUPABASE_SERVICE_ROLE_KEY=
-XAI_MODEL=grok-4-1-fast-non-reasoning
+GROQ_MODEL=llama-3.3-70b-versatile
 ```
 
 Rules:
 
-- Never expose `XAI_API_KEY`.
+- Never expose `GROQ_API_KEY`.
 - Never expose `SUPABASE_SERVICE_ROLE_KEY`.
 - Client components can only use `NEXT_PUBLIC_*`.
 - API routes own AI calls and database writes.
@@ -56,7 +56,7 @@ lib/validation.ts
 lib/statusColors.ts
 lib/demoData.ts
 lib/supabase.ts
-lib/grok.ts
+lib/groq.ts
 lib/prompts/strategyPrompt.ts
 lib/prompts/opportunityPrompt.ts
 ```
@@ -65,7 +65,7 @@ Legacy compatibility plan:
 
 - Replace `lib/fixture.ts` with `lib/demoData.ts`, or temporarily re-export from `fixture.ts` while migrating imports.
 - Replace `lib/validate.ts` with `lib/validation.ts`, or temporarily re-export while migrating imports.
-- Replace `lib/aiClient.ts` with `lib/grok.ts`.
+- Replace `lib/aiClient.ts` with `lib/groq.ts`.
 
 ## Type Contract
 
@@ -351,7 +351,7 @@ Error shape:
 5. `lib/statusColors.ts`
 6. `lib/demoData.ts`
 7. `lib/supabase.ts`
-8. `lib/grok.ts`
+8. `lib/groq.ts`
 9. API contract stubs or implementations
 10. Update imports from legacy file names
 

@@ -20,7 +20,7 @@ Each feature must explain both product behavior and technical implementation arc
 |---|---|---|---|
 | 0 | [000-project-foundation-and-data-contract](000-project-foundation-and-data-contract/) | Project Foundation and Data Contract | Dependencies, env, types, validation, demo data, Supabase schema |
 | 1 | [001-landing-and-onboarding](001-landing-and-onboarding/) | Landing and Onboarding | Capture the student profile and start generation |
-| 2 | [002-strategy-generation-ai](002-strategy-generation-ai/) | Strategy Generation AI | Grok prompt, validation, and plan creation |
+| 2 | [002-strategy-generation-ai](002-strategy-generation-ai/) | Strategy Generation AI | Groq prompt, validation, and plan creation |
 | 3 | [003-demo-data-and-plan-fetching](003-demo-data-and-plan-fetching/) | Demo Data and Plan Fetching | Reliable demo route and plan retrieval |
 | 4 | [004-dashboard-command-center](004-dashboard-command-center/) | Dashboard Command Center | Main strategy dashboard composition |
 | 5 | [005-strategy-map-visualization](005-strategy-map-visualization/) | Strategy Map Visualization | Hero graph, bottleneck highlight, graph fallback |
@@ -48,7 +48,7 @@ For hackathon execution, the practical priority is:
 4. Strategy Map
 5. Opportunity Checker with mocked fallback
 6. Landing and onboarding shell
-7. Grok integration
+7. Groq integration
 8. Supabase persistence
 9. Polish
 
@@ -63,7 +63,7 @@ Landing
 Onboarding -> POST /api/generate
   |              |
   |              v
-  |         Grok + Zod
+  |         Groq + Zod
   |              |
   |              v
   |         Supabase JSONB

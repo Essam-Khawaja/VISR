@@ -14,7 +14,7 @@
 - [ ] Render cuts required
 - [ ] Create `POST /api/opportunity`
 - [ ] Build opportunity prompt
-- [ ] Call Grok
+- [ ] Call Groq
 - [ ] Validate response
 - [ ] Save check JSONB
 - [ ] Add demo fallback

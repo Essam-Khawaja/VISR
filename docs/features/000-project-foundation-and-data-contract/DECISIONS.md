@@ -6,7 +6,7 @@ The MVP should not start with UI screens until the data contract is stable. Type
 
 ## D2: AI Objects Stay Clean
 
-`StrategyPlan` and `OpportunityCheck` should match Grok's JSON output and UI needs. Database metadata belongs in wrapper types or route responses.
+`StrategyPlan` and `OpportunityCheck` should match Groq's JSON output and UI needs. Database metadata belongs in wrapper types or route responses.
 
 ## D3: JSONB for Hackathon Speed
 
@@ -14,7 +14,7 @@ Use JSONB for `strategy_plans.plan` and `opportunity_checks.check` to avoid over
 
 ## D4: Demo Data Must Not Depend on Infrastructure
 
-The demo route should work even if Grok, Supabase, or network access fails.
+The demo route should work even if Groq, Supabase, or network access fails.
 
 ## D5: Compatibility Re-Exports Are Allowed Temporarily
 

@@ -1,6 +1,6 @@
 # TASKS: Strategy Generation AI
 
-- [ ] Create `lib/grok.ts`
+- [ ] Create `lib/groq.ts`
 - [ ] Create `lib/prompts/strategyPrompt.ts`
 - [ ] Confirm `StrategyPlanSchema` exists in `lib/validation.ts`
 - [ ] Create `app/api/generate/route.ts`
@@ -8,7 +8,7 @@
 - [ ] Generate `studentId`
 - [ ] Save student profile to Supabase
 - [ ] Build strategy prompt
-- [ ] Call Grok
+- [ ] Call Groq
 - [ ] Validate response with Zod
 - [ ] Retry once with correction prompt if validation fails
 - [ ] Generate `planId`

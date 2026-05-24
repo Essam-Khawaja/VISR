@@ -9,7 +9,7 @@
 | Styling | Tailwind CSS |
 | Animation | Framer Motion |
 | Graph visualization | Three.js if feasible; polished 2D radial graph fallback |
-| AI API | xAI Grok API via direct HTTP |
+| AI API | Groq API via direct HTTP |
 | Validation | Zod |
 | Database | Supabase Postgres via `@supabase/supabase-js` |
 | State | React `useState` / `useEffect` |
@@ -46,13 +46,14 @@ Install and use:
 ## Environment Variables
 
 ```bash
-XAI_API_KEY=
+GROQ_API_KEY=
+GROQ_MODEL=llama-3.3-70b-versatile
 NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
 SUPABASE_SERVICE_ROLE_KEY=
 ```
 
-Never expose `XAI_API_KEY` or `SUPABASE_SERVICE_ROLE_KEY` to the client.
+Never expose `GROQ_API_KEY` or `SUPABASE_SERVICE_ROLE_KEY` to the client.
 
 ---
 
@@ -64,7 +65,7 @@ lib/validation.ts
 lib/statusColors.ts
 lib/demoData.ts
 lib/supabase.ts
-lib/grok.ts
+lib/groq.ts
 lib/prompts/strategyPrompt.ts
 lib/prompts/opportunityPrompt.ts
 ```
@@ -75,7 +76,7 @@ lib/prompts/opportunityPrompt.ts
 
 ### POST /api/generate
 
-Purpose: accept a student profile from onboarding, call Grok, validate the result, save it to Supabase, and return the `planId`.
+Purpose: accept a student profile from onboarding, call Groq, validate the result, save it to Supabase, and return the `planId`.
 
 Request:
 
@@ -99,8 +100,8 @@ Internal flow:
 1. Generate UUID for student profile.
 2. Save profile to `student_profiles`.
 3. Build strategy prompt using `buildStrategyPrompt(profile)`.
-4. Call Grok with strict JSON-output prompt.
-5. Parse Grok response as JSON.
+4. Call Groq with strict JSON-output prompt.
+5. Parse Groq response as JSON.
 6. Validate with `StrategyPlanSchema`.
 7. If validation fails, retry once with a correction prompt that includes the validation error.
 8. Save validated plan to `strategy_plans.plan` as JSONB.
@@ -132,7 +133,7 @@ Internal flow:
 
 1. Fetch strategy plan from Supabase by `planId`, unless it is the demo plan.
 2. Build opportunity prompt using the current `StrategyPlan` and `opportunityText`.
-3. Call Grok.
+3. Call Groq.
 4. Parse JSON response.
 5. Validate with `OpportunityCheckSchema`.
 6. Save to `opportunity_checks.check` as JSONB.
@@ -307,7 +308,7 @@ No blank screens.
 
 Errors:
 
-- Grok generation failure: "Strategy generation failed. Try again or open the demo."
+- Groq generation failure: "Strategy generation failed. Try again or open the demo."
 - Opportunity failure: "Could not evaluate this opportunity. Your saved strategy is still available."
 - Graph failure: show the 2D fallback graph.
 

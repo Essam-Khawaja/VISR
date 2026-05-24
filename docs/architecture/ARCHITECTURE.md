@@ -33,7 +33,7 @@ POST /api/generate
   - Generate student UUID
   - Save StudentProfile to Supabase
   - Build strict JSON strategy prompt
-  - Call Grok via xAI chat completions
+  - Call Groq chat completions
   - Parse and validate StrategyPlan with Zod
   - Retry once with correction prompt if validation fails
   - Save plan JSONB to Supabase
@@ -50,7 +50,7 @@ Opportunity Checker embedded on dashboard
   - User enters opportunity text
   - POST /api/opportunity with planId + opportunityText
   - Fetch existing StrategyPlan for context
-  - Call Grok with opportunity prompt
+  - Call Groq with opportunity prompt
   - Validate OpportunityCheck with Zod
   - Save check JSONB to Supabase
   - Render fit score, recommendation, tradeoffs, conditions, and cuts required
@@ -129,7 +129,7 @@ lib/
   statusColors.ts
   demoData.ts
   supabase.ts
-  grok.ts
+  groq.ts
   prompts/
     strategyPrompt.ts
     opportunityPrompt.ts
@@ -158,7 +158,7 @@ JSONB is the MVP choice because the plan shape is rich, nested, and likely to ch
 
 Server-only:
 
-- `XAI_API_KEY`
+- `GROQ_API_KEY`
 - `SUPABASE_SERVICE_ROLE_KEY`, if server-side writes require it
 
 Client-safe:
@@ -166,13 +166,13 @@ Client-safe:
 - `NEXT_PUBLIC_SUPABASE_URL`
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 
-Grok calls only happen inside API routes or server utilities. The client never receives API keys.
+Groq calls only happen inside API routes or server utilities. The client never receives API keys.
 
-`/lib/grok.ts` owns:
+`/lib/groq.ts` owns:
 
-- xAI chat completions request construction.
-- Model string, defaulting to `grok-4-1-fast-non-reasoning`.
-- `callGrokJson(system: string, user: string, opts?: GrokOptions)`.
+- Groq chat completions request construction.
+- Model string, defaulting to `llama-3.3-70b-versatile`.
+- `callGroqJson(system: string, user: string, opts?: GroqOptions)`.
 - Markdown fence stripping.
 - JSON parsing errors with useful messages.
 
@@ -206,9 +206,9 @@ Priority order:
 7. Risk Cards
 8. Strategy Map
 9. Opportunity Checker with clean mocked fallback
-10. Grok API integration for opportunity checker
+10. Groq API integration for opportunity checker
 11. Onboarding form
-12. `/api/generate` with Grok
+12. `/api/generate` with Groq
 13. Supabase persistence
 14. Polish animations
 15. Screenshot-ready visual polish
