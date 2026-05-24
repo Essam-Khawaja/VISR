@@ -326,10 +326,33 @@ export default function GoalTree({
   const [dockOpen, setDockOpen] = useState(false);
   const [focusPath, setFocusPath] = useState<FocusBreadcrumb[]>([]);
   const [exploreDialogId, setExploreDialogId] = useState<string | null>(null);
+  const [didAutoFocus, setDidAutoFocus] = useState(false);
 
   const onboarding = displayMode === "onboarding";
   const preview = displayMode === "preview";
   const explore = displayMode === "full";
+
+  useEffect(() => {
+    if (!explore || didAutoFocus || nodes.length === 0) return;
+    const rootNode = nodes.find((n) => n.parentNodeId === null);
+    if (!rootNode) return;
+
+    const yearNode = nodes.find(
+      (n) => n.parentNodeId === rootNode.id && n.kind === "academic_year",
+    );
+    if (!yearNode) return;
+
+    const semesterNode = nodes.find(
+      (n) => n.parentNodeId === yearNode.id && n.kind === "semester",
+    );
+
+    const path: FocusBreadcrumb[] = [{ id: yearNode.id, name: yearNode.title }];
+    if (semesterNode) {
+      path.push({ id: semesterNode.id, name: semesterNode.title });
+    }
+    setFocusPath(path);
+    setDidAutoFocus(true);
+  }, [explore, nodes, didAutoFocus]);
 
   const nucleusLevel = useMemo(() => {
     if (!explore) return null;
