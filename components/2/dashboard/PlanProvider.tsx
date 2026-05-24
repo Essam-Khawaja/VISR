@@ -9,7 +9,6 @@ import {
   useState,
 } from "react";
 import {
-  addTasksToNode,
   applyOpportunity,
   fetchStoredPlanFromSupabase,
   loadStoredPlan,
@@ -20,19 +19,40 @@ import {
   type StoredPlan,
 } from "@/lib/2/planStore";
 import {
+  computeNodeRollup,
+  createStrategyTask,
+  type CreateStrategyTaskInput,
   ensureMaterializedTasks,
+  fetchTasksFromSupabase,
   migrateActionStatesToTasks,
+  type NodeRollup,
+  todayLocalDate,
+  type UpdateStrategyTaskInput,
+  updateStrategyTask,
 } from "@/lib/2/taskStore";
 import { DEMO_PLAN_ID, fixturePlan } from "@/lib/2/fixture";
-import type { ActionNode, OpportunityCheck, StrategyPlan } from "@/lib/2/types";
+import type {
+  OpportunityCheck,
+  StrategyPlan,
+  StrategyTask,
+  StrategyTaskStatus,
+} from "@/lib/2/types";
 
 type PlanContextValue = {
   planId: string;
   plan: StrategyPlan;
   stored: StoredPlan;
+  tasks: StrategyTask[];
+  rollups: Record<string, NodeRollup>;
   isDemo: boolean;
   isReady: boolean;
   markAction: (actionId: string, state: ActionState) => void;
+  createTask: (input: Omit<CreateStrategyTaskInput, "planId">) => Promise<void>;
+  updateTask: (
+    taskId: string,
+    patch: UpdateStrategyTaskInput,
+  ) => Promise<void>;
+  markTask: (taskId: string, state: StrategyTaskStatus) => Promise<void>;
   addTasks: (
     parentNodeId: string,
     tasks: { name: string; recommendation: string }[],
@@ -52,6 +72,7 @@ type Props = {
 export function PlanProvider({ planId, initialPlan, children }: Props) {
   const isDemo = planId === DEMO_PLAN_ID || planId.startsWith("demo-");
   const [stored, setStored] = useState<StoredPlan | null>(null);
+  const [tasks, setTasks] = useState<StrategyTask[]>([]);
   const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
@@ -67,7 +88,7 @@ export function PlanProvider({ planId, initialPlan, children }: Props) {
         opportunityHistory: [],
         lastReviewedAt: new Date().toISOString(),
       });
-      ensureMaterializedTasks(demoPlan);
+      setTasks(ensureMaterializedTasks(demoPlan));
       setIsReady(true);
       return;
     }
@@ -77,12 +98,12 @@ export function PlanProvider({ planId, initialPlan, children }: Props) {
     if (fromCache) {
       setStored(fromCache);
       ensureMaterializedTasks(fromCache.plan);
-      migrateActionStatesToTasks(planId, fromCache.actionStates);
+      setTasks(migrateActionStatesToTasks(planId, fromCache.actionStates));
     } else if (initialPlan) {
       savePlan(planId, initialPlan);
       const fresh = loadStoredPlan(planId);
       setStored(fresh);
-      ensureMaterializedTasks(initialPlan);
+      setTasks(ensureMaterializedTasks(initialPlan));
     } else {
       setStored(null);
     }
@@ -95,9 +116,13 @@ export function PlanProvider({ planId, initialPlan, children }: Props) {
       if (fromSupabase) {
         setStored(fromSupabase);
         ensureMaterializedTasks(fromSupabase.plan);
-        migrateActionStatesToTasks(planId, fromSupabase.actionStates);
+        setTasks(migrateActionStatesToTasks(planId, fromSupabase.actionStates));
       }
     })();
+
+    void fetchTasksFromSupabase({ planId }).then((fromTasks) => {
+      if (!cancelled && fromTasks.length > 0) setTasks(fromTasks);
+    });
 
     // 3) One-time push of any leftover local-only plans up to Supabase.
     void migrateLocalToSupabase();
@@ -107,8 +132,44 @@ export function PlanProvider({ planId, initialPlan, children }: Props) {
     };
   }, [planId, isDemo, initialPlan]);
 
+  const refreshTasks = useCallback(async () => {
+    const fromTasks = await fetchTasksFromSupabase({ planId });
+    setTasks(fromTasks);
+  }, [planId]);
+
+  const createTask = useCallback(
+    async (input: Omit<CreateStrategyTaskInput, "planId">) => {
+      const task = await createStrategyTask({ ...input, planId });
+      setTasks((prev) => [...prev.filter((t) => t.id !== task.id), task]);
+    },
+    [planId],
+  );
+
+  const updateTask = useCallback(
+    async (taskId: string, patch: UpdateStrategyTaskInput) => {
+      const task = await updateStrategyTask(planId, taskId, patch);
+      if (!task) return;
+      setTasks((prev) => [...prev.filter((t) => t.id !== task.id), task]);
+    },
+    [planId],
+  );
+
+  const markTask = useCallback(
+    async (taskId: string, state: StrategyTaskStatus) => {
+      await updateTask(taskId, { status: state });
+    },
+    [updateTask],
+  );
+
   const markAction = useCallback(
     (actionId: string, state: ActionState) => {
+      const matchingTask = tasks.find(
+        (task) => task.id === actionId || task.sourceActionId === actionId,
+      );
+      if (matchingTask) {
+        void markTask(matchingTask.id, state);
+        return;
+      }
       if (isDemo) {
         setStored((prev) => {
           if (!prev) return prev;
@@ -122,48 +183,28 @@ export function PlanProvider({ planId, initialPlan, children }: Props) {
       const next = setActionState(planId, actionId, state);
       if (next) setStored(next);
     },
-    [planId, isDemo],
+    [planId, isDemo, tasks, markTask],
   );
 
   const addTasks = useCallback(
     (
       parentNodeId: string,
-      tasks: { name: string; recommendation: string }[],
+      newTasks: { name: string; recommendation: string }[],
     ) => {
-      if (isDemo) {
-        setStored((prev) => {
-          if (!prev) return prev;
-          const created: ActionNode[] = tasks.map((t) => ({
-            id: `task-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-            name: t.name,
-            status: "On Track" as const,
-            recommendation: t.recommendation,
-          }));
-          const plan = JSON.parse(JSON.stringify(prev.plan)) as StrategyPlan;
-          let attached = false;
-          for (const pillar of plan.strategicPillars) {
-            if (pillar.id === parentNodeId) {
-              pillar.actions.push(...created);
-              attached = true;
-              break;
-            }
-            for (const action of pillar.actions) {
-              if (attachChildrenDemo(action, parentNodeId, created)) {
-                attached = true;
-                break;
-              }
-            }
-            if (attached) break;
-          }
-          return attached ? { ...prev, plan } : prev;
-        });
-        return;
-      }
-      addTasksToNode(planId, parentNodeId, tasks);
-      const fresh = loadStoredPlan(planId);
-      if (fresh) setStored(fresh);
+      void Promise.all(
+        newTasks.map((task) =>
+          createTask({
+            parentNodeId,
+            parentNodeKind: parentNodeId === "goal" ? "goal" : "pillar",
+            title: task.name,
+            recommendation: task.recommendation,
+            dueDate: todayLocalDate(),
+            source: "strategy_map",
+          }),
+        ),
+      );
     },
-    [planId, isDemo],
+    [createTask],
   );
 
   const applyOpportunityResult = useCallback(
@@ -194,50 +235,67 @@ export function PlanProvider({ planId, initialPlan, children }: Props) {
     if (fresh) setStored(fresh);
   }, [planId, isDemo]);
 
+  const rollups = useMemo(() => {
+    const ids = new Set<string>(["goal"]);
+    if (stored) {
+      stored.plan.strategicPillars.forEach((pillar) => {
+        ids.add(pillar.id);
+        pillar.actions.forEach((action) => ids.add(action.id));
+      });
+    }
+    tasks.forEach((task) => {
+      ids.add(task.id);
+      ids.add(task.parentNodeId);
+      if (task.parentTaskId) ids.add(task.parentTaskId);
+    });
+    const next: Record<string, NodeRollup> = {};
+    ids.forEach((id) => {
+      next[id] = computeNodeRollup(id, tasks);
+    });
+    return next;
+  }, [stored, tasks]);
+
   const value: PlanContextValue | null = useMemo(() => {
     if (!stored) return null;
     return {
       planId,
       plan: stored.plan,
       stored,
+      tasks,
+      rollups,
       isDemo,
       isReady,
       markAction,
+      createTask,
+      updateTask,
+      markTask,
       addTasks,
       applyOpportunityResult,
-      refresh,
+      refresh: () => {
+        refresh();
+        void refreshTasks();
+      },
     };
   }, [
     planId,
     stored,
+    tasks,
+    rollups,
     isDemo,
     isReady,
     markAction,
+    createTask,
+    updateTask,
+    markTask,
     addTasks,
     applyOpportunityResult,
     refresh,
+    refreshTasks,
   ]);
 
   return (
     <PlanContext.Provider value={value}>{children}</PlanContext.Provider>
   );
-}
-
-function attachChildrenDemo(
-  action: ActionNode,
-  parentId: string,
-  children: ActionNode[],
-): boolean {
-  if (action.id === parentId) {
-    action.children = [...(action.children ?? []), ...children];
-    return true;
-  }
-  if (action.children) {
-    for (const child of action.children) {
-      if (attachChildrenDemo(child, parentId, children)) return true;
-    }
-  }
-  return false;
 }
 
 export function usePlan(): PlanContextValue {
