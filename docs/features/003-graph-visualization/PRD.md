@@ -3,6 +3,9 @@
 ## Status
 Draft
 
+## Dashboard integration
+Graph **rendering component** lives here. It is embedded as the **hero** on [007-main-dashboard](../007-main-dashboard/) — see [graph-visualization.md](../007-main-dashboard/graph-visualization.md). No separate `/graph` route required for MVP.
+
 ## Summary
 Renders the degree roadmap as a living growth graph: nodes represent skills, experiences, courses, and milestones; edges represent dependencies. Visual state reflects progress—not started, in progress, completed—with completed areas appearing stronger and inactive paths de-emphasized (fade) when adaptation reduces priority.
 
@@ -13,7 +16,7 @@ Long-term plans in list or calendar form do not show how goals connect or how fa
 As a student executing my plan, I want to see my roadmap as an interactive graph that shows what I have done and what depends on what, so that I understand how close I am to each outcome.
 
 ## Main User Flow
-1. Student opens graph view from dashboard.
+1. Student lands on main dashboard (007); graph renders in hero region.
 2. System loads `Roadmap` and maps nodes/edges to graph library format.
 3. Graph renders with color/size by `status` and optional progress %.
 4. Student clicks a node → detail panel (label, type, linked weekly tasks).

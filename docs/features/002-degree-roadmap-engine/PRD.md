@@ -3,6 +3,9 @@
 ## Status
 Draft
 
+## Dashboard integration
+Roadmap **generation and API** live here. The **student-facing home UI** is [007-main-dashboard](../007-main-dashboard/) — see [degree-roadmap-engine.md](../007-main-dashboard/degree-roadmap-engine.md).
+
 ## Summary
 Transforms the student profile into a structured four-year academic and career roadmap. Output is year-by-year stages (exploration → specialization → career prep) with interconnected nodes: courses, skills, clubs, projects, and milestones—aligned to the student's goal (e.g. health tech → health tech clubs, relevant courses).
 
@@ -16,7 +19,7 @@ As a student with a defined goal, I want a four-year roadmap tailored to my degr
 1. System receives `UserProfile` after onboarding (or profile update).
 2. Generator produces `Roadmap` with years 1–4, each with focus theme and `nodes[]`.
 3. Nodes include type, label, dependencies, and suggested timing.
-4. Roadmap persisted and passed to Graph Visualization (003) and Weekly Execution (004).
+4. Roadmap persisted and consumed by Main Dashboard (007), Graph Visualization (003), and Weekly Execution (004).
 
 ## Requirements
 
