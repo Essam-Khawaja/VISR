@@ -312,7 +312,6 @@ export default function GoalTree({
       <div
         ref={labelsRef}
         className="pointer-events-none absolute inset-0 z-10"
-        aria-hidden
       />
 
       {explore ? (

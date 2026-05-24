@@ -87,33 +87,38 @@ function darkenHex(hex: string, amount = 0.24): string {
 function labelSize(name: string, kind: GraphNodeData["kind"]) {
   const length = name.length;
   if (kind === "goal") {
-    return { width: Math.min(180, Math.max(118, length * 7)), height: 74 };
+    const diameter = Math.min(220, Math.max(132, length * 7));
+    return { width: diameter, height: diameter };
   }
   if (kind === "pillar") {
-    return { width: Math.min(158, Math.max(106, length * 6)), height: 66 };
+    const diameter = Math.min(190, Math.max(114, length * 6));
+    return { width: diameter, height: diameter };
   }
-  return { width: Math.min(136, Math.max(86, length * 5.5)), height: 54 };
+  const diameter = Math.min(172, Math.max(94, length * 5.5));
+  return { width: diameter, height: diameter };
 }
 
 function nodeLabelHtml(node: LayoutNode): string {
   const progress = Math.max(0, Math.min(1, node.progressPercent ?? 0));
-  const angle = Math.round(progress * 360);
   const count = node.actionCount ?? 0;
   const fill = node.pastelColor ?? node.color;
   const ring = darkenHex(fill);
   const { width, height } = labelSize(node.name, node.kind);
   const fontSize = node.kind === "goal" ? 13 : node.kind === "pillar" ? 11 : 9;
+  const circumference = 2 * Math.PI * 46;
   const countBadge =
     count > 0
       ? `<span style="position:absolute;top:-6px;right:-6px;background:#ffffff;color:#182235;font-size:9px;font-weight:800;min-width:17px;height:17px;padding:0 4px;border-radius:999px;display:flex;align-items:center;justify-content:center;box-shadow:0 6px 14px rgba(24,34,53,0.15)">${count}</span>`
       : "";
   return `
-    <div style="position:relative;width:${width}px;min-height:${height}px;padding:4px;border-radius:999px;background:conic-gradient(${ring} ${angle}deg, rgba(24,34,53,0.12) ${angle}deg);box-shadow:0 16px 32px rgba(24,34,53,0.16)">
+    <span style="position:relative;width:${width}px;height:${height}px;border-radius:999px;background:${fill};box-shadow:0 18px 36px rgba(24,34,53,0.16);display:flex;align-items:center;justify-content:center;padding:14px;color:#fff;text-align:center;font-size:${fontSize}px;font-weight:800;line-height:1.15;white-space:normal;overflow-wrap:anywhere;text-shadow:0 1px 2px rgba(0,0,0,0.25)">
       ${countBadge}
-      <div style="min-height:${height - 8}px;border-radius:999px;background:${fill};display:flex;align-items:center;justify-content:center;padding:8px 12px;color:#fff;text-align:center;font-size:${fontSize}px;font-weight:700;line-height:1.15;white-space:normal;overflow-wrap:anywhere;text-shadow:0 1px 2px rgba(0,0,0,0.25)">
-        ${escapeHtml(node.name)}
-      </div>
-    </div>`;
+      <svg aria-hidden="true" viewBox="0 0 100 100" style="position:absolute;inset:0;width:100%;height:100%;transform:rotate(-90deg)">
+        <circle cx="50" cy="50" r="46" fill="none" stroke="${ring}" stroke-opacity="0.18" stroke-width="7" />
+        <circle cx="50" cy="50" r="46" fill="none" stroke="${ring}" stroke-width="7" stroke-linecap="round" stroke-dasharray="${progress * circumference} ${circumference}" />
+      </svg>
+      <span style="position:relative;z-index:1;max-width:${Math.max(48, width - 36)}px">${escapeHtml(node.name)}</span>
+    </span>`;
 }
 
 function applyLabelSpacing(layout: Pick<GraphLayoutResult, "nodes" | "edges">) {
@@ -319,20 +324,66 @@ export function useGraphScene({
     const raycaster = new THREE.Raycaster();
     const pointer = new THREE.Vector2();
 
-    type Label = { el: HTMLDivElement; node: NodeMesh };
+    type Label = { el: HTMLButtonElement; node: NodeMesh };
     const labels: Label[] = [];
     if (labelsContainer) {
       labelsContainer.innerHTML = "";
       nodeMeshes.forEach((nm) => {
-        const el = document.createElement("div");
+        const el = document.createElement("button");
+        el.type = "button";
         el.style.willChange = "transform, opacity";
         el.style.transform = "translate(-9999px,-9999px)";
         el.style.position = "absolute";
         el.style.textAlign = "center";
-        el.style.pointerEvents = "none";
+        el.style.pointerEvents = isReadOnly ? "none" : "auto";
         el.style.userSelect = "none";
+        el.style.border = "0";
+        el.style.padding = "0";
+        el.style.background = "transparent";
+        el.style.cursor = isReadOnly ? "default" : "pointer";
+        el.setAttribute("aria-label", nm.data.name);
 
         el.innerHTML = nodeLabelHtml(nm.data);
+        el.addEventListener("click", (event) => {
+          event.preventDefault();
+          event.stopPropagation();
+          if (isReadOnly) return;
+          if (nm.data.kind === "goal" && !layoutOverride) {
+            selectionRef.current = null;
+            setSelectionState(null);
+          } else if (nm.data.kind === "goal" || nm.data.kind === "pillar") {
+            const next: GraphSelection = {
+              kind: "pillar",
+              nodeId: nm.data.id,
+            };
+            selectionRef.current = next;
+            setSelectionState(next);
+          } else {
+            const next: GraphSelection = {
+              kind: "action",
+              nodeId: nm.data.id,
+            };
+            selectionRef.current = next;
+            setSelectionState(next);
+          }
+          updateCameraTargetFromSelection();
+        });
+        el.addEventListener("pointerenter", () => {
+          if (isReadOnly) return;
+          hoveredIdRef.current = nm.data.id;
+          const rect = el.getBoundingClientRect();
+          setHoverState({
+            node: nm.data,
+            x: rect.left + rect.width / 2,
+            y: rect.top + rect.height / 2,
+          });
+        });
+        el.addEventListener("pointerleave", () => {
+          if (hoveredIdRef.current === nm.data.id) {
+            hoveredIdRef.current = null;
+            setHoverState(null);
+          }
+        });
 
         labelsContainer.appendChild(el);
         labels.push({ el, node: nm });
@@ -654,7 +705,7 @@ export function useGraphScene({
         nm.currentScale = lerp(nm.currentScale, nm.targetScale, lerpT);
 
         const coreMat = nm.core.material as THREE.MeshBasicMaterial;
-        coreMat.opacity = Math.min(1, nm.currentOpacity);
+        coreMat.opacity = 0;
         const haloMat = nm.halo.material as THREE.SpriteMaterial;
         const isSelected =
           selectionRef.current?.nodeId === nm.data.id &&
@@ -663,9 +714,7 @@ export function useGraphScene({
         haloMat.opacity = nm.currentOpacity * haloStrength(nm, isSelected);
 
         const ringMat = nm.ring.material as THREE.MeshBasicMaterial;
-        ringMat.opacity = isSelected
-          ? Math.min(1, nm.currentOpacity) * 0.5
-          : 0;
+        ringMat.opacity = 0;
 
         nm.group.scale.setScalar(Math.max(0.001, nm.currentScale));
 
