@@ -37,7 +37,10 @@ export function OnboardingMapPanel({ mapState, insight, isInsightLoading }: Prop
           plan={plan}
           planId="onboarding-preview"
           actionStates={{}}
+          tasks={[]}
           markAction={() => {}}
+          onCreateTask={async () => {}}
+          onMarkTask={async () => {}}
           isDemo={false}
           onToggleToday={() => {}}
           displayMode="onboarding"

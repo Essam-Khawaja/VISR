@@ -8,7 +8,13 @@ import { StrategyHUD } from "./StrategyHUD";
 import { buildNucleusLayout, type NucleusChild } from "./graphLayout";
 import { useGraphScene, type ActionState } from "./useGraphScene";
 import type { LayoutEdge, LayoutNode, GraphSelection } from "./graphTypes";
-import type { ActionNode, StrategyPlan } from "@/lib/2/types";
+import type {
+  ActionNode,
+  StrategyPlan,
+  StrategyTask,
+  StrategyTaskStatus,
+} from "@/lib/2/types";
+import type { CreateStrategyTaskInput } from "@/lib/2/taskStore";
 
 const PILLAR_PASTELS = [
   "#933B5B", // amaranth
@@ -26,13 +32,12 @@ export type GoalTreeProps = {
   plan: StrategyPlan;
   planId: string;
   actionStates: Record<string, ActionState>;
+  tasks: StrategyTask[];
   markAction: (actionId: string, state: ActionState) => void;
+  onCreateTask: (input: Omit<CreateStrategyTaskInput, "planId">) => Promise<void>;
+  onMarkTask: (taskId: string, state: StrategyTaskStatus) => Promise<void>;
   isDemo: boolean;
   onToggleToday: () => void;
-  onAddTasks?: (
-    parentNodeId: string,
-    tasks: { name: string; recommendation: string }[],
-  ) => void;
   displayMode?: "onboarding" | "preview" | "full";
   layoutOverride?: { nodes: LayoutNode[]; edges: LayoutEdge[] };
 };
@@ -158,10 +163,12 @@ export default function GoalTree({
   plan,
   planId,
   actionStates,
+  tasks,
   markAction,
+  onCreateTask,
+  onMarkTask,
   isDemo,
   onToggleToday,
-  onAddTasks,
   displayMode = "full",
   layoutOverride,
 }: GoalTreeProps) {
@@ -207,16 +214,6 @@ export default function GoalTree({
     });
 
   const toggleDock = useCallback(() => setDockOpen((v) => !v), []);
-
-  const handleAddTasks = useCallback(
-    (
-      parentNodeId: string,
-      tasks: { name: string; recommendation: string }[],
-    ) => {
-      onAddTasks?.(parentNodeId, tasks);
-    },
-    [onAddTasks],
-  );
 
   // Handle clicks in Explore mode
   useEffect(() => {
@@ -342,22 +339,20 @@ export default function GoalTree({
         <NodeTaskDialog
           plan={plan}
           selection={exploreSelection}
-          actionStates={actionStates}
-          onSelect={select}
+          tasks={tasks}
           onClose={closeExploreDialog}
-          onToggleAction={markAction}
-          onAddTasks={handleAddTasks}
+          onCreateTask={onCreateTask}
+          onMarkTask={onMarkTask}
           isDemo={isDemo}
         />
       ) : hideNonExploreChrome ? null : (
         <NodeTaskDialog
           plan={plan}
           selection={selection}
-          actionStates={actionStates}
-          onSelect={select}
+          tasks={tasks}
           onClose={clearSelection}
-          onToggleAction={markAction}
-          onAddTasks={handleAddTasks}
+          onCreateTask={onCreateTask}
+          onMarkTask={onMarkTask}
           isDemo={isDemo}
         />
       )}

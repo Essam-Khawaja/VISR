@@ -15,16 +15,27 @@ type Props = {
 };
 
 export function GoalTreeSlot({ onToggleToday, displayMode = "full" }: Props) {
-  const { plan, planId, stored, markAction, addTasks, isDemo } = usePlan();
+  const {
+    plan,
+    planId,
+    stored,
+    tasks,
+    markAction,
+    createTask,
+    markTask,
+    isDemo,
+  } = usePlan();
   return (
     <GoalTree
       plan={plan}
       planId={planId}
       actionStates={stored.actionStates}
+      tasks={tasks}
       markAction={markAction}
+      onCreateTask={createTask}
+      onMarkTask={markTask}
       isDemo={isDemo}
       onToggleToday={onToggleToday}
-      onAddTasks={addTasks}
       displayMode={displayMode}
     />
   );
