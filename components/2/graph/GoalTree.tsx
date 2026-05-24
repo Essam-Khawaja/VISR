@@ -14,7 +14,11 @@ import type {
   StrategyTask,
   StrategyTaskStatus,
 } from "@/lib/2/types";
-import type { CreateStrategyTaskInput, NodeRollup } from "@/lib/2/taskStore";
+import {
+  tasksForNode,
+  type CreateStrategyTaskInput,
+  type NodeRollup,
+} from "@/lib/2/taskStore";
 
 const PILLAR_PASTELS = [
   "#933B5B", // amaranth
@@ -57,7 +61,13 @@ function findActionDeep(
   return null;
 }
 
-function findNodeName(plan: StrategyPlan, nodeId: string): string {
+function findNodeName(
+  plan: StrategyPlan,
+  tasks: StrategyTask[],
+  nodeId: string,
+): string {
+  const task = tasks.find((t) => t.id === nodeId || t.graphNodeId === nodeId);
+  if (task) return task.title;
   if (nodeId === "goal") return plan.destination;
   for (const p of plan.strategicPillars) {
     if (p.id === nodeId) return p.name;
@@ -67,8 +77,27 @@ function findNodeName(plan: StrategyPlan, nodeId: string): string {
   return "Unknown";
 }
 
+function taskNodeColor(task: StrategyTask): string {
+  if (task.status === "done") return "#8A9A5B";
+  if (task.priority === "High") return "#933B5B";
+  if (task.priority === "Medium") return "#C4A882";
+  return "#AABAAE";
+}
+
+function taskChildren(task: StrategyTask, tasks: StrategyTask[]): NucleusChild[] {
+  return tasksForNode(tasks, task.id).map((child, i) => ({
+    id: child.id,
+    name: child.title,
+    status: child.status,
+    recommendation: child.recommendation || `Due ${child.dueDate}`,
+    pastelColor: taskNodeColor(child),
+    childCount: tasksForNode(tasks, child.id).length,
+  }));
+}
+
 function resolveNucleusLevel(
   plan: StrategyPlan,
+  tasks: StrategyTask[],
   focusPath: FocusBreadcrumb[],
 ): {
   nucleusId: string;
@@ -81,14 +110,36 @@ function resolveNucleusLevel(
       nucleusId: "goal",
       nucleusName: plan.destination,
       nucleusPastel: GOAL_PASTEL,
-      children: plan.strategicPillars.map((p, i) => ({
-        id: p.id,
-        name: p.name,
-        status: p.status,
-        recommendation: p.reason,
-        pastelColor: PILLAR_PASTELS[i % PILLAR_PASTELS.length],
-        childCount: p.actions.length,
-      })),
+      children: [
+        ...plan.strategicPillars.map((p, i) => ({
+          id: p.id,
+          name: p.name,
+          status: p.status,
+          recommendation: p.reason,
+          pastelColor: PILLAR_PASTELS[i % PILLAR_PASTELS.length],
+          childCount: p.actions.length + tasksForNode(tasks, p.id).length,
+        })),
+        ...tasksForNode(tasks, "goal").map((task) => ({
+          id: task.id,
+          name: task.title,
+          status: task.status,
+          recommendation: task.recommendation || `Due ${task.dueDate}`,
+          pastelColor: taskNodeColor(task),
+          childCount: tasksForNode(tasks, task.id).length,
+        })),
+      ],
+    };
+  }
+
+  const focusedTask = tasks.find(
+    (task) => task.id === focusPath[focusPath.length - 1]?.id,
+  );
+  if (focusedTask) {
+    return {
+      nucleusId: focusedTask.id,
+      nucleusName: focusedTask.title,
+      nucleusPastel: taskNodeColor(focusedTask),
+      children: taskChildren(focusedTask, tasks),
     };
   }
 
@@ -112,14 +163,25 @@ function resolveNucleusLevel(
       nucleusId: pillar.id,
       nucleusName: pillar.name,
       nucleusPastel: basePastel,
-      children: pillar.actions.map((a) => ({
-        id: a.id,
-        name: a.name,
-        status: a.status,
-        recommendation: a.recommendation,
-        pastelColor: basePastel,
-        childCount: a.children?.length ?? 0,
-      })),
+      children: [
+        ...pillar.actions.map((a) => ({
+          id: a.id,
+          name: a.name,
+          status: a.status,
+          recommendation: a.recommendation,
+          pastelColor: basePastel,
+          childCount:
+            (a.children?.length ?? 0) + tasksForNode(tasks, a.id).length,
+        })),
+        ...tasksForNode(tasks, pillar.id).map((task) => ({
+          id: task.id,
+          name: task.title,
+          status: task.status,
+          recommendation: task.recommendation || `Due ${task.dueDate}`,
+          pastelColor: taskNodeColor(task),
+          childCount: tasksForNode(tasks, task.id).length,
+        })),
+      ],
     };
   }
 
@@ -139,14 +201,25 @@ function resolveNucleusLevel(
         nucleusId: action.id,
         nucleusName: action.name,
         nucleusPastel: basePastel,
-        children: (action.children ?? []).map((c) => ({
-          id: c.id,
-          name: c.name,
-          status: c.status,
-          recommendation: c.recommendation,
-          pastelColor: basePastel,
-          childCount: c.children?.length ?? 0,
-        })),
+        children: [
+          ...(action.children ?? []).map((c) => ({
+            id: c.id,
+            name: c.name,
+            status: c.status,
+            recommendation: c.recommendation,
+            pastelColor: basePastel,
+            childCount:
+              (c.children?.length ?? 0) + tasksForNode(tasks, c.id).length,
+          })),
+          ...tasksForNode(tasks, action.id).map((task) => ({
+            id: task.id,
+            name: task.title,
+            status: task.status,
+            recommendation: task.recommendation || `Due ${task.dueDate}`,
+            pastelColor: taskNodeColor(task),
+            childCount: tasksForNode(tasks, task.id).length,
+          })),
+        ],
       };
     }
     actions = action.children ?? [];
@@ -186,8 +259,8 @@ export default function GoalTree({
 
   const nucleusLevel = useMemo(() => {
     if (!explore) return null;
-    return resolveNucleusLevel(plan, focusPath);
-  }, [explore, plan, focusPath]);
+    return resolveNucleusLevel(plan, tasks, focusPath);
+  }, [explore, plan, tasks, focusPath]);
 
   const nucleusLayout = useMemo(() => {
     if (!nucleusLevel) return undefined;
@@ -236,11 +309,11 @@ export default function GoalTree({
     }
 
     // Clicked an orbit node — only drill in, no dialog
-    const name = findNodeName(plan, nodeId);
+    const name = findNodeName(plan, tasks, nodeId);
     setFocusPath((prev) => [...prev, { id: nodeId, name }]);
     setExploreDialogId(null);
     clearSelection();
-  }, [selection, explore, focusPath, plan, clearSelection]);
+  }, [selection, explore, focusPath, plan, tasks, clearSelection]);
 
   const closeExploreDialog = useCallback(() => {
     setExploreDialogId(null);

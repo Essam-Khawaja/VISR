@@ -33,7 +33,7 @@ type Props = {
 };
 
 type ResolvedNode = {
-  kind: "pillar" | "action";
+  kind: "pillar" | "action" | "task";
   pillar: StrategicPillar;
   node: { id: string; name: string; status: string; recommendation?: string; reason?: string };
   children: ActionNode[];
@@ -55,9 +55,32 @@ function findActionDeep(
 
 function resolveNode(
   plan: StrategyPlan,
+  tasks: StrategyTask[],
   selection: GraphSelection,
 ): ResolvedNode | null {
   if (!selection) return null;
+
+  const selectedTask = tasks.find((task) => task.id === selection.nodeId);
+  if (selectedTask) {
+    const syntheticPillar: StrategicPillar = {
+      id: selectedTask.parentNodeId,
+      name: "Strategy task",
+      status: "Okay",
+      reason: "A dated task connected to the current strategy.",
+      actions: [],
+    };
+    return {
+      kind: "task",
+      pillar: syntheticPillar,
+      node: {
+        id: selectedTask.id,
+        name: selectedTask.title,
+        status: selectedTask.status,
+        recommendation: selectedTask.recommendation || `Due ${selectedTask.dueDate}`,
+      },
+      children: [],
+    };
+  }
 
   if (selection.nodeId === "goal") {
     const syntheticPillar: StrategicPillar = {
@@ -120,6 +143,7 @@ function parentTaskFor(
   resolved: ResolvedNode,
   tasks: StrategyTask[],
 ): string | null {
+  if (resolved.kind === "task") return resolved.node.id;
   if (resolved.kind !== "action") return null;
   const backing = tasks.find(
     (task) =>
@@ -146,7 +170,7 @@ export function NodeTaskDialog({
   isDemo,
 }: Props) {
   const reduce = useReducedMotion();
-  const resolved = resolveNode(plan, selection);
+  const resolved = resolveNode(plan, tasks, selection);
 
   return (
     <AnimatePresence>
@@ -224,7 +248,11 @@ function DialogInner({
           {resolved.node.status}
         </Badge>
         <span className="text-[11px] font-medium text-tertiary">
-          {resolved.kind === "pillar" ? "Pillar" : "Action"}
+          {resolved.kind === "pillar"
+            ? "Pillar"
+            : resolved.kind === "task"
+              ? "Task"
+              : "Action"}
         </span>
       </div>
       <h2 className="mt-2 font-display text-[20px] font-semibold leading-tight text-primary">
