@@ -14,7 +14,7 @@ import type {
   StrategyTask,
   StrategyTaskStatus,
 } from "@/lib/2/types";
-import type { CreateStrategyTaskInput } from "@/lib/2/taskStore";
+import type { CreateStrategyTaskInput, NodeRollup } from "@/lib/2/taskStore";
 
 const PILLAR_PASTELS = [
   "#933B5B", // amaranth
@@ -33,6 +33,7 @@ export type GoalTreeProps = {
   planId: string;
   actionStates: Record<string, ActionState>;
   tasks: StrategyTask[];
+  rollups: Record<string, NodeRollup>;
   markAction: (actionId: string, state: ActionState) => void;
   onCreateTask: (input: Omit<CreateStrategyTaskInput, "planId">) => Promise<void>;
   onMarkTask: (taskId: string, state: StrategyTaskStatus) => Promise<void>;
@@ -164,6 +165,7 @@ export default function GoalTree({
   planId,
   actionStates,
   tasks,
+  rollups,
   markAction,
   onCreateTask,
   onMarkTask,
@@ -208,6 +210,7 @@ export default function GoalTree({
       destination: plan.destination,
       mainBottleneck: plan.mainBottleneck,
       actionStates,
+      rollups,
       isReadOnly: onboarding || preview,
       showAllNodes: preview,
       layoutOverride: explore ? nucleusLayout : layoutOverride,

@@ -18,9 +18,10 @@ import {
 import { createEdgeRender, type EdgeRender } from "./graphEdges";
 import { buildGraphLayout, graphRadii } from "./graphLayout";
 import { createNodeMesh, haloStrength, type NodeMesh } from "./graphNodes";
-import type { GraphNodeData, GraphSelection } from "./graphTypes";
+import type { GraphNodeData, GraphSelection, LayoutNode } from "./graphTypes";
 import type { StrategicPillar } from "@/lib/2/types";
 import type { ActionState } from "@/lib/2/planStore";
+import type { NodeRollup } from "@/lib/2/taskStore";
 
 export type { ActionState };
 
@@ -37,6 +38,7 @@ type Props = {
   destination: string;
   mainBottleneck: string;
   actionStates?: Record<string, ActionState>;
+  rollups?: Record<string, NodeRollup>;
   isReadOnly?: boolean;
   showAllNodes?: boolean;
   layoutOverride?: {
@@ -54,6 +56,57 @@ function lerp(a: number, b: number, t: number): number {
   return a + (b - a) * t;
 }
 
+function escapeHtml(text: string): string {
+  const div = document.createElement("div");
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+function darkenHex(hex: string, amount = 0.24): string {
+  const clean = hex.replace("#", "");
+  const full =
+    clean.length === 3
+      ? clean
+          .split("")
+          .map((c) => c + c)
+          .join("")
+      : clean;
+  const n = Number.parseInt(full, 16);
+  if (Number.isNaN(n)) return "rgba(0,0,0,0.35)";
+  const r = Math.max(0, Math.round(((n >> 16) & 255) * (1 - amount)));
+  const g = Math.max(0, Math.round(((n >> 8) & 255) * (1 - amount)));
+  const b = Math.max(0, Math.round((n & 255) * (1 - amount)));
+  return `rgb(${r}, ${g}, ${b})`;
+}
+
+function labelSize(name: string, kind: GraphNodeData["kind"]) {
+  const length = name.length;
+  if (kind === "goal") return { width: Math.min(172, Math.max(118, length * 7)), height: 74 };
+  if (kind === "pillar") return { width: Math.min(150, Math.max(104, length * 6)), height: 64 };
+  return { width: Math.min(126, Math.max(82, length * 5.5)), height: 52 };
+}
+
+function nodeLabelHtml(node: LayoutNode): string {
+  const progress = Math.max(0, Math.min(1, node.progressPercent ?? 0));
+  const angle = Math.round(progress * 360);
+  const count = node.actionCount ?? 0;
+  const fill = node.pastelColor ?? node.color;
+  const ring = darkenHex(fill);
+  const { width, height } = labelSize(node.name, node.kind);
+  const fontSize = node.kind === "goal" ? 13 : node.kind === "pillar" ? 11 : 9;
+  const countBadge =
+    count > 0
+      ? `<span style="position:absolute;top:-6px;right:-6px;background:#ffffff;color:#182235;font-size:9px;font-weight:800;min-width:17px;height:17px;padding:0 4px;border-radius:999px;display:flex;align-items:center;justify-content:center;box-shadow:0 6px 14px rgba(24,34,53,0.15)">${count}</span>`
+      : "";
+  return `
+    <div style="position:relative;width:${width}px;min-height:${height}px;padding:4px;border-radius:999px;background:conic-gradient(${ring} ${angle}deg, rgba(24,34,53,0.12) ${angle}deg);box-shadow:0 16px 32px rgba(24,34,53,0.16)">
+      ${countBadge}
+      <div style="min-height:${height - 8}px;border-radius:999px;background:${fill};display:flex;align-items:center;justify-content:center;padding:8px 12px;color:#fff;text-align:center;font-size:${fontSize}px;font-weight:700;line-height:1.15;white-space:normal;overflow-wrap:anywhere;text-shadow:0 1px 2px rgba(0,0,0,0.25)">
+        ${escapeHtml(node.name)}
+      </div>
+    </div>`;
+}
+
 export function useGraphScene({
   containerRef,
   labelsRef,
@@ -61,6 +114,7 @@ export function useGraphScene({
   destination,
   mainBottleneck,
   actionStates,
+  rollups,
   isReadOnly = false,
   showAllNodes = false,
   layoutOverride,
@@ -72,9 +126,11 @@ export function useGraphScene({
   const hoveredIdRef = useRef<string | null>(null);
   const bottleneckIdRef = useRef<string | null>(null);
   const actionStatesRef = useRef<Record<string, ActionState>>({});
+  const rollupsRef = useRef<Record<string, NodeRollup>>({});
   const nodeMeshesRef = useRef<NodeMesh[]>([]);
 
   actionStatesRef.current = actionStates ?? {};
+  rollupsRef.current = rollups ?? {};
 
   const select = useCallback((sel: GraphSelection) => {
     selectionRef.current = sel;
@@ -98,7 +154,9 @@ export function useGraphScene({
     const successHex = hexToThreeColor(cssVar("--success", "#7D9B7A"));
     nodeMeshesRef.current.forEach((nm) => {
       if (nm.data.kind !== "action") return;
-      const state = actionStatesRef.current[nm.data.id];
+      const state =
+        rollupsRef.current[nm.data.id]?.derivedStatus ??
+        actionStatesRef.current[nm.data.id];
       const coreMat = nm.core.material as THREE.MeshBasicMaterial;
       const haloMat = nm.halo.material as THREE.SpriteMaterial;
       if (state === "done") {
@@ -109,7 +167,7 @@ export function useGraphScene({
         haloMat.color.setHex(mutedHex);
       }
     });
-  }, [actionStates]);
+  }, [actionStates, rollups]);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -121,8 +179,14 @@ export function useGraphScene({
       : buildGraphLayout(pillars, destination, mainBottleneck);
     bottleneckIdRef.current = layout.bottleneckPillarId;
 
-    // Compute progress from actionStates
+    // Compute progress from canonical strategy tasks first, then legacy action states.
     layout.nodes.forEach((n) => {
+      const rollup = rollupsRef.current[n.id];
+      if (rollup && rollup.childCount > 0) {
+        n.progressPercent = rollup.completionRatio;
+        n.actionCount = rollup.childCount;
+        return;
+      }
       if (n.kind === "pillar") {
         const pillar = pillars.find((p) => p.id === n.id);
         if (pillar) {
@@ -207,7 +271,9 @@ export function useGraphScene({
     const successHex = hexToThreeColor(cssVar("--success", "#7D9B7A"));
     nodeMeshes.forEach((nm) => {
       if (nm.data.kind !== "action") return;
-      const state = actionStatesRef.current[nm.data.id];
+      const state =
+        rollupsRef.current[nm.data.id]?.derivedStatus ??
+        actionStatesRef.current[nm.data.id];
       const coreMat = nm.core.material as THREE.MeshBasicMaterial;
       const haloMat = nm.halo.material as THREE.SpriteMaterial;
       if (state === "done") {
@@ -242,34 +308,7 @@ export function useGraphScene({
         el.style.pointerEvents = "none";
         el.style.userSelect = "none";
 
-        if (nm.data.kind === "goal") {
-          el.style.color = "#FDFBF7";
-          el.style.fontSize = "14px";
-          el.style.fontWeight = "600";
-          el.style.textShadow = "0 1px 3px rgba(0,0,0,0.3)";
-          el.innerHTML = `<span>${nm.data.name}</span>
-            <div style="margin:4px auto 0;width:28px;height:3px;border-radius:2px;background:rgba(0,0,0,0.25)">
-              <div style="width:0%;height:100%;border-radius:2px;background:#C4A55A"></div>
-            </div>`;
-        } else if (nm.data.kind === "pillar") {
-          const count = nm.data.actionCount ?? 0;
-          const pct = Math.round((nm.data.progressPercent ?? 0) * 100);
-          el.style.color = "#FDFBF7";
-          el.style.fontSize = "11px";
-          el.style.fontWeight = "500";
-          el.style.textShadow = "0 1px 3px rgba(0,0,0,0.3)";
-          el.innerHTML = `${count > 0 ? `<span style="position:absolute;top:-8px;right:-8px;background:#FDFBF7;color:#2C2520;font-size:9px;font-weight:700;width:16px;height:16px;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 3px rgba(0,0,0,0.15)">${count}</span>` : ""}
-            <span>${nm.data.name}</span>
-            <div style="margin:3px auto 0;width:24px;height:3px;border-radius:2px;background:rgba(0,0,0,0.25)">
-              <div style="width:${pct}%;height:100%;border-radius:2px;background:#C4A55A;transition:width 0.3s"></div>
-            </div>`;
-        } else {
-          el.style.color = "#FDFBF7";
-          el.style.fontSize = "9px";
-          el.style.fontWeight = "500";
-          el.style.textShadow = "0 1px 2px rgba(0,0,0,0.4)";
-          el.innerHTML = `<span>${nm.data.name}</span>`;
-        }
+        el.innerHTML = nodeLabelHtml(nm.data);
 
         labelsContainer.appendChild(el);
         labels.push({ el, node: nm });
@@ -715,6 +754,7 @@ export function useGraphScene({
     pillars,
     destination,
     mainBottleneck,
+    rollups,
     isReadOnly,
     showAllNodes,
     layoutOverride,

@@ -20,6 +20,7 @@ export function GoalTreeSlot({ onToggleToday, displayMode = "full" }: Props) {
     planId,
     stored,
     tasks,
+    rollups,
     markAction,
     createTask,
     markTask,
@@ -31,6 +32,7 @@ export function GoalTreeSlot({ onToggleToday, displayMode = "full" }: Props) {
       planId={planId}
       actionStates={stored.actionStates}
       tasks={tasks}
+      rollups={rollups}
       markAction={markAction}
       onCreateTask={createTask}
       onMarkTask={markTask}
